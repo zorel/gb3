@@ -44,7 +44,7 @@ export class Gc2Tribune extends HTMLElement {
         this.hasReply = false;
         for (let i = postElements.length - 1; i > 0; --i) {
             let post = postElements[i];
-            if(post.id < this.lastReadPostId || post.isMine) {
+            if(post.id <= this.lastReadPostId || post.isMine) {
                 break;
             }
             this.hasReply |= post.isReply;
