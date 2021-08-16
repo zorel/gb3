@@ -2,6 +2,7 @@ import {Gc2TribuneNavigator} from "./gc2-tribune-navigator.js";
 import {Gc2Tribune} from "./gc2-tribune.js";
 import {Gc2Menu} from "./gc2-menu.js";
 import {Gc2Alarm} from "./gc2-alarm.js";
+import { GC2_STORAGE } from "./gc2-storage.js";
 
 class Gc2Main extends HTMLElement {
 
@@ -92,7 +93,7 @@ class Gc2Main extends HTMLElement {
     }
 
     setupNickname() {
-        if(!localStorage.nickname) {
+        if(!GC2_STORAGE.getItem("nickname")) {
             let consonants = "bcdfghjklmnpqrstvwxz";
             let vowels = "aeiouy";
             let syllabes = 2 + Math.floor(Math.random() * 2);
@@ -101,7 +102,7 @@ class Gc2Main extends HTMLElement {
                 generatedNickname += consonants.charAt(Math.floor(Math.random() * consonants.length));
                 generatedNickname += vowels.charAt(Math.floor(Math.random() * vowels.length));
             }
-            localStorage.nickname = generatedNickname;
+            GC2_STORAGE.setItem("nickname", generatedNickname);
         }
     }
 
@@ -118,15 +119,15 @@ class Gc2Main extends HTMLElement {
                 let data = new URLSearchParams();//NEVER use FormData, it forces multipart and backend dont support multipart
                 data.set('message', this.messageInput.value);
                 data.set('tribune', this.tribuneSelect.value);
-                data.set('info', localStorage.nickname);
+                data.set('info', GC2_STORAGE.getItem("nickname"));
                 this.messageInput.value = "";
                 this.messageInput.classList.toggle("gc2-loading", true);
                 let headers = new Headers();
                 if (this.tribuneSelect.value === "dlfp") {
-                    let accessToken = localStorage.getItem("linuxfr_access_token");
-                    let expiresAt = parseInt(localStorage.getItem("linuxfr_expires_at"), 10) || 0;
+                    let accessToken = GC2_STORAGE.getItem("linuxfr_access_token");
+                    let expiresAt = parseInt(GC2_STORAGE.getItem("linuxfr_expires_at"), 10) || 0;
                     if (!accessToken || expiresAt < Date.now()) {
-                        localStorage.setItem("linuxfr_unposted_message", data.get('message'));
+                        GC2_STORAGE.setItem("linuxfr_unposted_message", data.get('message'));
                         window.location.href = "/gb2c/linuxfr/authorize";
                     } else {
                         headers.set('Authorization', `Bearer ${accessToken}`);
@@ -243,11 +244,11 @@ class Gc2Main extends HTMLElement {
     }
 
     selectTribune() {
-        let unposted = localStorage.getItem("linuxfr_unposted_message");
+        let unposted = GC2_STORAGE.getItem("linuxfr_unposted_message");
         if (unposted) {
             this.setActiveTribune("dlfp", false);
             this.messageInput.value = unposted;
-            localStorage.removeItem("linuxfr_unposted_message");
+            GC2_STORAGE.removeItem("linuxfr_unposted_message");
         } else {
             let tribuneName = window.location.hash.substr(1);
             if(this.isTribune(tribuneName)) {

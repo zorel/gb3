@@ -1,3 +1,5 @@
+import { GC2_STORAGE } from "./gc2-storage.js";
+
 class Gc2PostIcon extends HTMLElement {
 
     /**
@@ -16,8 +18,8 @@ class Gc2PostIcon extends HTMLElement {
     isReply;
 
     updateIcon(post, messageElement) {
-        let nickname = localStorage.nickname || "";
-        let login = localStorage.linuxfr_login || "";
+        let nickname = GC2_STORAGE.getItem("nickname") || "";
+        let login = GC2_STORAGE.getItem("linuxfr_login") || "";
 
         this.isMine = post.info === nickname || (post.tribune === "dlfp" && post.login === login);
 

@@ -1,7 +1,9 @@
+import { GC2_STORAGE } from "./gc2-storage.js";
+
 let nickname = document.getElementById("nickname");
-nickname.value = localStorage.nickname || "";
+nickname.value = GC2_STORAGE.getItem("nickname") || "";
 nickname.oninput = (e) => {
-    localStorage.nickname = e.target.value;
+    GC2_STORAGE.setItem("nickname", e.target.value);
 };
 
 let backButton = document.getElementById("backButton");
