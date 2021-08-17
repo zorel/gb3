@@ -38,6 +38,24 @@ class Gc2Storage {
         }
         this.map.set(key, value);
     }
+
+    /**
+     * 
+     * @param {string} key
+     */
+    removeItem(key) {
+        try {
+            localStorage.removeItem(key);
+            return;
+        } catch (e) {
+        }
+        try {
+            sessionStorage.removeItem(key);
+            return;
+        } catch(e) {
+        }
+        this.map.delete(key);
+    }
 }
 
 export const GC2_STORAGE = new Gc2Storage();
