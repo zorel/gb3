@@ -303,7 +303,7 @@ gc2-attach audio {
     border-radius: 4px;
 }
 
-@media only screen and (max-device-width: 767px) {
+@media only screen and (max-device-width: 480px) {
 	.gc2-shortcuts-button {
 		display: none;
 	}
@@ -343,7 +343,7 @@ gc2-attach audio {
 	}
 }
 
-@media only screen and (min-device-width: 1184px) {
+@media only screen and (min-device-width: 720px) {
 
 	.gc2-sidebar {
 		display: flex;
