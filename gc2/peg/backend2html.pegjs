@@ -160,16 +160,16 @@ fullNorloge
  }
  
 norlogeYear
- = digits: [0-9]+
- { return digits.join(""); }
+ = [0-9] [0-9] [0-9] [0-9]
+ { return text(); }
  
 norlogeMonth
- = first: [0-1] last: [0-9]
- { return first + last; }
+ = [0-1] [0-9]
+ { return text(); }
 
 norlogeDay
- = first: [0-3] last: [0-9]
- { return first + last; }
+ = [0-3] [0-9]
+ { return text(); }
 
 normalNorloge
  = h:norlogeHours ":" mi:norlogeMinutes ":" s:norlogeSeconds b:bouchot?
@@ -188,16 +188,16 @@ shortNorloge
  }
 
 norlogeHours
- = first: [0-2] last: [0-9]
- { return first + last; }
+ = [0-2] [0-9]
+ { return text(); }
  
 norlogeMinutes
- = first: [0-5] last: [0-9]
- { return first + last; }
+ = [0-5] [0-9]
+ { return text(); }
  
 norlogeSeconds
- = first: [0-5] last: [0-9]
- { return first + last; }
+ = [0-5] [0-9]
+ { return text(); }
 
 bigorno
  = spaces:$(inputStart / whitespaces) s2:whitespaces? bigorno:$[a-zA-Z0-9-_]+ ("<" / "&lt;") &(whitespaces / [<;:[,] / !.)
