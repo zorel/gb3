@@ -26,5 +26,6 @@ func EmojiSearch(w http.ResponseWriter, r *http.Request) {
 	err := e.Encode(&emojis)
 	if nil != err {
 		http.Error(w, fmt.Sprintf("Cannot encode emoji search results: %s. Blame dave.", err), 500)
+		return
 	}
 }

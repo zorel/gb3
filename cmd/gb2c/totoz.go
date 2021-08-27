@@ -27,6 +27,7 @@ func TotozSearch(w http.ResponseWriter, r *http.Request) {
 	totozSearchResults, err := gb2cHttpClient.Get(searchURL)
 	if nil != err {
 		http.Error(w, fmt.Sprintf("Totoz server error: %s. Blame fork.", err), 500)
+		return
 	}
 	defer totozSearchResults.Body.Close()
 	decoder := xml.NewDecoder(totozSearchResults.Body)
@@ -34,6 +35,7 @@ func TotozSearch(w http.ResponseWriter, r *http.Request) {
 	err = decoder.Decode(&totozes)
 	if nil != err {
 		http.Error(w, fmt.Sprintf("Cannot decode totoz search results: %s. Blame fork.", err), 500)
+		return
 	}
 	for t := range totozes.Totozes {
 		u := url.URL{
@@ -48,5 +50,6 @@ func TotozSearch(w http.ResponseWriter, r *http.Request) {
 	err = e.Encode(&totozes)
 	if nil != err {
 		http.Error(w, fmt.Sprintf("Cannot encode totoz search results: %s. Blame dave.", err), 500)
+		return
 	}
 }

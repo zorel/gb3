@@ -152,6 +152,7 @@ func (g *gb3) handleList(w http.ResponseWriter, r *http.Request) {
 	err := encoder.Encode(tribunes)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -199,6 +200,7 @@ func (g *gb3) handleSearch(w http.ResponseWriter, r *http.Request) {
 	err = encoder.Encode(results)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
