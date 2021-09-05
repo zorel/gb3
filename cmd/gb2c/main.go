@@ -201,41 +201,31 @@ func (g *gb3) handleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *gb3) pollTribunes() {
-	for _, t := range g.tribunes {
-		err := g.pollTribune(t)
-		if nil != err {
-			log.Println(err)
-			continue
-		}
-	}
-}
-
-func (g *gb3) pollTribune(t *Tribune) error {
+func (g *gb3) pollTribune(t *Tribune) {
 	if verboseMode {
 		log.Printf("Poll %s\n", t.Name)
 	}
 	posts, err := t.Poll()
 	if nil != err {
-		return err
+		log.Println(err)
+		return
 	}
 	for _, p := range posts {
 		g.forward <- forwardMessage{Post: p}
 	}
 	go g.store.Save(t.Name, posts)
 	go g.indexer.Index(posts)
-	return err
 }
 
-func (g *gb3) pollLoop() {
+func (g *gb3) pollLoop(t *Tribune) {
 	tick := time.Tick(30 * time.Second)
-	g.pollTribunes()
+	g.pollTribune(t)
 	for {
 		select {
 		case t := <-g.poll:
 			g.pollTribune(t)
 		case <-tick:
-			g.pollTribunes()
+			g.pollTribune(t)
 		}
 	}
 }
@@ -243,7 +233,9 @@ func (g *gb3) pollLoop() {
 func main() {
 	g := newGb3()
 	go g.forwardLoop()
-	go g.pollLoop()
+	for _, t := range g.tribunes {
+		go g.pollLoop(t)
+	}
 	RegisterLinuxfrAPI()
 	RegisterAttachmentAPI()
 	http.HandleFunc("/gb2c/list", func(w http.ResponseWriter, r *http.Request) {
