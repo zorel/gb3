@@ -60,7 +60,7 @@ apos
  { return "&apos;"; }
  
 url
- = tag:"<a href=\""? urlStr:$((("http" "s"?) / "ftp") "://" ([^< \t\r\n\"])+) ("\">" [^<]+ "</a>")?
+ = tag:"<a href=\""? urlStr:$( ( ((("http" "s"?) / "ftp") "://") / ("data:" [A-Za-z.-;=/]+ ",")) ([^< \t\r\n\"])+) ("\">" [^<]+ "</a>")?
  { 
    if(tag) {
       let doc = backend2html.domParser.parseFromString(urlStr, "text/html");
@@ -69,7 +69,7 @@ url
    let a = document.createElement("a");
    try {
      let url = new URL(urlStr);
-     a.innerText = url.hostname;
+     a.innerText = url.hostname || "url";
    } catch(e) {
        a.innerText = "url";
    }
