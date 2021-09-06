@@ -149,7 +149,18 @@ class Gc2TotozSearch extends HTMLElement {
 
         this.resultsContainer = document.createElement("div");
         this.resultsContainer.onclick = (e) => {
-            let caption = e.target.parentElement.querySelector("figcaption");
+            let caption;
+            switch(e.target.tagName) {
+                case "FIGURE":
+                    caption = e.target.querySelector("figcaption");
+                    break;
+                case "IMG":
+                    caption = e.target.parentElement.querySelector("figcaption");
+                    break;
+                case "FIGCAPTION":
+                    caption = e.target;
+                    break;
+            }
             if (caption) {
                 let message = document.getElementById("gc2-message");
                 let value = message.value;
@@ -229,7 +240,19 @@ class Gc2EmojiSearch extends HTMLElement {
 
         this.resultsContainer = document.createElement("div");
         this.resultsContainer.onclick = (e) => {
-            let characters = e.target.parentElement.querySelector(".gc2-emoji-characters");
+            let characters;
+            switch(e.target.tagName) {
+                case "FIGURE":
+                    characters = e.target.querySelector(".gc2-emoji-characters");
+                    break;
+                case "FIGCAPTION":
+                    characters = e.target.parentElement.querySelector(".gc2-emoji-characters");
+                    break;
+                default:
+                    if(e.target.classList.contains("gc2-emoji-characters")) {
+                        characters = e.target;
+                    }
+            }
             if (characters) {
                 let message = document.getElementById("gc2-message");
                 message.value += `${message.value && ' '}${characters.innerText} `;
