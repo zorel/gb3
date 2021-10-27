@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -16,6 +17,12 @@ type LinuxfrAccessData struct {
 	RefreshToken string `json:"refresh_token"`
 	ExpiresIn    int64  `json:"expires_in"`
 	Login        string `json:"login"`
+}
+
+type LinuxfrAccessRefreshData struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int64  `json:"expires_in"`
 }
 
 //RegisterLinuxfrAPI setup http linuxfr API endpoints
@@ -110,5 +117,41 @@ func RegisterLinuxfrAPI() {
 			Fragment: encodedToken,
 		}
 		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
+	})
+	http.HandleFunc("/gb2c/linuxfr/refresh", func(w http.ResponseWriter, r *http.Request) {
+		tokenParams := url.Values{}
+		tokenParams.Set("client_id", clientID)
+		tokenParams.Set("client_secret", clientSecret)
+		tokenParams.Set("refresh_token", r.FormValue("refresh_token"))
+		tokenParams.Set("grant_type", "refresh_token")
+		tokenRequest, err := http.NewRequest("POST", "https://linuxfr.org/api/oauth/token", strings.NewReader(tokenParams.Encode()))
+		if nil != err {
+			http.Error(w, fmt.Sprintf("Cannot build linuxfr refresh token request: %s", err), 500)
+			return
+		}
+		tokenRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		tokenRequest.Header.Set("User-Agent", "gb3")
+		tokenResponse, err := gb2cHttpClient.Do(tokenRequest)
+		if nil != err {
+			http.Error(w, fmt.Sprintf("Cannot refresh linuxfr token: %s", err), 500)
+			return
+		}
+		//parse token
+		var linuxfrAccessData LinuxfrAccessRefreshData
+		defer tokenResponse.Body.Close()
+		tokenDecoder := json.NewDecoder(tokenResponse.Body)
+		err = tokenDecoder.Decode(&linuxfrAccessData)
+		if nil != err {
+			http.Error(w, fmt.Sprintf("Cannot decode linuxfr refresh token: %s", err), 500)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, err = io.Copy(w, r.Body)
+		if nil != err {
+			http.Error(w, fmt.Sprintf("Cannot write linuxfr refresh token response: %s.", err), 500)
+			return
+		}
+
 	})
 }

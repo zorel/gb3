@@ -1,7 +1,7 @@
-import {Gc2TribuneNavigator} from "./gc2-tribune-navigator.js";
-import {Gc2Tribune} from "./gc2-tribune.js";
-import {Gc2Menu} from "./gc2-menu.js";
-import {Gc2Alarm} from "./gc2-alarm.js";
+import { Gc2TribuneNavigator } from "./gc2-tribune-navigator.js";
+import { Gc2Tribune } from "./gc2-tribune.js";
+import { Gc2Menu } from "./gc2-menu.js";
+import { Gc2Alarm } from "./gc2-alarm.js";
 import { GC2_STORAGE } from "./gc2-storage.js";
 
 class Gc2Main extends HTMLElement {
@@ -93,12 +93,12 @@ class Gc2Main extends HTMLElement {
     }
 
     setupNickname() {
-        if(!GC2_STORAGE.getItem("nickname")) {
+        if (!GC2_STORAGE.getItem("nickname")) {
             let consonants = "bcdfghjklmnpqrstvwxz";
             let vowels = "aeiouy";
             let syllabes = 2 + Math.floor(Math.random() * 2);
             let generatedNickname = "";
-            for(let i=0; i<syllabes; ++i) {
+            for (let i = 0; i < syllabes; ++i) {
                 generatedNickname += consonants.charAt(Math.floor(Math.random() * consonants.length));
                 generatedNickname += vowels.charAt(Math.floor(Math.random() * vowels.length));
             }
@@ -114,7 +114,7 @@ class Gc2Main extends HTMLElement {
         this.setupShortcutButtons();
         this.setupMenuButton();
 
-        this.controls.onsubmit = (e) => {
+        this.controls.onsubmit = async (e) => {
             if (this.messageInput.value && this.tribuneSelect.value) {
                 let data = new URLSearchParams();//NEVER use FormData, it forces multipart and backend dont support multipart
                 data.set('message', this.messageInput.value);
@@ -124,9 +124,8 @@ class Gc2Main extends HTMLElement {
                 this.messageInput.classList.toggle("gc2-loading", true);
                 let headers = new Headers();
                 if (this.tribuneSelect.value === "dlfp") {
-                    let accessToken = GC2_STORAGE.getItem("linuxfr_access_token");
-                    let expiresAt = parseInt(GC2_STORAGE.getItem("linuxfr_expires_at"), 10) || 0;
-                    if (!accessToken || expiresAt < Date.now()) {
+                    let accessToken = await this.retrieveLinuxfrToken();
+                    if (!accessToken) {
                         GC2_STORAGE.setItem("linuxfr_unposted_message", data.get('message'));
                         window.location.href = "/gb2c/linuxfr/authorize";
                     } else {
@@ -146,6 +145,34 @@ class Gc2Main extends HTMLElement {
             }
             e.preventDefault();
         };
+    }
+
+    async retrieveLinuxfrToken() {
+        try {
+            let accessToken = GC2_STORAGE.getItem("linuxfr_access_token");
+            if (!accessToken) {
+                return null;
+            }
+            let expiresAt = parseInt(GC2_STORAGE.getItem("linuxfr_expires_at"), 10) || 0;
+            if (expiresAt > Date.now()) {
+                return accessToken;
+            }
+            let refreshData = new URLSearchParams();
+            refreshData.set("refresh_token", GC2_STORAGE.getItem("linuxfr_refresh_token"));
+            let response = await fetch("/gb2c/linuxfr/refresh", {
+                body: refreshData,
+                method: "POST",
+            });
+            let token = await response.json();
+            if (token.access_token) {
+                GC2_STORAGE.setItem("linuxfr_access_token", token.access_token);
+                GC2_STORAGE.setItem("linuxfr_refresh_token", token.refresh_token);
+                GC2_STORAGE.setItem("linuxfr_expires_at", Date.now() + token.expires_in * 1000);
+                return token.access_token;
+            }
+        } catch (e) {
+            console.log("Cannot retrieve linuxfr access token");
+        }
     }
 
     setupShortcutButtons() {
@@ -251,10 +278,10 @@ class Gc2Main extends HTMLElement {
             GC2_STORAGE.removeItem("linuxfr_unposted_message");
         } else {
             let tribuneName = window.location.hash.substr(1);
-            if(this.isTribune(tribuneName)) {
+            if (this.isTribune(tribuneName)) {
                 this.setActiveTribune(tribuneName, false);
             }
-        }        
+        }
     }
 
     startPoll() {
@@ -295,7 +322,7 @@ class Gc2Main extends HTMLElement {
             option.text = option.value = tribuneName;
             this.tribuneSelect.add(option);
 
-            if(this.tribuneNavigator) {
+            if (this.tribuneNavigator) {
                 this.tribuneNavigator.addTribune(tribuneName);
             }
 
@@ -311,7 +338,7 @@ class Gc2Main extends HTMLElement {
     }
 
     setActiveTribune(selectedTribuneName, markPreviousAsRead = true) {
-        if(selectedTribuneName === this.activeTribune) {
+        if (selectedTribuneName === this.activeTribune) {
             return;
         }
         this.addBouchotSuffixInMessageInput(this.activeTribune, selectedTribuneName);
@@ -322,7 +349,7 @@ class Gc2Main extends HTMLElement {
         this.activeTribune = selectedTribuneName;
         this.tribuneSelect.value = selectedTribuneName;
         this.messageInput.placeholder = selectedTribuneName;
-        if(this.tribuneNavigator) {
+        if (this.tribuneNavigator) {
             this.tribuneNavigator.setActiveTribune(selectedTribuneName);
         }
         this.tribunes.forEach((tribuneElement, tribuneName) => {
@@ -427,7 +454,7 @@ class Gc2Main extends HTMLElement {
     }
 
     addBouchotSuffixInMessageInput(previousTribuneName, nextTribuneName) {
-        this.messageInput.value = this.bouchotSuffixor.parse(this.messageInput.value, { oldBouchot: previousTribuneName, newBouchot: nextTribuneName});
+        this.messageInput.value = this.bouchotSuffixor.parse(this.messageInput.value, { oldBouchot: previousTribuneName, newBouchot: nextTribuneName });
     }
 
     updateNotifications() {
@@ -452,7 +479,7 @@ class Gc2Main extends HTMLElement {
                 } else {
                     option.innerText = option.innerText.replace("↩", "");
                 }
-                if(this.tribuneNavigator) {
+                if (this.tribuneNavigator) {
                     this.tribuneNavigator.setTribuneNotifications(tribuneName, tribuneElement.hasBigorno, tribuneElement.hasReply);
                 }
             }
@@ -465,10 +492,10 @@ class Gc2Main extends HTMLElement {
             document.title = document.title.replace("📢", "");
         }
         if (reply) {
-            if(document.title.indexOf("↩") < 0) {
+            if (document.title.indexOf("↩") < 0) {
                 document.title = `↩${document.title}`;
             }
-        } else {
+        } else {
             document.title = document.title.replace("↩", "");
         }
     }
