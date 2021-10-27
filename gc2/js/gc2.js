@@ -114,37 +114,41 @@ class Gc2Main extends HTMLElement {
         this.setupShortcutButtons();
         this.setupMenuButton();
 
-        this.controls.onsubmit = async (e) => {
-            if (this.messageInput.value && this.tribuneSelect.value) {
-                let data = new URLSearchParams();//NEVER use FormData, it forces multipart and backend dont support multipart
-                data.set('message', this.messageInput.value);
-                data.set('tribune', this.tribuneSelect.value);
-                data.set('info', GC2_STORAGE.getItem("nickname"));
-                this.messageInput.value = "";
-                this.messageInput.classList.toggle("gc2-loading", true);
-                let headers = new Headers();
-                if (this.tribuneSelect.value === "dlfp") {
-                    let accessToken = await this.retrieveLinuxfrToken();
-                    if (!accessToken) {
-                        GC2_STORAGE.setItem("linuxfr_unposted_message", data.get('message'));
-                        window.location.href = "/gb2c/linuxfr/authorize";
-                    } else {
-                        headers.set('Authorization', `Bearer ${accessToken}`);
-                    }
-                }
-                fetch("/gb2c/post", {
-                    body: data,
-                    method: "POST",
-                    headers: headers
-                }).then((data) => {
-                    this.messageInput.classList.toggle("gc2-loading", false);
-                }).catch((error) => {
-                    this.messageInput.classList.toggle("gc2-loading", false);
-                    console.log(`Cannot post message '${data.get('message')}'. Error: `, error);
-                });
-            }
+        this.controls.onsubmit = (e) => {
             e.preventDefault();
+            this.postMessage();
         };
+    }
+
+    async postMessage() {
+        if (this.messageInput.value && this.tribuneSelect.value) {
+            let data = new URLSearchParams();//NEVER use FormData, it forces multipart and backend dont support multipart
+            data.set('message', this.messageInput.value);
+            data.set('tribune', this.tribuneSelect.value);
+            data.set('info', GC2_STORAGE.getItem("nickname"));
+            this.messageInput.value = "";
+            this.messageInput.classList.toggle("gc2-loading", true);
+            let headers = new Headers();
+            if (this.tribuneSelect.value === "dlfp") {
+                let accessToken = await this.retrieveLinuxfrToken();
+                if (!accessToken) {
+                    GC2_STORAGE.setItem("linuxfr_unposted_message", data.get('message'));
+                    window.location.href = "/gb2c/linuxfr/authorize";
+                } else {
+                    headers.set('Authorization', `Bearer ${accessToken}`);
+                }
+            }
+            fetch("/gb2c/post", {
+                body: data,
+                method: "POST",
+                headers: headers
+            }).then((data) => {
+                this.messageInput.classList.toggle("gc2-loading", false);
+            }).catch((error) => {
+                this.messageInput.classList.toggle("gc2-loading", false);
+                console.log(`Cannot post message '${data.get('message')}'. Error: `, error);
+            });
+        }
     }
 
     async retrieveLinuxfrToken() {

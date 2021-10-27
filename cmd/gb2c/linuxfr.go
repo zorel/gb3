@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -137,21 +136,22 @@ func RegisterLinuxfrAPI() {
 			return
 		}
 		//parse token
-		var linuxfrAccessData LinuxfrAccessRefreshData
+		var linuxfrAccessRefreshData LinuxfrAccessRefreshData
 		defer tokenResponse.Body.Close()
 		tokenDecoder := json.NewDecoder(tokenResponse.Body)
-		err = tokenDecoder.Decode(&linuxfrAccessData)
+		err = tokenDecoder.Decode(&linuxfrAccessRefreshData)
 		if nil != err {
 			http.Error(w, fmt.Sprintf("Cannot decode linuxfr refresh token: %s", err), 500)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		_, err = io.Copy(w, r.Body)
+
+		e := json.NewEncoder(w)
+		err = e.Encode(&linuxfrAccessRefreshData)
 		if nil != err {
-			http.Error(w, fmt.Sprintf("Cannot write linuxfr refresh token response: %s.", err), 500)
+			http.Error(w, fmt.Sprintf("Cannot encode linuxfrAccessRefreshData: %s. Blame dave.", err), 500)
 			return
 		}
-
 	})
 }
