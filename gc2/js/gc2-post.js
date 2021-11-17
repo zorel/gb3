@@ -117,6 +117,9 @@ class Gc2PostNorloge extends HTMLElement {
         };
 
         this.onclick = (e) => {
+            /**
+             * @type HTMLInputElement
+             */
             let message = document.getElementById("gc2-message");
             let style;
             if(e.ctrlKey && e.shiftKey) {
@@ -126,7 +129,13 @@ class Gc2PostNorloge extends HTMLElement {
             } else if(e.shiftKey) {
                 style = "short";
             }
-            message.value += `${message.value && ' '}${this.formatNorloge(style)} `;
+            if(message.selectionStart < (message.value.length / 2)) {
+                let trimmedMessageValue = message.value.trimStart();
+                message.value = `${this.formatNorloge(style)} ${trimmedMessageValue}`;    
+            } else {
+                let trimmedMessageValue = message.value.trimEnd();
+                message.value = `${trimmedMessageValue}${trimmedMessageValue && ' '}${this.formatNorloge(style)} `;
+            }
             message.focus();
         };
     }
