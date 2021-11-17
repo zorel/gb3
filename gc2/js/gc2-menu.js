@@ -163,7 +163,6 @@ class Gc2TotozSearch extends HTMLElement {
             }
             if (caption) {
                 let message = document.getElementById("gc2-message");
-                let value = message.value;
                 message.value += `${message.value && ' '}[:${caption.innerText}] `;
                 gc2CloseMenu();
                 message.focus();
