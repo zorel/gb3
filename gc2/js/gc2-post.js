@@ -37,7 +37,8 @@ class Gc2PostIcon extends HTMLElement {
         let norlogesInMessage = messageElement.getElementsByTagName('gc2-norloge');
         for (let n = 0; n < norlogesInMessage.length; n++) {
             let norlogeInMessage = norlogesInMessage[n];
-            let postNorloge = document.querySelector(`gc2-tribune[name="${post.tribune}"] gc2-post-norloge[title*=" ${norlogeInMessage.title.substr(-8)}"]`);
+            let postNorloges = document.querySelectorAll(`gc2-tribune[name="${post.tribune}"] gc2-post-norloge[title*=" ${norlogeInMessage.title.substr(-8)}"]`);
+            let postNorloge = postNorloges.item(postNorloges.length-1);
             if (postNorloge) {
                 let postIcon = postNorloge.parentElement.querySelector('gc2-post-icon');
                 if (postIcon && postIcon.isMine) {
