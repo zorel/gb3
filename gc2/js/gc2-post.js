@@ -203,7 +203,8 @@ class Gc2Norloge extends HTMLElement {
         if(gc2Main) {
             gc2Main.setActiveTribune(bouchot);
         }
-        return document.querySelector(`gc2-tribune[name="${bouchot}"] gc2-post-norloge[title*=" ${this.title.substr(-8)}"]`);
+        let results = document.querySelectorAll(`gc2-tribune[name="${bouchot}"] gc2-post-norloge[title*=" ${this.title.substr(-8)}"]`);
+        return results.item(results.length-1);
     }
 }
 customElements.define('gc2-norloge', Gc2Norloge);
