@@ -67,7 +67,7 @@ func (g *gb3) addMiaoliTribunes() {
 		}
 		miaoliTribuneName := miaoliTribuneSplitted[0]
 		miaoliTribuneURL := miaoliTribuneSplitted[1]
-		g.tribunes[miaoliTribuneName] = &Tribune{Name: miaoliTribuneName, BackendURL: miaoliTribuneURL + "/tsv", PostURL: miaoliTribuneURL + "/post", PostField: "message"}
+		g.tribunes[miaoliTribuneName] = &Tribune{Name: miaoliTribuneName, BackendURL: miaoliTribuneURL + "/posts.tsv", PostURL: miaoliTribuneURL, PostField: "message"}
 	}
 }
 
