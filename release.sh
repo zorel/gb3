@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-GB3_VERSION=0.49
+GB3_VERSION=0.50
 
 curl -u "devnewton:${FRAMAGIT_TOKEN}" --upload-file gb0 "https://framagit.org/api/v4/projects/devnewton%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb0" | tee /dev/null
 curl -u "devnewton:${FRAMAGIT_TOKEN}" --upload-file gb2c "https://framagit.org/api/v4/projects/devnewton%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb2c" | tee /dev/null
