@@ -57,7 +57,7 @@ func (g *gb3) addGb0Tribunes() {
 func (g *gb3) addMiaoliTribunes() {
 	miaoliTribunes := os.Getenv("GB2C_MIAOLI_TRIBUNES")
 	if len(miaoliTribunes) == 0 {
-		miaoliTribunes = "reveildutroll:https://miaoli.im/tribune/LeR%C3%A9veilDuTroll"
+		miaoliTribunes = "reveildutroll:https://miaoli.im/%2B6VtcdSCI0Y"
 	}
 	for _, miaoliTribune := range strings.Split(miaoliTribunes, ",") {
 		miaoliTribuneSplitted := strings.SplitN(miaoliTribune, ":", 2)

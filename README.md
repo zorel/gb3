@@ -83,7 +83,7 @@ GB2C_GB0_TRIBUNES=devnewton:https://gb3.devnewton.fr,gabuzomeu:https://gb3.plop.
 List of miaoli tribunes url. Default value is:
 
 ```bash
-GB2C_MIAOLI_TRIBUNES=reveildutroll:https://miaoli.im/tribune/LeR%C3%A9veilDuTroll
+GB2C_MIAOLI_TRIBUNES=reveildutroll:https://miaoli.im/%2B6VtcdSCI0Y
 ```
 
 #### GB2C_MAX_POSTS_IN_HISTORY
