@@ -327,6 +327,7 @@ class Gc2Attach extends HTMLElement {
                 progress.src = "";
                 let location = response.headers.get("Location");
                 if (location) {
+                    uploadError.innerText = "";
                     let message = document.getElementById("gc2-message");
                     message.value += `${message.value && ' '}${location} `;
                     gc2CloseMenu();
