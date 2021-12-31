@@ -315,6 +315,8 @@ class Gc2Attach extends HTMLElement {
         let progress = document.createElement("img");
         progress.classList.add("gc2-attach-progress");
 
+        let uploadError = document.createElement("p");
+
         form.onsubmit = (e) => {
             e.preventDefault();
             progress.src = "/img/loading.svg";
@@ -325,19 +327,31 @@ class Gc2Attach extends HTMLElement {
                 progress.src = "";
                 let location = response.headers.get("Location");
                 if (location) {
+                    uploadError.innerText = "";
                     let message = document.getElementById("gc2-message");
                     message.value += `${message.value && ' '}${location} `;
                     gc2CloseMenu();
                     message.focus();
+                } else {
+                    switch(response.status) {
+                        case 413:
+                            uploadError.innerText = "Cannot attach file: file is too large, try less than 1mo.";
+                            break;
+                        default:
+                            uploadError.innerText = `Cannot attach file: http response is ${response.status} ${response.statusText}`;
+                            break;
+                    }
                 }
             }).catch((error) => {
                 progress.src = "";
+                uploadError.innerText = "Cannot attach file: unknown error";
                 console.log(`Cannot attach file. Error: `, error);
             });
         };
         this.appendChild(form);
 
         this.appendChild(progress);
+        this.appendChild(uploadError);
 
         let imagePreview = document.createElement("img");
         this.appendChild(imagePreview);
