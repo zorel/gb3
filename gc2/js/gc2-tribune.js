@@ -1,4 +1,5 @@
 import {Gc2Post} from "./gc2-post.js";
+import { GC2_STORAGE } from "./gc2-storage.js";
 
 export class Gc2Tribune extends HTMLElement {
 
@@ -11,8 +12,6 @@ export class Gc2Tribune extends HTMLElement {
      * @type boolean
      */
     hasReply = false;
-
-    lastReadPostId = -1;
 
     constructor() {
         super();
@@ -42,9 +41,10 @@ export class Gc2Tribune extends HTMLElement {
 
         this.hasBigorno = false;
         this.hasReply = false;
+        let lastReadPostId =  GC2_STORAGE.getItem(`${this.getAttribute("name")}_lastReadPostId`) || -1;
         for (let i = postElements.length - 1; i > 0; --i) {
             let post = postElements[i];
-            if(post.id <= this.lastReadPostId || post.isMine) {
+            if(post.id <= lastReadPostId || post.isMine) {
                 break;
             }
             this.hasReply |= post.isReply;
@@ -57,7 +57,7 @@ export class Gc2Tribune extends HTMLElement {
         this.hasReply = false;
         let lastPost = this.querySelector('gc2-post:last-of-type');
         if(lastPost) {
-            this.lastReadPostId = lastPost.id;
+            GC2_STORAGE.setItem(`${this.getAttribute("name")}_lastReadPostId`, lastPost.id);
         }
     }
 }
