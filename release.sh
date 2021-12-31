@@ -2,12 +2,15 @@
 
 GB3_VERSION=0.51
 
-curl -u "devnewton:${FRAMAGIT_TOKEN}" --upload-file gb0 "https://framagit.org/api/v4/projects/devnewton%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb0" | tee /dev/null
-curl -u "devnewton:${FRAMAGIT_TOKEN}" --upload-file gb2c "https://framagit.org/api/v4/projects/devnewton%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb2c" | tee /dev/null
-curl -u "devnewton:${FRAMAGIT_TOKEN}" --upload-file gc2.tar.gz "https://framagit.org/api/v4/projects/devnewton%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gc2.tar.gz" | tee /dev/null
+GITLAB_HOST="gitlab.com"
+GITLAB_USER="davenewton"
 
-curl --request POST "https://framagit.org/api/v4/projects/devnewton%2Fgb3/releases" \
-     --header 'Content-Type: application/json' --header "PRIVATE-TOKEN: ${FRAMAGIT_TOKEN}" \
+curl -u "${GITLAB_USER}:${GITLAB_TOKEN}" --upload-file gb0 "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb0" | tee /dev/null
+curl -u "${GITLAB_USER}:${GITLAB_TOKEN}" --upload-file gb2c "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb2c" | tee /dev/null
+curl -u "${GITLAB_USER}:${GITLAB_TOKEN}" --upload-file gc2.tar.gz "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gc2.tar.gz" | tee /dev/null
+
+curl --request POST "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/releases" \
+     --header 'Content-Type: application/json' --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
      --data @- <<REQUEST_BODY
 {
   "name": "${GB3_VERSION}",
@@ -18,19 +21,19 @@ curl --request POST "https://framagit.org/api/v4/projects/devnewton%2Fgb3/releas
     "links": [
       {
         "name": "gb0",
-        "url": "https://framagit.org/api/v4/projects/devnewton%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb0",
+        "url": "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb0",
         "filepath": "/gb0",
         "link_type": "package"
       },
       {
         "name": "gb2c",
-        "url": "https://framagit.org/api/v4/projects/devnewton%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb2c",
+        "url": "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb2c",
         "filepath": "/gb2c",
         "link_type": "package"
       },
       {
         "name": "gc2.tar.gz",
-        "url": "https://framagit.org/api/v4/projects/devnewton%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gc2.tar.gz",
+        "url": "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gc2.tar.gz",
         "filepath": "/gc2.tar.gz",
         "link_type": "package"
       }

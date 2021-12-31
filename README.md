@@ -1,4 +1,4 @@
-MOVED TO https://framagit.org/devnewton/gb3
+MOVED TO https://gitlab.com/davenewton/gb3
 
 # gb3
 
