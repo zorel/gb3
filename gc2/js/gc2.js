@@ -67,7 +67,8 @@ class Gc2Main extends HTMLElement {
         this.selectTribune();
         this.appendChild(this.controls);
         this.setupAlarm();
-        this.startPoll();
+        this.poll();
+        setInterval(() => this.poll(), 10000);
     }
 
     setupAlarm() {
@@ -288,23 +289,55 @@ class Gc2Main extends HTMLElement {
         }
     }
 
-    startPoll() {
-        let postSource = new EventSource("/gb2c/poll");
-        postSource.onmessage = (event) => {
-            let wasAtbottom = this.isScrollAtBottom();
-            let post = JSON.parse(event.data);
-            post.message = this.backend2html.parse(post.message);
-            this.getTribuneElement(post.tribune).insertPost(post);
-            this.updateNotifications();
-            if (wasAtbottom) {
-                this.scrollToBottom();
+    /**
+     * @type EventSource
+     */
+    postSource;
+
+    /**
+     * @type number
+     */
+    lastPostSourceActivity = 0;
+
+    closeInactivePostSource() {
+        if (this.postSource) {
+            if (this.postSource.readyState === EventSource.CLOSED) {
+                this.postSource = null;
+                return;
             }
-        };
-        postSource.onerror = (err) => {
-            console.log(`Lost connection, retry in 10 seconds`);
-            postSource.close();
-            setTimeout(() => this.startPoll(), 10000);
-        };
+            let noPostSourceActivitySince = Date.now() - this.lastPostSourceActivity;
+            if (noPostSourceActivitySince > 60000) {
+                this.postSource.close();
+                this.postSource = null;
+            }
+        }
+    }
+
+    poll() {
+        this.closeInactivePostSource();
+        if (!this.postSource) {
+            this.postSource = new EventSource("/gb2c/poll");
+            this.postSource.onopen = () => {
+                this.lastPostSourceActivity = Date.now();
+            };
+            this.lastPostSourceActivity = Date.now();
+            this.postSource.onmessage = (event) => {
+                this.lastPostSourceActivity = Date.now();
+                let wasAtbottom = this.isScrollAtBottom();
+                let post = JSON.parse(event.data);
+                post.message = this.backend2html.parse(post.message);
+                this.getTribuneElement(post.tribune).insertPost(post);
+                this.updateNotifications();
+                if (wasAtbottom) {
+                    this.scrollToBottom();
+                }
+            };
+            this.postSource.onerror = (err) => {
+                console.log(`Lost connection, retry in few seconds`);
+                this.postSource.close();
+                this.postSource = null;
+            };
+        }
     }
 
     isScrollAtBottom() {
