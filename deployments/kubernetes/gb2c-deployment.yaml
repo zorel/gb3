@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    gb3.service: gb2c
+  name: gb2c
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+     gb3.service: gb2c
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        gb3.service: gb2c
+    spec:
+      containers:
+      - env:
+        - name: GB2C_GB0_TRIBUNES
+          value: taiste:http://gb0:16667
+        image: localhost:32000/gb2c
+        imagePullPolicy: Always
+        name: gb2c
+        ports:
+        - containerPort: 16666
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 10m
+          limits:
+            memory: 512Mi
+            cpu: 1000m
+      restartPolicy: Always
+status: {}

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    gb3.service: gb0
+  name: gb0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      gb3.service: gb0
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        gb3.service: gb0
+    spec:
+      volumes:
+      - name: gb0-store
+        persistentVolumeClaim:
+          claimName: gb0-volumeclaim
+      containers:
+      - image: localhost:32000/gb0
+        imagePullPolicy: Always
+        name: gb0
+        env:
+          - name: GB0_STORE_DIRECTORY
+            value: /var/opt/gb0
+        ports:
+        - containerPort: 16667
+        volumeMounts:
+          - name: gb0-store
+            mountPath: /var/opt/gb0
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 10m
+          limits:
+            memory: 512Mi
+            cpu: 1000m
+      restartPolicy: Always
+status: {}

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    gb3.service: gb0
+  name: gb0
+spec:
+  ports:
+  - name: "16667"
+    port: 16667
+    targetPort: 16667
+  selector:
+    gb3.service: gb0
+status:
+  loadBalancer: {}

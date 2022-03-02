@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gb3-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gc2
+            port:
+              number: 80
+      - path: /gb2c
+        pathType: Prefix
+        backend:
+          service:
+            name: gb2c
+            port:
+              number: 16666
+      - path: /gb0
+        pathType: Prefix
+        backend:
+          service:
+              name: gb0
+              port:
+                number: 16667

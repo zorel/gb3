@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    gb3.service: gc2
+  name: gc2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      gb3.service: gc2
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        gb3.service: gc2
+    spec:
+      containers:
+      - image: localhost:32000/gc2
+        imagePullPolicy: Always
+        name: gc2
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 10m
+          limits:
+            memory: 512Mi
+            cpu: 1000m
+      restartPolicy: Always
+status: {}
