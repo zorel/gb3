@@ -165,6 +165,8 @@ func (g *gb3) handlePoll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+
 	c := NewCoincoin(w, flusher)
 	g.join <- c
 	defer func() { g.leave <- c }()

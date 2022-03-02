@@ -2,8 +2,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: gb3-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/proxy-buffering: "off"
 spec:
   rules:
   - http:
