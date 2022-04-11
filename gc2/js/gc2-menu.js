@@ -122,7 +122,8 @@ class Gc2TotozSearch extends HTMLElement {
     setup() {
         let form = document.createElement("form");
 
-        this.searchInput = document.createElement('input');
+        this.searchInput = document.createElement("input");
+        this.searchInput.enterKeyHint = "search";
         this.searchInput.type = "text";
         this.searchInput.placeholder = "dont be so vanilla";
         form.appendChild(this.searchInput);
@@ -214,7 +215,8 @@ class Gc2EmojiSearch extends HTMLElement {
     setup() {
         let form = document.createElement("form");
 
-        this.searchInput = document.createElement('input');
+        this.searchInput = document.createElement("input");
+        this.searchInput.enterKeyHint = "search";
         this.searchInput.type = "text";
         this.searchInput.placeholder = "poop";
         form.appendChild(this.searchInput);
@@ -303,7 +305,7 @@ class Gc2Attach extends HTMLElement {
         form.enctype = "multipart/form-data";
         form.method = "post";
 
-        let fileInput = document.createElement('input');
+        let fileInput = document.createElement("input");
         fileInput.name = "attachment";
         fileInput.type = "file";
         form.appendChild(fileInput);

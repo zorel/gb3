@@ -257,6 +257,7 @@ class Gc2Main extends HTMLElement {
         this.messageInput = document.createElement("input");
         this.messageInput.id = "gc2-message";
         this.messageInput.type = "text";
+        this.messageInput.enterKeyHint = "send";
         this.messageInput.spellcheck = true;
         this.messageInput.onkeydown = (e) => {
             if (e.altKey) {
