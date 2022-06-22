@@ -143,7 +143,7 @@ class Gc2Main extends HTMLElement {
                 body: data,
                 method: "POST",
                 headers: headers
-            }).then((data) => {
+            }).then((_data) => {
                 this.messageInput.classList.toggle("gc2-loading", false);
             }).catch((error) => {
                 this.messageInput.classList.toggle("gc2-loading", false);
