@@ -211,7 +211,7 @@ customElements.define('gc2-norloge', Gc2Norloge);
 class Gc2Moule extends HTMLElement {
     constructor() {
         super();
-        this.onclick = (e) => {
+        this.onclick = (_e) => {
             let message = document.getElementById("gc2-message");
             message.value += `${message.value && ' '}${this.innerText}< `;
             message.focus();
