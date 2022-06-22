@@ -333,7 +333,7 @@ class Gc2Main extends HTMLElement {
                     this.scrollToBottom();
                 }
             };
-            this.postSource.onerror = (err) => {
+            this.postSource.onerror = (_err) => {
                 console.log(`Lost connection, retry in few seconds`);
                 this.postSource.close();
                 this.postSource = null;
