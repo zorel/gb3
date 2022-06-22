@@ -401,7 +401,7 @@ class Gc2Main extends HTMLElement {
         let hammertime = new Hammer(document.querySelector("gc2-main"), {
             inputClass: Hammer.TouchInput
         });
-        hammertime.on('swipeleft', (e) => {
+        hammertime.on('swipeleft', (_e) => {
             if (this.tribuneSelect.selectedIndex === 0) {
                 this.tribuneSelect.selectedIndex = this.tribuneSelect.options.length - 1;
             } else {
@@ -411,7 +411,7 @@ class Gc2Main extends HTMLElement {
             this.scrollToBottom();
         }
         );
-        hammertime.on('swiperight', (e) => {
+        hammertime.on('swiperight', (_e) => {
             if (this.tribuneSelect.selectedIndex >= (this.tribuneSelect.options.length - 1)) {
                 this.tribuneSelect.selectedIndex = 0;
             } else {

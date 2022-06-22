@@ -109,11 +109,11 @@ class Gc2PostNorloge extends HTMLElement {
     constructor() {
         super();
 
-        this.onmouseenter = (e) => {
+        this.onmouseenter = (_e) => {
             highlightNorloges(this.closest('gc2-tribune').getAttribute('name'), this.title);
         };
 
-        this.onmouseleave = (e) => {
+        this.onmouseleave = (_e) => {
             unhighlightNorloges();
         };
 
@@ -175,11 +175,11 @@ class Gc2Norloge extends HTMLElement {
     constructor() {
         super();
 
-        this.onmouseenter = (e) => {
+        this.onmouseenter = (_e) => {
             highlightNorloges(this.findBouchot(), this.title);
         };
 
-        this.onmouseleave = (e) => {
+        this.onmouseleave = (_e) => {
             unhighlightNorloges();
         };
 
