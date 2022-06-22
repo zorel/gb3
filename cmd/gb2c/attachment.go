@@ -16,6 +16,7 @@ import (
 )
 
 const maxAttachmentSize = 4 * 1024 * 1024
+const attachmentEndpointPath = "/gb2c/attachment/"
 
 type AttachmentHandler struct {
 	attachmentDirectory string
@@ -107,7 +108,7 @@ func (a *AttachmentHandler) postAttachment(w http.ResponseWriter, r *http.Reques
 	attachmentURL := url.URL{
 		Scheme: remoteProtocol(r),
 		Host:   remoteHost(r),
-		Path:   "/gb2c/attachment/" + attachmentId,
+		Path:   attachmentEndpointPath + attachmentId,
 	}
 
 	w.Header().Set("Location", attachmentURL.String())
@@ -116,7 +117,7 @@ func (a *AttachmentHandler) postAttachment(w http.ResponseWriter, r *http.Reques
 }
 
 func (a *AttachmentHandler) getAttachment(w http.ResponseWriter, r *http.Request) {
-	attachmentId := strings.TrimPrefix(r.URL.Path, "/gb2c/attachment/")
+	attachmentId := strings.TrimPrefix(r.URL.Path, attachmentEndpointPath)
 	if !isAttachmentId(attachmentId) {
 		http.Error(w, "Attachment id is not valid", http.StatusBadRequest)
 		return
@@ -137,5 +138,5 @@ func RegisterAttachmentAPI() {
 		attachmentHandler.attachmentDirectory, _ = os.MkdirTemp("", "gb2c_attachments")
 	}
 
-	http.Handle("/gb2c/attachment/", attachmentHandler)
+	http.Handle(attachmentEndpointPath, attachmentHandler)
 }
