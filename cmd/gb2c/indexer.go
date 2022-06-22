@@ -21,6 +21,7 @@ func NewIndexer() Indexer {
 }
 
 func (i *noopIndexer) Index(posts Posts) {
+	//Nothing to do
 }
 
 func (i *noopIndexer) Search(query string) (SearchResults, error) {

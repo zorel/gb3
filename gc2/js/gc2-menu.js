@@ -407,6 +407,7 @@ class Gc2Attach extends HTMLElement {
     }
 
     focus() {
+        //no component to focus
     }
 }
 customElements.define("gc2-attach", Gc2Attach);
