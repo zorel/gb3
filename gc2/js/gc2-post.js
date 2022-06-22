@@ -25,8 +25,7 @@ class Gc2PostIcon extends HTMLElement {
 
         this.isBigorno = false;
         let bigornos = messageElement.getElementsByTagName('gc2-bigorno');
-        for (let b = 0; b < bigornos.length; b++) {
-            let bigorno = bigornos[b].innerText;
+        for (let bigorno of bigornos) {
             if (bigorno === nickname || bigorno === login || bigorno === "moules") {
                 this.isBigorno = true;
                 break;
@@ -35,8 +34,7 @@ class Gc2PostIcon extends HTMLElement {
 
         this.isReply = false;
         let norlogesInMessage = messageElement.getElementsByTagName('gc2-norloge');
-        for (let n = 0; n < norlogesInMessage.length; n++) {
-            let norlogeInMessage = norlogesInMessage[n];
+        for (let norlogeInMessage of norlogesInMessage) {
             let postNorloges = document.querySelectorAll(`gc2-tribune[name="${post.tribune}"] gc2-post-norloge[title*=" ${norlogeInMessage.title.slice(-8)}"]`);
             let postNorloge = postNorloges.item(postNorloges.length-1);
             if (postNorloge) {
