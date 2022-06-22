@@ -37,7 +37,7 @@ class Gc2PostIcon extends HTMLElement {
         let norlogesInMessage = messageElement.getElementsByTagName('gc2-norloge');
         for (let n = 0; n < norlogesInMessage.length; n++) {
             let norlogeInMessage = norlogesInMessage[n];
-            let postNorloges = document.querySelectorAll(`gc2-tribune[name="${post.tribune}"] gc2-post-norloge[title*=" ${norlogeInMessage.title.substr(-8)}"]`);
+            let postNorloges = document.querySelectorAll(`gc2-tribune[name="${post.tribune}"] gc2-post-norloge[title*=" ${norlogeInMessage.title.slice(-8)}"]`);
             let postNorloge = postNorloges.item(postNorloges.length-1);
             if (postNorloge) {
                 let postIcon = postNorloge.parentElement.querySelector('gc2-post-icon');
@@ -72,14 +72,14 @@ function highlightNorloges(bouchot, norlogeText, showPopup = true) {
     }
     for (let t of tribunes) {
         let isSameBouchot = bouchot === t.getAttribute("name");
-        let norloges = t.querySelectorAll(`gc2-norloge[title$="${norlogeText.substr(-8)}"]`);
+        let norloges = t.querySelectorAll(`gc2-norloge[title$="${norlogeText.slice(-8)}"]`);
         for (let n of norloges) {
             if (isSameBouchot || n.getAttribute("bouchot") === bouchot) {
                 n.classList.toggle("gc2-highlighted", true);
                 n.parentElement.classList.toggle("gc2-highlighted", true);
             }
         }
-        let postNorloges = t.querySelectorAll(`gc2-post-norloge[title*=" ${norlogeText.substr(-8)}"]`);
+        let postNorloges = t.querySelectorAll(`gc2-post-norloge[title*=" ${norlogeText.slice(-8)}"]`);
         for (let n of postNorloges) {
             if(popup) {
                 let postBoundingRect= n.parentElement.getBoundingClientRect();
@@ -146,7 +146,7 @@ class Gc2PostNorloge extends HTMLElement {
             let now = new Date();
             let dateLocal = new Date(now.getTime() - now.getTimezoneOffset() * 60 * 1000);
             let dateLocalStr = dateLocal.toISOString().slice(0, 10);
-            if (this.title.substr(0, 10) === dateLocalStr) {
+            if (this.title.slice(0, 10) === dateLocalStr) {
                 style = "normal";
             } else {
                 style = "longlong";
@@ -154,13 +154,13 @@ class Gc2PostNorloge extends HTMLElement {
         }
         switch (style) {
             case "iso":
-                return `${this.title.substr(0, 10)}T${this.title.substr(11, 8)}`;
+                return `${this.title.slice(0, 10)}T${this.title.slice(11, 19)}`;
             case "long":
-                return `${this.title.substr(5, 2)}/${this.title.substr(8, 2)}#${this.title.substr(11, 8)}`;
+                return `${this.title.slice(5, 7)}/${this.title.slice(8, 102)}#${this.title.slice(11, 19)}`;
             case "normal":
-                return this.title.substr(11, 8);
+                return this.title.slice(11, 19);
             case "short":
-                return this.title.substr(11, 5);
+                return this.title.slice(11, 16);
             case "id":
                 return `#${this.parentElement.id.split("@", 1)[0]}`;
             case "longlong":
@@ -204,7 +204,7 @@ class Gc2Norloge extends HTMLElement {
         if(gc2Main) {
             gc2Main.setActiveTribune(bouchot);
         }
-        let results = document.querySelectorAll(`gc2-tribune[name="${bouchot}"] gc2-post-norloge[title*=" ${this.title.substr(-8)}"]`);
+        let results = document.querySelectorAll(`gc2-tribune[name="${bouchot}"] gc2-post-norloge[title*=" ${this.title.slice(-8)}"]`);
         return results.item(results.length-1);
     }
 }
@@ -268,8 +268,8 @@ export class Gc2Post extends HTMLElement {
 
         let timeElement = document.createElement('gc2-post-norloge');
         let t = post.time;
-        let dateText = `${t.substr(0, 4)}-${t.substr(4, 2)}-${t.substr(6, 2)}`;
-        let timeText = `${t.substr(8, 2)}:${t.substr(10, 2)}:${t.substr(12, 2)}`;
+        let dateText = `${t.slice(0, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}`;
+        let timeText = `${t.slice(8, 10)}:${t.slice(10, 12)}:${t.slice(12, 14)}`;
         timeElement.innerText = timeText;
         timeElement.title = `${dateText} ${timeText}`;
         this.appendChild(timeElement);

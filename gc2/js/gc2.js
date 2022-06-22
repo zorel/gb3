@@ -283,7 +283,7 @@ class Gc2Main extends HTMLElement {
             this.messageInput.value = unposted;
             GC2_STORAGE.removeItem("linuxfr_unposted_message");
         } else {
-            let tribuneName = window.location.hash.substr(1);
+            let tribuneName = window.location.hash.slice(1);
             if (this.isTribune(tribuneName)) {
                 this.setActiveTribune(tribuneName, false);
             }
@@ -480,7 +480,7 @@ class Gc2Main extends HTMLElement {
             pos = text.length;
         }
         var selectionEnd = this.messageInput.selectionStart + pos;
-        this.messageInput.value = this.messageInput.value.substring(0, this.messageInput.selectionStart) + text + this.messageInput.value.substr(this.messageInput.selectionEnd);
+        this.messageInput.value = this.messageInput.value.substring(0, this.messageInput.selectionStart) + text + this.messageInput.value.substring(this.messageInput.selectionEnd);
         this.messageInput.focus();
         this.messageInput.setSelectionRange(selectionEnd, selectionEnd);
     }

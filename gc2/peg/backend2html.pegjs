@@ -147,7 +147,7 @@ fullNorloge
  = y: norlogeYear "-" m: norlogeMonth "-" d:norlogeDay [T# ] h:norlogeHours ":" mi:norlogeMinutes ":" s:norlogeSeconds b:bouchot?
  {
  let time = `${h}:${mi}:${s}`;
- let bouchot = b && ` bouchot="${b.substr(1)}"` || "";
+ let bouchot = b && ` bouchot="${b.slice(1)}"` || "";
  return `<gc2-norloge title="${y}-${m}-${d} ${time}"${bouchot}>${time}${b || ""}</gc2-norloge>`;
  }
 
@@ -155,7 +155,7 @@ fullNorloge
  = m: norlogeMonth "/" d:norlogeDay "#" h:norlogeHours ":" mi:norlogeMinutes ":" s:norlogeSeconds b:bouchot?
  {
  let time = `${h}:${mi}:${s}`;
- let bouchot = b && ` bouchot="${b.substr(1)}"` || "";
+ let bouchot = b && ` bouchot="${b.slice(1)}"` || "";
  return `<gc2-norloge title="${m}-${d} ${time}"${bouchot}>${time}${b || ""}</gc2-norloge>`;
  }
  
@@ -175,7 +175,7 @@ normalNorloge
  = h:norlogeHours ":" mi:norlogeMinutes ":" s:norlogeSeconds b:bouchot?
  {
  let time = `${h}:${mi}:${s}`;
- let bouchot = b && ` bouchot="${b.substr(1)}"` || "";
+ let bouchot = b && ` bouchot="${b.slice(1)}"` || "";
  return `<gc2-norloge title="${time}"${bouchot}>${time}${b || ""}</gc2-norloge>`;
  }
  
@@ -183,7 +183,7 @@ shortNorloge
  = h:norlogeHours ":" mi:norlogeMinutes b:bouchot?
  {
  let time = `${h}:${mi}`;
- let bouchot = b && ` bouchot="${b.substr(1)}"` || "";
+ let bouchot = b && ` bouchot="${b.slice(1)}"` || "";
  return `<gc2-norloge title="${time}"${bouchot}>${time}${b || ""}</gc2-norloge>`;
  }
 

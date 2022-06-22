@@ -2,7 +2,7 @@ import { GC2_STORAGE } from "./gc2-storage.js";
 
 let linuxfrInfo = document.getElementById('linuxfr-info');
 try {
-    let tokenStr = window.atob(window.location.hash.substr(1));
+    let tokenStr = window.atob(window.location.hash.slice(1));
     let token = JSON.parse(tokenStr);
     GC2_STORAGE.setItem("linuxfr_access_token", token.access_token);
     GC2_STORAGE.setItem("linuxfr_refresh_token", token.refresh_token);
