@@ -183,6 +183,7 @@ class Gc2TotozSearch extends HTMLElement {
             let totozElement = document.createElement("figure");
 
             let totozImg = document.createElement("img");
+            totozImg.loading = "lazy";
             totozImg.src = totoz.image;
             totozElement.appendChild(totozImg);
 
