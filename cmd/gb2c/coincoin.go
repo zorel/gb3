@@ -10,6 +10,7 @@ type Coincoin struct {
 	w                   http.ResponseWriter
 	flusher             http.Flusher
 	LastPostIDByTribune map[string]int64
+	TribunesFilter      []string
 }
 
 //NewCoincoin create coincoin
@@ -17,8 +18,23 @@ func NewCoincoin(w http.ResponseWriter, flusher http.Flusher) *Coincoin {
 	return &Coincoin{w: w, flusher: flusher, LastPostIDByTribune: make(map[string]int64)}
 }
 
+func (c *Coincoin) shouldWritePost(post Post) (result bool) {
+	if nil == c.TribunesFilter {
+		return true
+	}
+	for _, t := range c.TribunesFilter {
+		if post.Tribune == t {
+			return true
+		}
+	}
+	return false
+}
+
 //Write write events to coincoin
 func (c *Coincoin) Write(post Post, data []byte) (err error) {
+	if !c.shouldWritePost(post) {
+		return err
+	}
 	if post.ID > c.LastPostIDByTribune[post.Tribune] {
 		c.LastPostIDByTribune[post.Tribune] = post.ID
 		_, err = fmt.Fprintf(c.w, "data: %s\n\n", data)

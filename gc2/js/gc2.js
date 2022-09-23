@@ -52,6 +52,11 @@ class Gc2Main extends HTMLElement {
      */
     activeTribune;
 
+    /**
+     * @type Gc2StoredTribunes
+     */
+    storedTribunes;
+
     constructor() {
         super();
     }
@@ -68,6 +73,7 @@ class Gc2Main extends HTMLElement {
         this.selectTribune();
         this.appendChild(this.controls);
         this.setupAlarm();
+        this.storedTribunes = await GC2_STORAGE.getTribunes();
         this.poll();
         setInterval(() => this.poll(), 10000);
     }
@@ -318,7 +324,8 @@ class Gc2Main extends HTMLElement {
     poll() {
         this.closeInactivePostSource();
         if (!this.postSource) {
-            this.postSource = new EventSource("/gb2c/poll");
+            let pollQuery = `/gb2c/poll?filter=${encodeURIComponent(this.storedTribunes.selectedTribunes)}`;
+            this.postSource = new EventSource(pollQuery);
             this.postSource.onopen = () => {
                 this.lastPostSourceActivity = Date.now();
             };
@@ -425,9 +432,12 @@ class Gc2Main extends HTMLElement {
     }
 
     async listTribunes() {
-        let response = await fetch("/gb2c/list");
-        let tribunes = await response.json();
-        tribunes.forEach(t => this.getTribuneElement(t));
+        let storedTribunes = await GC2_STORAGE.getTribunes();
+        for(let availableTribune of storedTribunes.availableTribunes) {
+            if(storedTribunes.selectedTribunes.includes(availableTribune)) {
+                this.getTribuneElement(availableTribune);
+            }
+        }
     }
 
     handleAltShortcut(keychar) {

@@ -168,6 +168,9 @@ func (g *gb3) handlePoll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Accel-Buffering", "no")
 
 	c := NewCoincoin(w, flusher)
+	if r.URL.Query().Has("filter") {
+		c.TribunesFilter = strings.Split(r.URL.Query().Get("filter"), ",")
+	}
 	g.join <- c
 	defer func() { g.leave <- c }()
 	g.sendStoredPostsTo(c)

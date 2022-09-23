@@ -6,10 +6,12 @@ body {
 }
 
 main {
-	max-width: 60rem;
+	max-width: 30rem;
 	margin: auto;
-	display: flex;
-	flex-direction: column;
-	align-items: start;
+	display: grid;
     background-color: #ffffff
+}
+
+section {
+	display: grid;
 }
