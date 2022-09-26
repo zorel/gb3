@@ -130,8 +130,10 @@ class Gc2Main extends HTMLElement {
 
     async postMessage() {
         if (this.messageInput.value && this.tribuneSelect.value) {
+            const message = this.messageInput.value;
+            GC2_STORAGE.setItem("last_posted_message", message);
             let data = new URLSearchParams();//NEVER use FormData, it forces multipart and backend dont support multipart
-            data.set('message', this.messageInput.value);
+            data.set('message', message);           
             data.set('tribune', this.tribuneSelect.value);
             data.set('info', GC2_STORAGE.getItem("nickname"));
             this.messageInput.value = "";
@@ -478,6 +480,15 @@ class Gc2Main extends HTMLElement {
             case 'a':
                 this.insertTextInMessage(`\u266A <i>${this.getSelectedText()}</i> \u266A`, 5);
                 return true;
+            case 'z':
+                {
+                    let lastPostedMessage = GC2_STORAGE.getItem("last_posted_message");
+                    if(lastPostedMessage) {
+                        this.messageInput.value = lastPostedMessage;
+                        this.messageInput.focus();
+                    }
+                    return true;
+                }
         }
         return false;
     }
