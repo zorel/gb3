@@ -36,6 +36,13 @@ export class Gc2Menu extends HTMLElement {
         };
         this.appendChild(attachButton);
 
+        let altButton = document.createElement('button');
+        altButton.innerText = "⎇ ALT";
+        altButton.onclick = () => {
+            this.showComponent("gc2-alt");
+        };
+        this.appendChild(altButton);
+
         let settingsButton = document.createElement('button');
         settingsButton.innerText = "⚙ Settings";
         settingsButton.onclick = () => {
@@ -104,7 +111,7 @@ export class Gc2Menu extends HTMLElement {
 customElements.define('gc2-menu', Gc2Menu);
 
 class Gc2TotozSearch extends HTMLElement {
-    
+
     /**
      * @type HTMLInputElement
      */
@@ -151,7 +158,7 @@ class Gc2TotozSearch extends HTMLElement {
         this.resultsContainer = document.createElement("div");
         this.resultsContainer.onclick = (e) => {
             let caption;
-            switch(e.target.tagName) {
+            switch (e.target.tagName) {
                 case "FIGURE":
                     caption = e.target.querySelector("figcaption");
                     break;
@@ -243,7 +250,7 @@ class Gc2EmojiSearch extends HTMLElement {
         this.resultsContainer = document.createElement("div");
         this.resultsContainer.onclick = (e) => {
             let characters;
-            switch(e.target.tagName) {
+            switch (e.target.tagName) {
                 case "FIGURE":
                     characters = e.target.querySelector(".gc2-emoji-characters");
                     break;
@@ -251,7 +258,7 @@ class Gc2EmojiSearch extends HTMLElement {
                     characters = e.target.parentElement.querySelector(".gc2-emoji-characters");
                     break;
                 default:
-                    if(e.target.classList.contains("gc2-emoji-characters")) {
+                    if (e.target.classList.contains("gc2-emoji-characters")) {
                         characters = e.target;
                     }
             }
@@ -336,7 +343,7 @@ class Gc2Attach extends HTMLElement {
                     gc2CloseMenu();
                     message.focus();
                 } else {
-                    switch(response.status) {
+                    switch (response.status) {
                         case 413:
                             uploadError.innerText = "Cannot attach file: file is too large, try less than 1mo.";
                             break;
@@ -412,3 +419,134 @@ class Gc2Attach extends HTMLElement {
     }
 }
 customElements.define("gc2-attach", Gc2Attach);
+
+class Gc2Alt extends HTMLElement {
+    constructor() {
+        super();
+    }
+
+    setup() {
+        let blamButton = document.createElement('button');
+        blamButton.innerText = "BLAM";
+        blamButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altBlam();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(blamButton);
+
+        let momentButton = document.createElement('button');
+        momentButton.innerText = "Moment";
+        momentButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altMoment();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(momentButton);
+
+        let phiButton = document.createElement('button');
+        phiButton.innerText = "φ";
+        phiButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altPhi();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(phiButton);
+
+        let boldButton = document.createElement('button');
+        boldButton.innerText = "Bold";
+        boldButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altBold();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(boldButton);
+
+        let italicButton = document.createElement('button');
+        italicButton.innerText = "Italic";
+        italicButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altItalic();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(italicButton);
+
+        let underlineButton = document.createElement('button');
+        underlineButton.innerText = "Underline";
+        underlineButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altUnderline();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(underlineButton);
+
+        let strikeThroughButton = document.createElement('button');
+        strikeThroughButton.innerText = "Strike through";
+        strikeThroughButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altStrikeThrough();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(strikeThroughButton);
+
+        let teletextButton = document.createElement('button');
+        teletextButton.innerText = "Teletext";
+        teletextButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altTeletext();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+            
+        };
+        this.appendChild(teletextButton);
+
+        let codeButton = document.createElement('button');
+        codeButton.innerText = "Code";
+        codeButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altCode();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(codeButton);
+
+        let spoilerButton = document.createElement('button');
+        spoilerButton.innerText = "Spoiler";
+        spoilerButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altSpoiler();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(spoilerButton);
+
+        let pafButton = document.createElement('button');
+        pafButton.innerText = "Paf";
+        pafButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altPaf();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(pafButton);
+
+        let acappellaButton = document.createElement('button');
+        acappellaButton.innerText = "♪";
+        acappellaButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altAcappella();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(acappellaButton);
+
+        let lastPostedButton = document.createElement('button');
+        lastPostedButton.innerText = "Last posted";
+        lastPostedButton.onclick = () => {
+            document.getElementsByTagName("gc2-main")[0].altLastPosted();
+            gc2CloseMenu();
+            document.getElementById("gc2-message").focus();
+        };
+        this.appendChild(lastPostedButton);
+    }
+
+    focus() {
+        //no component to focus
+    }
+}
+customElements.define("gc2-alt", Gc2Alt);

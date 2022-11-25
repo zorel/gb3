@@ -442,53 +442,103 @@ class Gc2Main extends HTMLElement {
         }
     }
 
+    altBlam() {
+        this.insertTextInMessage('_o/* <b>BLAM</b>! ');
+    }
+
+    altMoment() {
+        this.insertTextInMessage(`====> <b>Moment ${this.getSelectedText()}</b> <====`, 16);
+    }
+
+    altPhi() {
+        this.insertTextInMessage('\u03C6');
+    }
+
+    altBold() {
+        this.insertTextInMessage(`<b>${this.getSelectedText()}</b>`, 3);
+    }
+
+    altItalic() {
+        this.insertTextInMessage(`<i>${this.getSelectedText()}</i>`, 3);
+    }
+
+    altUnderline() {
+        this.insertTextInMessage(`<u>${this.getSelectedText()}</u>`, 3);
+    }
+
+    altStrikeThrough() {
+        this.insertTextInMessage(`<s>${this.getSelectedText()}</s>`, 3);
+    }
+
+    altTeletext() {
+        this.insertTextInMessage(`<tt>${this.getSelectedText()}</tt>`, 4);
+    }
+
+    altCode() {
+        this.insertTextInMessage(`<code>${this.getSelectedText()}</code>`, 6);
+    }
+
+    altSpoiler() {
+        this.insertTextInMessage(`<spoiler>${this.getSelectedText()}</spoiler>`, 9);
+    }
+
+    altPaf() {
+        this.insertTextInMessage('_o/* <b>paf!</b> ');
+    }
+
+    altAcappella() {
+        this.insertTextInMessage(`\u266A <i>${this.getSelectedText()}</i> \u266A`, 5);
+    }
+
+    altLastPosted() {
+        let lastPostedMessage = GC2_STORAGE.getItem("last_posted_message");
+        if(lastPostedMessage) {
+            this.messageInput.value = lastPostedMessage;
+            this.messageInput.focus();
+        }
+    }
+
     handleAltShortcut(keychar) {
         switch (keychar) {
             case 'o':
-                this.insertTextInMessage('_o/* <b>BLAM</b>! ');
+                this.altBlam();
                 return true;
             case 'm':
-                this.insertTextInMessage(`====> <b>Moment ${this.getSelectedText()}</b> <====`, 16);
+                this.altMoment();
                 return true;
             case 'f':
-                this.insertTextInMessage('\u03C6');
+                this.altPhi();
                 return true;
             case 'b':
-                this.insertTextInMessage(`<b>${this.getSelectedText()}</b>`, 3);
+                this.altBold();
                 return true;
             case 'i':
-                this.insertTextInMessage(`<i>${this.getSelectedText()}</i>`, 3);
+                this.altItalic();
                 return true;
             case 'u':
-                this.insertTextInMessage(`<u>${this.getSelectedText()}</u>`, 3);
+                this.altUnderline();
                 return true;
             case 's':
-                this.insertTextInMessage(`<s>${this.getSelectedText()}</s>`, 3);
+                this.altStrikeThrough();
                 return true;
             case 't':
-                this.insertTextInMessage(`<tt>${this.getSelectedText()}</tt>`, 4);
+                this.altTeletext();
                 return true;
             case 'c':
-                this.insertTextInMessage(`<code>${this.getSelectedText()}</code>`, 6);
+                this.altCode();
                 return true;
             case 'd':
-                this.insertTextInMessage(`<spoiler>${this.getSelectedText()}</spoiler>`, 9);
+                this.altSpoiler();
                 return true;
             case 'p':
-                this.insertTextInMessage('_o/* <b>paf!</b> ');
+                this.altPaf();
                 return true;
             case 'a':
-                this.insertTextInMessage(`\u266A <i>${this.getSelectedText()}</i> \u266A`, 5);
+                this.altAcappella();
                 return true;
             case 'z':
-                {
-                    let lastPostedMessage = GC2_STORAGE.getItem("last_posted_message");
-                    if(lastPostedMessage) {
-                        this.messageInput.value = lastPostedMessage;
-                        this.messageInput.focus();
-                    }
-                    return true;
-                }
+                this.altLastPosted();
+                return true;
         }
         return false;
     }
