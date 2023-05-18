@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-GB3_VERSION=0.57
+GB3_VERSION=0.58
 
 GITLAB_HOST="gitlab.com"
 GITLAB_USER="davenewton"
