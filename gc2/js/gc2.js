@@ -295,6 +295,8 @@ class Gc2Main extends HTMLElement {
             let tribuneName = window.location.hash.slice(1);
             if (this.isTribune(tribuneName)) {
                 this.setActiveTribune(tribuneName, false);
+            } else {
+                this.setActiveTribune(this.tribunes.keys().next().value, false);
             }
         }
     }
@@ -380,7 +382,6 @@ class Gc2Main extends HTMLElement {
             this.tribunesContainer.appendChild(tribuneElement);
 
             this.tribunes.set(tribuneName, tribuneElement);
-            this.setActiveTribune(this.tribunes.size === 1 ? tribuneName : this.tribuneSelect.value);
         }
         return tribuneElement;
     }
@@ -395,6 +396,7 @@ class Gc2Main extends HTMLElement {
             previousTribuneElement.markAsRead();
         }
         this.activeTribune = selectedTribuneName;
+        window.location.hash = selectedTribuneName;
         this.tribuneSelect.value = selectedTribuneName;
         this.messageInput.placeholder = selectedTribuneName;
         if (this.tribuneNavigator) {
