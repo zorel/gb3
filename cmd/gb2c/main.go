@@ -79,7 +79,7 @@ func newGb3() *gb3 {
 		tribunes: map[string]*Tribune{
 			"euromussels": {Name: "euromussels", BackendURL: "https://faab.euromussels.eu/data/backend.tsv", PostURL: "https://faab.euromussels.eu/add.php", PostField: "message"},
 			"sveetch":     {Name: "sveetch", BackendURL: "http://sveetch.net/tribune/remote/tsv/", PostURL: "http://sveetch.net/tribune/post/tsv/?last_id=1", PostField: "content"},
-			"moules":      {Name: "moules", BackendURL: "http://moules.org/board/backend/tsv", PostURL: "http://moules.org/board/add.php?backend=tsv", PostField: "message"},
+			"moules":      {Name: "moules", BackendURL: "https://moules.org/board/backend/tsv", PostURL: "https://moules.org/board/add.php?backend=tsv", PostField: "message"},
 			"dlfp":        {Name: "dlfp", BackendURL: "https://linuxfr.org/board/index.tsv", PostURL: "https://linuxfr.org/api/v1/board", PostField: "message", AuthentificationType: OAuth2Authentification},
 			"ototu":       {Name: "ototu", BackendURL: "https://www.ototu.me/goboard/backend/tsv", PostURL: "https://www.ototu.me/goboard/post", PostField: "message"},
 		},
