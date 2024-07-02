@@ -3,7 +3,6 @@ import { Gc2Tribune } from "./gc2-tribune.js";
 import { Gc2Menu } from "./gc2-menu.js";
 import { Gc2Alarm } from "./gc2-alarm.js";
 import { GC2_STORAGE } from "./gc2-storage.js";
-import peg from "./peggy-2.0.1.js"
 
 class Gc2Main extends HTMLElement {
 
@@ -282,7 +281,7 @@ class Gc2Main extends HTMLElement {
     async setupBackend2html() {
         let response = await fetch("/peg/backend2html.pegjs");
         let text = await response.text();
-        this.backend2html = peg.generate(text);
+        this.backend2html = peggy.generate(text);
     }
 
     selectTribune() {
@@ -562,7 +561,7 @@ class Gc2Main extends HTMLElement {
     async setupBouchotSuffixor() {
         let response = await fetch("/peg/bouchotsuffixor.pegjs");
         let text = await response.text();
-        this.bouchotSuffixor = peg.generate(text);
+        this.bouchotSuffixor = peggy.generate(text);
     }
 
     addBouchotSuffixInMessageInput(previousTribuneName, nextTribuneName) {
