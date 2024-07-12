@@ -2,4 +2,12 @@ module devnewton.fr/gb3
 
 go 1.20
 
-require github.com/hackebrot/turtle v0.2.0
+require (
+	github.com/PuerkitoBio/goquery v1.9.2
+	github.com/hackebrot/turtle v0.2.0
+)
+
+require (
+	github.com/andybalholm/cascadia v1.3.2 // indirect
+	golang.org/x/net v0.24.0 // indirect
+)
