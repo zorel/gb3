@@ -26,6 +26,7 @@ func cacheTotoz(totozUrl string) {
 		log.Println(err)
 	}
 
+	//totoz regex /^[A-Za-z0-9-_ ]+$/ ?
 	totozName := doc.Find(".totoz .name").Text()
 	totozTags := doc.Find(".totoz .tags").Text()
 	fmt.Printf("Totoz %s with tags : %s\n", totozName, totozTags)
