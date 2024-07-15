@@ -18,7 +18,9 @@ Change default http listen address and port.
 
 #### GB0_STORE_DIRECTORY
 
-Post will be stored to disk only if this variable is a valid path to a writable directory.
+Post will be stored permanently to disk if this variable is a valid path to a writable directory.
+
+If not set, a temporary folder will be used.
 
 #### GB0_MAX_POSTS_IN_HISTORY
 
@@ -118,3 +120,17 @@ curl -X POST -d "info=dave" -d "message=plop" -d "tribune=euromussels" 'http://l
 ### gc2
 
 A simple coincoin frontend for gb2c.
+
+### cachetotoz
+
+A simple utility to cache [totoz](https://nsfw.totoz.eu) image and tags.
+
+### Configuration
+
+cachetotoz use the following environment variables.
+
+#### CACHETOTOZ_CACHE_DIRECTORY
+
+Totoz images and tags will be stored to permanently to disk if this variable is a valid path to a writable directory.
+
+If not set, a temporary folder will be used.
