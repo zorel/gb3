@@ -10,66 +10,74 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
 var totozRegex = regexp.MustCompile("^[A-Za-z0-9-_ !$'*+-.:²µ¸¹ÃÇßæèøûвмотԝ①③⑦愛]+$")
 var totozCacheDir string
+var durationBetweenRequests time.Duration
 
-func cacheTotoz(totozUrl string) {
-	fmt.Printf("Totoz %s\n", totozUrl)
+func initCacheDir() {
+	totozCacheDir = os.Getenv("CACHETOTOZ_CACHE_DIRECTORY")
+	if len(totozCacheDir) == 0 {
+		log.Println("CACHETOTOZ_CACHE_DIRECTORY is empty or not defined, totoz will be cached in a temporary directory")
+		totozCacheDir, _ = os.MkdirTemp("", "cachetotoz")
+	}
+	info, err := os.Stat(totozCacheDir)
+	if nil != err {
+		log.Fatalln("Cannot stat", info, err)
+	}
+	if !info.IsDir() {
+		log.Fatalln(info, "is not a directory")
+	}
+	fmt.Println("Totozes will be cached in", totozCacheDir)
+}
+
+func initDurationBetweenRequests() {
+	value := os.Getenv("CACHETOTOZ_DURATION_BETWEEN_REQUESTS")
+	if len(value) == 0 {
+		value = "5s"
+		log.Println("CACHETOTOZ_DURATION_BETWEEN_REQUESTS is empty or not defined. Default value will be used.")
+	}
+	durationValue, err := time.ParseDuration(value)
+	if nil != err {
+		log.Fatalln("Invalid value for CACHETOTOZ_DURATION_BETWEEN_REQUESTS", err)
+	}
+	durationBetweenRequests = durationValue
+	fmt.Println("Will wait", durationBetweenRequests, "between requests to totoz server")
+}
+
+func cacheTotozTags(totozName string) error {
+	totozTagsFilename := path.Join(totozCacheDir, totozName+".tags")
+	_, err := os.Stat(totozTagsFilename)
+	if nil == err {
+		return nil
+	}
+
+	totozUrl, err := url.JoinPath("https://nsfw.totoz.eu/totoz", totozName)
+	if nil != err {
+		return err
+	}
+
 	res, err := http.Get(totozUrl)
 	if nil != err {
-		log.Println(err)
-		return
+		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		log.Printf("Erreur de nsfw.totoz.eu : %d %s\n", res.StatusCode, res.Status)
-		return
+		return fmt.Errorf("erreur de nsfw.totoz.eu : %d %s", res.StatusCode, res.Status)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if nil != err {
-		log.Println(err)
-		return
+		return err
 	}
 
-	//totoz regex /^[A-Za-z0-9-_ ]+$/ ?
-	totozNameWithMarkup := doc.Find(".totoz .name").Text()
-	totozName, prefixFound := strings.CutPrefix(totozNameWithMarkup, "[:")
-	if !prefixFound {
-		log.Printf("Totoz %s is not prefixed with [:\n", totozNameWithMarkup)
-		return
-	}
-	totozName, suffixFound := strings.CutSuffix(totozName, "]")
-	if !suffixFound {
-		log.Printf("Totoz %s is not prefixed with [:\n", totozNameWithMarkup)
-		return
-	}
-	if !totozRegex.MatchString(totozName) {
-		log.Printf("Totoz %s contains invalid characters\n", totozNameWithMarkup)
-		return
-	}
 	totozTags := doc.Find(".totoz .tags").Text()
-	fmt.Printf("Caching totoz %s with tags : %s\n", totozNameWithMarkup, totozTags)
-	err = cacheTotozImage(totozName)
-	if nil != err {
-		log.Printf("Cannot cache totoz %s image\n", totozNameWithMarkup)
-		return
-	}
-	err = cacheTotozTags(totozName, totozTags)
-	if nil != err {
-		log.Printf("Cannot cache totoz %s tags\n", totozNameWithMarkup)
-		return
-	}
 
-}
-
-func cacheTotozTags(totozName, totozTags string) error {
-	totozImageFilename := path.Join(totozCacheDir, totozName+".tags")
-	totozTagsFile, err := os.Create(totozImageFilename)
+	totozTagsFile, err := os.Create(totozTagsFilename)
 	if nil != err {
 		return err
 	}
@@ -80,6 +88,13 @@ func cacheTotozTags(totozName, totozTags string) error {
 }
 
 func cacheTotozImage(totozName string) error {
+	totozImageFilename := path.Join(totozCacheDir, totozName)
+
+	_, err := os.Stat(totozImageFilename)
+	if nil == err {
+		return nil
+	}
+
 	totozImageUrl, err := url.JoinPath("https://nsfw.totoz.eu/img", totozName)
 	if nil != err {
 		return err
@@ -94,7 +109,6 @@ func cacheTotozImage(totozName string) error {
 		return fmt.Errorf("erreur de nsfw.totoz.eu : %d %s", res.StatusCode, res.Status)
 	}
 
-	totozImageFilename := path.Join(totozCacheDir, totozName)
 	totozImageFile, err := os.Create(totozImageFilename)
 	if nil != err {
 		return err
@@ -123,26 +137,46 @@ func cacheLastestTotozes() {
 		return
 	}
 
-	doc.Find(".totoz .img").Each(func(i int, s *goquery.Selection) {
-		totozHref, totozHrefExist := s.Attr("href")
-		if !totozHrefExist {
-			log.Println("cannot find totoz page url : href attribute is missing")
+	doc.Find(".totoz").Each(func(i int, s *goquery.Selection) {
+		//totoz regex /^[A-Za-z0-9-_ ]+$/ ?
+		totozNameWithMarkup := s.Find(".name").Text()
+		totozName, prefixFound := strings.CutPrefix(totozNameWithMarkup, "[:")
+		if !prefixFound {
+			log.Printf("Totoz %s is not prefixed with [:\n", totozNameWithMarkup)
 			return
 		}
-		totozUrl, err := url.JoinPath("https://nsfw.totoz.eu", totozHref)
+		totozName, suffixFound := strings.CutSuffix(totozName, "]")
+		if !suffixFound {
+			log.Printf("Totoz %s is not prefixed with [:\n", totozNameWithMarkup)
+			return
+		}
+		if !totozRegex.MatchString(totozName) {
+			log.Printf("Totoz %s contains invalid characters\n", totozNameWithMarkup)
+			return
+		}
+
+		fmt.Printf("Cache totoz %s\n", totozName)
+
+		err = cacheTotozImage(totozName)
 		if nil != err {
-			log.Println(err)
+			log.Printf("Cannot cache totoz %s image\n", totozNameWithMarkup)
 			return
 		}
-		cacheTotoz(totozUrl)
+		err = cacheTotozTags(totozName)
+		if nil != err {
+			log.Printf("Cannot cache totoz %s tags\n", totozNameWithMarkup)
+			return
+		}
 	})
 }
 
 func main() {
-	totozCacheDir = os.Getenv("CACHETOTOZ_CACHE_DIRECTORY")
-	if len(totozCacheDir) == 0 {
-		log.Println("CACHETOTOZ_CACHE_DIRECTORY is not defined, totoz will be cached in a temporary directory")
-		totozCacheDir, _ = os.MkdirTemp("", "cachetotoz")
+
+	initCacheDir()
+	initDurationBetweenRequests()
+
+	for {
+		cacheLastestTotozes()
+		time.Sleep(durationBetweenRequests)
 	}
-	cacheLastestTotozes()
 }
