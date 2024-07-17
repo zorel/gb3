@@ -64,7 +64,9 @@ typings/
 
 /gb0
 /gb2c
+/cachetotoz
 cmd/gb2c/__debug_bin
 cmd/gb0/__debug_bin
+cmd/cachetotoz/__debug_bin
 gc2.tar.gz
 .vscode/launch.json

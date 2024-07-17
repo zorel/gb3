@@ -38,7 +38,7 @@ func initCacheDir() {
 func initDurationBetweenRequests() {
 	value := os.Getenv("CACHETOTOZ_DURATION_BETWEEN_REQUESTS")
 	if len(value) == 0 {
-		value = "5s"
+		value = "1h"
 		log.Println("CACHETOTOZ_DURATION_BETWEEN_REQUESTS is empty or not defined. Default value will be used.")
 	}
 	durationValue, err := time.ParseDuration(value)
@@ -49,74 +49,74 @@ func initDurationBetweenRequests() {
 	fmt.Println("Will wait", durationBetweenRequests, "between requests to totoz server")
 }
 
-func cacheTotozTags(totozName string) error {
+func cacheTotozTags(totozName string) (cached bool, err error) {
 	totozTagsFilename := path.Join(totozCacheDir, totozName+".tags")
-	_, err := os.Stat(totozTagsFilename)
+	_, err = os.Stat(totozTagsFilename)
 	if nil == err {
-		return nil
+		return false, nil
 	}
 
 	totozUrl, err := url.JoinPath("https://nsfw.totoz.eu/totoz", totozName)
 	if nil != err {
-		return err
+		return false, err
 	}
 
 	res, err := http.Get(totozUrl)
 	if nil != err {
-		return err
+		return false, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		return fmt.Errorf("erreur de nsfw.totoz.eu : %d %s", res.StatusCode, res.Status)
+		return false, fmt.Errorf("erreur de nsfw.totoz.eu : %d %s", res.StatusCode, res.Status)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if nil != err {
-		return err
+		return false, err
 	}
 
 	totozTags := doc.Find(".totoz .tags").Text()
 
 	totozTagsFile, err := os.Create(totozTagsFilename)
 	if nil != err {
-		return err
+		return false, err
 	}
 	defer totozTagsFile.Close()
 
 	_, err = io.WriteString(totozTagsFile, totozTags)
-	return err
+	return true, err
 }
 
-func cacheTotozImage(totozName string) error {
+func cacheTotozImage(totozName string) (cached bool, err error) {
 	totozImageFilename := path.Join(totozCacheDir, totozName)
 
-	_, err := os.Stat(totozImageFilename)
+	_, err = os.Stat(totozImageFilename)
 	if nil == err {
-		return nil
+		return false, nil
 	}
 
 	totozImageUrl, err := url.JoinPath("https://nsfw.totoz.eu/img", totozName)
 	if nil != err {
-		return err
+		return false, err
 	}
 
 	res, err := http.Get(totozImageUrl)
 	if nil != err {
-		return err
+		return false, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		return fmt.Errorf("erreur de nsfw.totoz.eu : %d %s", res.StatusCode, res.Status)
+		return false, fmt.Errorf("erreur de nsfw.totoz.eu : %d %s", res.StatusCode, res.Status)
 	}
 
 	totozImageFile, err := os.Create(totozImageFilename)
 	if nil != err {
-		return err
+		return false, err
 	}
 	defer totozImageFile.Close()
 
 	_, err = io.Copy(totozImageFile, res.Body)
-	return err
+	return true, err
 }
 
 func cacheLastestTotozes() {
@@ -137,7 +137,11 @@ func cacheLastestTotozes() {
 		return
 	}
 
+	nbTotozFound := 0
+	nbImagesCached := 0
+	nbTagsCached := 0
 	doc.Find(".totoz").Each(func(i int, s *goquery.Selection) {
+
 		//totoz regex /^[A-Za-z0-9-_ ]+$/ ?
 		totozNameWithMarkup := s.Find(".name").Text()
 		totozName, prefixFound := strings.CutPrefix(totozNameWithMarkup, "[:")
@@ -155,19 +159,27 @@ func cacheLastestTotozes() {
 			return
 		}
 
-		fmt.Printf("Cache totoz %s\n", totozName)
+		nbTotozFound++
 
-		err = cacheTotozImage(totozName)
+		imageCached, err := cacheTotozImage(totozName)
 		if nil != err {
 			log.Printf("Cannot cache totoz %s image\n", totozNameWithMarkup)
 			return
 		}
-		err = cacheTotozTags(totozName)
+		if imageCached {
+			nbImagesCached++
+		}
+		tagsCached, err := cacheTotozTags(totozName)
 		if nil != err {
 			log.Printf("Cannot cache totoz %s tags\n", totozNameWithMarkup)
 			return
 		}
+		if tagsCached {
+			nbTagsCached++
+		}
 	})
+
+	fmt.Printf("Found %d totozes, cached %d images and %d tags\n", nbTotozFound, nbImagesCached, nbTagsCached)
 }
 
 func main() {
