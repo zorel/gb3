@@ -163,7 +163,7 @@ func cacheLastestTotozes() {
 
 		imageCached, err := cacheTotozImage(totozName)
 		if nil != err {
-			log.Printf("Cannot cache totoz %s image\n", totozNameWithMarkup)
+			log.Printf("Cannot cache totoz %s image : %v\n", totozNameWithMarkup, err)
 			return
 		}
 		if imageCached {
@@ -171,7 +171,7 @@ func cacheLastestTotozes() {
 		}
 		tagsCached, err := cacheTotozTags(totozName)
 		if nil != err {
-			log.Printf("Cannot cache totoz %s tags\n", totozNameWithMarkup)
+			log.Printf("Cannot cache totoz %s tags : %v\n", totozNameWithMarkup, err)
 			return
 		}
 		if tagsCached {
