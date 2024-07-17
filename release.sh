@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-GB3_VERSION=0.62
+GB3_VERSION=0.63
 
 GITLAB_HOST="gitlab.com"
 GITLAB_USER="davenewton"
@@ -8,6 +8,7 @@ GITLAB_USER="davenewton"
 curl -u "${GITLAB_USER}:${GITLAB_TOKEN}" --upload-file gb0 "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb0" | tee /dev/null
 curl -u "${GITLAB_USER}:${GITLAB_TOKEN}" --upload-file gb2c "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gb2c" | tee /dev/null
 curl -u "${GITLAB_USER}:${GITLAB_TOKEN}" --upload-file gc2.tar.gz "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gc2.tar.gz" | tee /dev/null
+curl -u "${GITLAB_USER}:${GITLAB_TOKEN}" --upload-file cachetotoz "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/cachetotoz" | tee /dev/null
 
 curl --request POST "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/releases" \
      --header 'Content-Type: application/json' --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
@@ -35,6 +36,12 @@ curl --request POST "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3
         "name": "gc2.tar.gz",
         "url": "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/gc2.tar.gz",
         "filepath": "/gc2.tar.gz",
+        "link_type": "package"
+      },
+      {
+        "name": "cachetotoz",
+        "url": "https://${GITLAB_HOST}/api/v4/projects/${GITLAB_USER}%2Fgb3/packages/generic/gb3/${GB3_VERSION}/cachetotoz",
+        "filepath": "/cachetotoz",
         "link_type": "package"
       }
     ]
