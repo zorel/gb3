@@ -15,15 +15,16 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-var totozRegex = regexp.MustCompile("^[A-Za-z0-9-_ !$'*+-.:²µ¸¹ÃÇßæèøûвмотԝ①③⑦愛]+$")
 var totozCacheDir string
-var durationBetweenRequests time.Duration
+
+const maxTagsToRetrieve = 100
+const durationBetweenRetrieve = time.Hour
 
 func initCacheDir() {
 	totozCacheDir = os.Getenv("CACHETOTOZ_CACHE_DIRECTORY")
 	if len(totozCacheDir) == 0 {
 		log.Println("CACHETOTOZ_CACHE_DIRECTORY is empty or not defined, totoz will be cached in a temporary directory")
-		totozCacheDir, _ = os.MkdirTemp("", "cachetotoz")
+		totozCacheDir /*, _*/ = "/home/bcolombi/tmp/totozes" //os.MkdirTemp("", "cachetotoz")
 	}
 	info, err := os.Stat(totozCacheDir)
 	if nil != err {
@@ -35,18 +36,10 @@ func initCacheDir() {
 	fmt.Println("Totozes will be cached in", totozCacheDir)
 }
 
-func initDurationBetweenRequests() {
-	value := os.Getenv("CACHETOTOZ_DURATION_BETWEEN_REQUESTS")
-	if len(value) == 0 {
-		value = "1h"
-		log.Println("CACHETOTOZ_DURATION_BETWEEN_REQUESTS is empty or not defined. Default value will be used.")
-	}
-	durationValue, err := time.ParseDuration(value)
-	if nil != err {
-		log.Fatalln("Invalid value for CACHETOTOZ_DURATION_BETWEEN_REQUESTS", err)
-	}
-	durationBetweenRequests = durationValue
-	fmt.Println("Will wait", durationBetweenRequests, "between requests to totoz server")
+var totozRegex = regexp.MustCompile("^[A-Za-z0-9-_ !$'*+-.:²µ¸¹ÃÇßæèøûвмотԝ①③⑦愛]+$")
+
+func isValidTotozName(totozName string) bool {
+	return totozRegex.MatchString(totozName) && !strings.HasSuffix(totozName, ".tags")
 }
 
 func cacheTotozTags(totozName string) (cached bool, err error) {
@@ -119,7 +112,7 @@ func cacheTotozImage(totozName string) (cached bool, err error) {
 	return true, err
 }
 
-func cacheLastestTotozes() {
+func retrieveLastestTotozes() {
 	res, err := http.Get("https://nsfw.totoz.eu/")
 	if nil != err {
 		log.Println(err)
@@ -154,7 +147,7 @@ func cacheLastestTotozes() {
 			log.Printf("Totoz %s is not prefixed with [:\n", totozNameWithMarkup)
 			return
 		}
-		if !totozRegex.MatchString(totozName) {
+		if !isValidTotozName(totozName) {
 			log.Printf("Totoz %s contains invalid characters\n", totozNameWithMarkup)
 			return
 		}
@@ -182,13 +175,46 @@ func cacheLastestTotozes() {
 	fmt.Printf("Found %d totozes, cached %d images and %d tags\n", nbTotozFound, nbImagesCached, nbTagsCached)
 }
 
+func retrieveMissingTags() {
+	nbTotozFoundWithMissingTags := 0
+	nbTagsCached := 0
+
+	files, err := os.ReadDir(totozCacheDir)
+	if nil != err {
+		log.Fatal(err)
+	}
+
+	for _, file := range files {
+		if !file.Type().IsRegular() {
+			continue
+		}
+		totozName := file.Name()
+		if !isValidTotozName(totozName) {
+			continue
+		}
+		tagsCached, err := cacheTotozTags(totozName)
+		if nil != err {
+			nbTotozFoundWithMissingTags++
+			log.Printf("Cannot cache totoz %s tags : %v\n", totozName, err)
+			continue
+		}
+		if tagsCached {
+			nbTotozFoundWithMissingTags++
+			nbTagsCached++
+			if nbTagsCached >= maxTagsToRetrieve {
+				break
+			}
+		}
+	}
+	fmt.Printf("Found %d totozes without tags, cached %d tags\n", nbTotozFoundWithMissingTags, nbTagsCached)
+}
 func main() {
 
 	initCacheDir()
-	initDurationBetweenRequests()
 
 	for {
-		cacheLastestTotozes()
-		time.Sleep(durationBetweenRequests)
+		retrieveLastestTotozes()
+		retrieveMissingTags()
+		time.Sleep(durationBetweenRetrieve)
 	}
 }
