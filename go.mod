@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/hackebrot/turtle v0.2.0
+	golang.org/x/text v0.14.0
 )
 
 require (

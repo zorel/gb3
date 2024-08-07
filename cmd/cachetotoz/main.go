@@ -24,7 +24,7 @@ func initCacheDir() {
 	totozCacheDir = os.Getenv("CACHETOTOZ_CACHE_DIRECTORY")
 	if len(totozCacheDir) == 0 {
 		log.Println("CACHETOTOZ_CACHE_DIRECTORY is empty or not defined, totoz will be cached in a temporary directory")
-		totozCacheDir /*, _*/ = "/home/bcolombi/tmp/totozes" //os.MkdirTemp("", "cachetotoz")
+		totozCacheDir, _ = os.MkdirTemp("", "cachetotoz")
 	}
 	info, err := os.Stat(totozCacheDir)
 	if nil != err {
@@ -211,6 +211,8 @@ func retrieveMissingTags() {
 func main() {
 
 	initCacheDir()
+
+	go ServeTotozCacheApi()
 
 	for {
 		retrieveLastestTotozes()
