@@ -24,7 +24,6 @@ type Totozes struct {
 type Totoz struct {
 	XMLName xml.Name `xml:"totoz" json:"-"`
 	Name    string   `xml:"name" json:"name"`
-	Image   string   `json:"image"`
 }
 
 func searchTotozesInCache(terms string) (totozes Totozes, err error) {
@@ -38,9 +37,13 @@ func searchTotozesInCache(terms string) (totozes Totozes, err error) {
 	matcher := search.New(language.French, search.Loose)
 	pattern := matcher.CompileString(terms)
 
+	appendTotoz := func(file string) {
+		totozes.Totozes = append(totozes.Totozes, Totoz{Name: strings.TrimSuffix(filepath.Base(file), ".tags")})
+	}
+
 	for _, file := range files {
 		if start, _ := pattern.IndexString(file); start >= 0 {
-			totozes.Totozes = append(totozes.Totozes, Totoz{Name: strings.TrimSuffix(filepath.Base(file), ".tags")})
+			appendTotoz(file)
 			continue
 		}
 
@@ -50,7 +53,7 @@ func searchTotozesInCache(terms string) (totozes Totozes, err error) {
 			continue
 		}
 		if start, _ := pattern.Index(fileContent, 0); start >= 0 {
-			totozes.Totozes = append(totozes.Totozes, Totoz{Name: strings.TrimSuffix(filepath.Base(file), ".tags")})
+			appendTotoz(file)
 			continue
 		}
 
@@ -67,24 +70,6 @@ func totozCacheSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	remoteHost := r.Header.Get("X-Forwarded-Host")
-	if len(remoteHost) == 0 {
-		remoteHost = r.Host
-	}
-
-	remoteProtocol := r.Header.Get("X-Forwarded-Proto")
-	if len(remoteProtocol) == 0 {
-		remoteProtocol = "http"
-	}
-
-	for t := range totozes.Totozes {
-		u := url.URL{
-			Scheme: remoteProtocol,
-			Host:   remoteHost,
-			Path:   fmt.Sprintf("/img/%s", totozes.Totozes[t].Name),
-		}
-		totozes.Totozes[t].Image = u.String()
-	}
 	w.Header().Set("Content-Type", "application/xml")
 	e := xml.NewEncoder(w)
 	err = e.Encode(&totozes)
