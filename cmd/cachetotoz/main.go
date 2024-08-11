@@ -137,16 +137,8 @@ func retrieveLastestTotozes() {
 
 		//totoz regex /^[A-Za-z0-9-_ ]+$/ ?
 		totozNameWithMarkup := s.Find(".name").Text()
-		totozName, prefixFound := strings.CutPrefix(totozNameWithMarkup, "[:")
-		if !prefixFound {
-			log.Printf("Totoz %s is not prefixed with [:\n", totozNameWithMarkup)
-			return
-		}
-		totozName, suffixFound := strings.CutSuffix(totozName, "]")
-		if !suffixFound {
-			log.Printf("Totoz %s is not prefixed with [:\n", totozNameWithMarkup)
-			return
-		}
+		totozName := strings.TrimPrefix(totozNameWithMarkup, "[:")
+		totozName = strings.TrimSuffix(totozName, "]")
 		if !isValidTotozName(totozName) {
 			log.Printf("Totoz %s contains invalid characters\n", totozNameWithMarkup)
 			return
