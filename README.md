@@ -1,4 +1,4 @@
-MOVED TO https://gitlab.com/davenewton/gb3
+MOVED TO https://codeberg.org/devnewton/gb3
 
 # gb3
 
