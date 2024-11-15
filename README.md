@@ -1,5 +1,3 @@
-MOVED TO https://codeberg.org/devnewton/gb3
-
 # gb3
 
 gb3 is a KISS cloud native tribune stack powered by [Go](https://golang.org/)
