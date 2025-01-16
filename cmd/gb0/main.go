@@ -44,9 +44,14 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid utf8 in user agent", http.StatusBadRequest)
 		return
 	}
-	postStore.WritePost(Post{
+	ip := r.Header.Get("X-Forwarded-For")
+	if len(ip) == 0 {
+		ip = r.RemoteAddr
+	}
+	postStore.WritePost(&Post{
 		Message: stripControlsCharsFromString(fmt.Sprintf("%.65536s", message)),
 		Info:    stripControlsCharsFromString(fmt.Sprintf("%.32s", info)),
+		ip:      ip,
 	})
 }
 

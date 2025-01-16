@@ -15,14 +15,15 @@ import (
 
 var timeLocation *time.Location
 
-//Post a moule post
+// Post a moule post
 type Post struct {
 	Time    string
 	Info    string
 	Message string
+	ip      string
 }
 
-//Posts list
+// Posts list
 type Posts []Post
 
 func (p Posts) Len() int           { return len(p) }
@@ -105,7 +106,7 @@ func initMaxDaysInHistory() {
 	}
 }
 
-//NewStore create posts store
+// NewStore create posts store
 func NewStore() Store {
 	storeDirectory := os.Getenv("GB0_STORE_DIRECTORY")
 	if len(storeDirectory) == 0 {
@@ -124,19 +125,19 @@ func NewStore() Store {
 	return fileStore
 }
 
-//Store posts
+// Store posts
 type Store interface {
 	ReadPosts() (p Posts)
-	WritePost(p Post)
+	WritePost(p *Post)
 }
 
-//FileStore store posts in file
+// FileStore store posts in file
 type FileStore struct {
 	postsDirectory string
 	tmpDirectory   string
 }
 
-//ReadPosts Load from file
+// ReadPosts Load from file
 func (f *FileStore) ReadPosts() Posts {
 	posts := make(Posts, 0, maxPostsInHistory)
 	now := time.Now().In(timeLocation)
@@ -183,20 +184,21 @@ func readPostFromFile(file string) (*Post, error) {
 
 const maxWritePostTry = 42
 
-//WritePost Save to file
-func (f *FileStore) WritePost(p Post) {
+// WritePost Save to file
+func (f *FileStore) WritePost(p *Post) {
 	var err error
 	for i := 1; i <= maxWritePostTry; i++ {
 		err = f.tryToWritePost(p)
 		if nil == err {
+			log.Printf("New post %s from %s\n", p.Time, p.ip)
 			return
 		}
 		time.Sleep(time.Duration(i) * time.Second)
 	}
-	log.Printf("Cannot write post %s : %s\n", p.Time, err)
+	log.Printf("Cannot write post %s from %s : %s\n", p.Time, p.ip, err)
 }
 
-func (f *FileStore) tryToWritePost(p Post) error {
+func (f *FileStore) tryToWritePost(p *Post) error {
 	t := time.Now().In(timeLocation)
 	p.Time = t.Format("20060102150405")
 	tmpFile, err := os.CreateTemp(f.tmpDirectory, p.Time+"*.tsv")
