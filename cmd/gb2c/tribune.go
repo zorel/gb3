@@ -59,7 +59,7 @@ func (tribune *Tribune) Post(inRequest *http.Request) {
 	}
 }
 
-//Poll Retrieve backend
+// Poll Retrieve backend
 func (tribune *Tribune) Poll() (posts Posts, err error) {
 	resp, err := gb2cHttpClient.Get(tribune.BackendURL)
 	if err != nil {

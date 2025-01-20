@@ -24,7 +24,7 @@ type LinuxfrAccessRefreshData struct {
 	ExpiresIn    int64  `json:"expires_in"`
 }
 
-//RegisterLinuxfrAPI setup http linuxfr API endpoints
+// RegisterLinuxfrAPI setup http linuxfr API endpoints
 func RegisterLinuxfrAPI() {
 	clientID := os.Getenv("GB2C_LINUXFR_CLIENT_ID")
 	clientSecret := os.Getenv("GB2C_LINUXFR_CLIENT_SECRET")

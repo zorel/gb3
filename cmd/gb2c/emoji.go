@@ -8,13 +8,13 @@ import (
 	"github.com/hackebrot/turtle"
 )
 
-//Emoji description
+// Emoji description
 type Emoji struct {
 	Name       string `json:"name"`
 	Characters string `json:"characters"`
 }
 
-//EmojiSearch handler
+// EmojiSearch handler
 func EmojiSearch(w http.ResponseWriter, r *http.Request) {
 	turtleEmojis := turtle.Search(r.FormValue("terms"))
 	emojis := make([]Emoji, len(turtleEmojis))

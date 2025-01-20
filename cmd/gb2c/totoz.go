@@ -8,20 +8,20 @@ import (
 	"net/url"
 )
 
-//Totozes list
+// Totozes list
 type Totozes struct {
 	XMLName xml.Name `xml:"totozes" json:"-"`
 	Totozes []Totoz  `xml:"totoz" json:"totozes"`
 }
 
-//Totoz description
+// Totoz description
 type Totoz struct {
 	XMLName xml.Name `xml:"totoz" json:"-"`
 	Name    string   `xml:"name" json:"name"`
 	Image   string   `json:"image"`
 }
 
-//TotozSearch handler
+// TotozSearch handler
 func TotozSearch(w http.ResponseWriter, r *http.Request) {
 	searchURL := fmt.Sprintf("https://nsfw.totoz.eu/search.xml?terms=%s", url.QueryEscape(r.FormValue("terms")))
 	totozSearchResults, err := gb2cHttpClient.Get(searchURL)
