@@ -79,7 +79,7 @@ func (tc *TribuneClient) Poll(tribune *Tribune) (Posts, error) {
 }
 
 func (tc *TribuneClient) parseTSVBackend(tribune *Tribune, body io.ReadCloser) (Posts, error) {
-	posts := make(Posts, 0, MaxPostsInHistory)
+	posts := make(Posts, 0, 100) // 100 seems to be a good starting point depending on the tribune
 	data, err := io.ReadAll(body)
 	if nil != err {
 		return nil, err
