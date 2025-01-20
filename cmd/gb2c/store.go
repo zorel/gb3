@@ -1,10 +1,7 @@
 package main
 
 import (
-	"log"
-	"os"
 	"sort"
-	"strconv"
 	"sync"
 )
 
@@ -14,23 +11,9 @@ type Store interface {
 	RetrieveLatests(tribune string) (Posts, error)
 }
 
-// MaxPostsInHistory is the number of latests posts to store
-var MaxPostsInHistory = 200
-
-func init() {
-	value, isPresent := os.LookupEnv("GB2C_MAX_POSTS_IN_HISTORY")
-	if isPresent {
-		intValue, err := strconv.Atoi(value)
-		if nil != err {
-			log.Println("Invalid value for GB2C_MAX_POSTS_IN_HISTORY")
-		} else {
-			MaxPostsInHistory = intValue
-		}
-	}
-}
-
 type memStore struct {
-	postsMap *sync.Map
+	postsMap          *sync.Map
+	maxPostsInHistory int //  number of latests posts to store
 }
 
 func constainsById(posts Posts, id int64) bool {
@@ -52,7 +35,7 @@ func appendUniquePosts(posts Posts, elements ...Post) Posts {
 }
 
 func (m memStore) Save(tribune string, posts Posts) error {
-	newPosts := make(Posts, 0, MaxPostsInHistory)
+	newPosts := make(Posts, 0, m.maxPostsInHistory)
 	oldPosts, ok := m.postsMap.Load(tribune)
 	if ok {
 		newPosts = append(newPosts, oldPosts.(Posts)...)
@@ -61,19 +44,19 @@ func (m memStore) Save(tribune string, posts Posts) error {
 		newPosts = append(newPosts, posts...)
 	}
 	sort.Sort(newPosts)
-	if len(newPosts) > MaxPostsInHistory {
-		newPosts = newPosts[len(newPosts)-MaxPostsInHistory:]
+	if len(newPosts) > m.maxPostsInHistory {
+		newPosts = newPosts[len(newPosts)-m.maxPostsInHistory:]
 	}
 	m.postsMap.Store(tribune, newPosts)
 	return nil
 }
 
 func (m memStore) RetrieveLatests(tribune string) (Posts, error) {
-	posts, _ := m.postsMap.LoadOrStore(tribune, make(Posts, 0, MaxPostsInHistory))
+	posts, _ := m.postsMap.LoadOrStore(tribune, make(Posts, 0, m.maxPostsInHistory))
 	return posts.(Posts), nil
 }
 
 // NewStore create store
-func NewStore() Store {
-	return &memStore{postsMap: new(sync.Map)}
+func NewStore(maxPostsInHistory int) Store {
+	return &memStore{postsMap: new(sync.Map), maxPostsInHistory: maxPostsInHistory}
 }

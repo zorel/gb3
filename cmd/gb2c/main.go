@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -20,6 +21,19 @@ func init() {
 	default:
 		verboseMode = false
 	}
+}
+
+func getMaxPostsInHistory() int {
+	value, isPresent := os.LookupEnv("GB2C_MAX_POSTS_IN_HISTORY")
+	if isPresent {
+		intValue, err := strconv.Atoi(value)
+		if nil != err {
+			log.Println("Invalid value for GB2C_MAX_POSTS_IN_HISTORY")
+		} else {
+			return intValue
+		}
+	}
+	return 200 // Default value
 }
 
 type gb3 struct {
@@ -72,7 +86,7 @@ func (g *gb3) addMiaoliTribunes() {
 	}
 }
 
-func newGb3(httpClient *http.Client) *gb3 {
+func newGb3(httpClient *http.Client, maxPostsInHistory int) *gb3 {
 	g := &gb3{
 		join:    make(chan *Coincoin),
 		leave:   make(chan *Coincoin),
@@ -86,7 +100,7 @@ func newGb3(httpClient *http.Client) *gb3 {
 		},
 		poll:    make(chan *Tribune),
 		indexer: NewIndexer(),
-		store:   NewStore(),
+		store:   NewStore(maxPostsInHistory),
 		client:  NewTribuneClient(httpClient),
 	}
 	g.addGb0Tribunes()
@@ -242,8 +256,9 @@ func (g *gb3) pollLoop(t *Tribune) {
 
 func main() {
 	httpClient := newHttpClient()
+	maxPostsInHistory := getMaxPostsInHistory()
 
-	g := newGb3(httpClient)
+	g := newGb3(httpClient, maxPostsInHistory)
 	go g.forwardLoop()
 	for _, t := range g.tribunes {
 		go g.pollLoop(t)
