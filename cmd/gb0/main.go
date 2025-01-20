@@ -36,6 +36,11 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid utf8 in message", http.StatusBadRequest)
 		return
 	}
+	message = strings.TrimSpace(message)
+	if len(message) == 0 {
+		http.Error(w, "Empty message forbidden : say something please !", http.StatusBadRequest)
+		return
+	}
 	info := r.FormValue("info")
 	if len(info) == 0 {
 		info = r.UserAgent()
