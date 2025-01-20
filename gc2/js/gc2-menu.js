@@ -56,6 +56,12 @@ export class Gc2Menu extends HTMLElement {
             gc2CloseMenu();
         };
         this.appendChild(backButton);
+
+        let aboutLink = document.createElement('a');
+        aboutLink.innerText = "About gb3";
+        aboutLink.href = "https://codeberg.org/devnewton/gb3";
+        aboutLink.target = "_blank";
+        this.appendChild(aboutLink);
     }
 
     showComponent(componentName) {

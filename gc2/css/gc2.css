@@ -85,6 +85,10 @@ gc2-menu button {
 	margin: 8px;
 }
 
+gc2-menu a {
+	margin-top: auto;
+}
+
 .gc2-controls {
 	display: flex;
 }
