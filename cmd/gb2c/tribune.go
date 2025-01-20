@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -78,7 +77,7 @@ func (tribune *Tribune) Poll() (posts Posts, err error) {
 
 func (tribune *Tribune) parseTSVBackend(body io.ReadCloser) (Posts, error) {
 	posts := make(Posts, 0, MaxPostsInHistory)
-	data, err := ioutil.ReadAll(body)
+	data, err := io.ReadAll(body)
 	if nil != err {
 		return nil, err
 	}
