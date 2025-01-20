@@ -27,11 +27,6 @@ type Tribune struct {
 	AuthentificationType int
 }
 
-// DlfpToken OAuth2 token
-type DlfpToken struct {
-	AccessToken string `json:"access_token"`
-}
-
 // Post message to tribune
 func (tribune *Tribune) Post(inRequest *http.Request) {
 	data := url.Values{
