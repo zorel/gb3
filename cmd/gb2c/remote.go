@@ -4,13 +4,11 @@ import (
 	"net/http"
 )
 
-var gb2cHttpClient *http.Client
-
-func init() {
+func newHttpClient() *http.Client {
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 	}
-	gb2cHttpClient = &http.Client{
+	return &http.Client{
 		Transport: transport,
 	}
 }

@@ -22,34 +22,36 @@ type Totoz struct {
 }
 
 // TotozSearch handler
-func TotozSearch(w http.ResponseWriter, r *http.Request) {
-	searchURL := fmt.Sprintf("https://nsfw.totoz.eu/search.xml?terms=%s", url.QueryEscape(r.FormValue("terms")))
-	totozSearchResults, err := gb2cHttpClient.Get(searchURL)
-	if nil != err {
-		http.Error(w, fmt.Sprintf("Totoz server error: %s. Blame fork.", err), 500)
-		return
-	}
-	defer totozSearchResults.Body.Close()
-	decoder := xml.NewDecoder(totozSearchResults.Body)
-	var totozes Totozes
-	err = decoder.Decode(&totozes)
-	if nil != err {
-		http.Error(w, fmt.Sprintf("Cannot decode totoz search results: %s. Blame fork.", err), 500)
-		return
-	}
-	for t := range totozes.Totozes {
-		u := url.URL{
-			Scheme: "https",
-			Host:   "nsfw.totoz.eu",
-			Path:   fmt.Sprintf("/img/%s", totozes.Totozes[t].Name),
+func TotozSearch(httpClient *http.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		searchURL := fmt.Sprintf("https://nsfw.totoz.eu/search.xml?terms=%s", url.QueryEscape(r.FormValue("terms")))
+		totozSearchResults, err := httpClient.Get(searchURL)
+		if nil != err {
+			http.Error(w, fmt.Sprintf("Totoz server error: %s. Blame fork.", err), 500)
+			return
 		}
-		totozes.Totozes[t].Image = u.String()
-	}
-	w.Header().Set("Content-Type", "application/json")
-	e := json.NewEncoder(w)
-	err = e.Encode(&totozes)
-	if nil != err {
-		http.Error(w, fmt.Sprintf("Cannot encode totoz search results: %s. Blame dave.", err), 500)
-		return
+		defer totozSearchResults.Body.Close()
+		decoder := xml.NewDecoder(totozSearchResults.Body)
+		var totozes Totozes
+		err = decoder.Decode(&totozes)
+		if nil != err {
+			http.Error(w, fmt.Sprintf("Cannot decode totoz search results: %s. Blame fork.", err), 500)
+			return
+		}
+		for t := range totozes.Totozes {
+			u := url.URL{
+				Scheme: "https",
+				Host:   "nsfw.totoz.eu",
+				Path:   fmt.Sprintf("/img/%s", totozes.Totozes[t].Name),
+			}
+			totozes.Totozes[t].Image = u.String()
+		}
+		w.Header().Set("Content-Type", "application/json")
+		e := json.NewEncoder(w)
+		err = e.Encode(&totozes)
+		if nil != err {
+			http.Error(w, fmt.Sprintf("Cannot encode totoz search results: %s. Blame dave.", err), 500)
+			return
+		}
 	}
 }

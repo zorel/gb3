@@ -27,8 +27,16 @@ type Tribune struct {
 	AuthentificationType int
 }
 
+type TribuneClient struct {
+	httpClient *http.Client
+}
+
+func NewTribuneClient(httpClient *http.Client) *TribuneClient {
+	return &TribuneClient{httpClient: httpClient}
+}
+
 // Post message to tribune
-func (tribune *Tribune) Post(inRequest *http.Request) {
+func (tc *TribuneClient) Post(tribune *Tribune, inRequest *http.Request) {
 	data := url.Values{
 		tribune.PostField: []string{inRequest.PostFormValue("message")},
 	}
@@ -47,21 +55,21 @@ func (tribune *Tribune) Post(inRequest *http.Request) {
 	if tribune.AuthentificationType == OAuth2Authentification {
 		outRequest.Header.Set("Authorization", inRequest.Header.Get("Authorization"))
 	}
-	_, err = gb2cHttpClient.Do(outRequest)
+	_, err = tc.httpClient.Do(outRequest)
 	if nil != err {
 		log.Println(err)
 	}
 }
 
 // Poll Retrieve backend
-func (tribune *Tribune) Poll() (posts Posts, err error) {
-	resp, err := gb2cHttpClient.Get(tribune.BackendURL)
+func (tc *TribuneClient) Poll(tribune *Tribune) (Posts, error) {
+	resp, err := tc.httpClient.Get(tribune.BackendURL)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	posts, err = tribune.parseTSVBackend(resp.Body)
+	posts, err := tc.parseTSVBackend(tribune, resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +78,7 @@ func (tribune *Tribune) Poll() (posts Posts, err error) {
 	return posts, nil
 }
 
-func (tribune *Tribune) parseTSVBackend(body io.ReadCloser) (Posts, error) {
+func (tc *TribuneClient) parseTSVBackend(tribune *Tribune, body io.ReadCloser) (Posts, error) {
 	posts := make(Posts, 0, MaxPostsInHistory)
 	data, err := io.ReadAll(body)
 	if nil != err {
