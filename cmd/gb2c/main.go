@@ -23,17 +23,50 @@ func init() {
 	}
 }
 
-func getMaxPostsInHistory() int {
-	value, isPresent := os.LookupEnv("GB2C_MAX_POSTS_IN_HISTORY")
+func getIntFromEnv(envVar string, defaultValue int) int {
+	value, isPresent := os.LookupEnv(envVar)
 	if isPresent {
 		intValue, err := strconv.Atoi(value)
 		if nil != err {
-			log.Println("Invalid value for GB2C_MAX_POSTS_IN_HISTORY")
+			log.Printf("Invalid value for %s: %v\n", envVar, err)
 		} else {
 			return intValue
 		}
 	}
-	return 200 // Default value
+	return defaultValue
+}
+
+func newStore() (Store, error) {
+	maxPostsInHistory := getIntFromEnv("GB2C_MAX_POSTS_IN_HISTORY", 200)
+
+	storeType := strings.ToLower(os.Getenv("GB2C_STORE"))
+	switch storeType {
+	case "", "memory":
+		log.Println("Using in-memory store")
+		return NewMemStore(maxPostsInHistory), nil
+	case "sqlite":
+		var err error
+		dbPath := os.Getenv("GB2C_SQLITE_PATH")
+		if dbPath == "" {
+			dbPath, err = os.MkdirTemp("", "gb2c_posts")
+			if err != nil {
+				return nil, fmt.Errorf("could not create temporary store directory: %v", err)
+			}
+		}
+
+		maxStoredPosts := getIntFromEnv("GB2C_SQLITE_MAX_POSTS_IN_STORAGE", maxPostsInHistory)
+
+		store, err := NewSqliteStore(dbPath, maxPostsInHistory, maxStoredPosts)
+		if err != nil {
+			return nil, fmt.Errorf("could not create SQLite store: %v", err)
+		} else {
+			log.Printf("Using SQLite store in %s\n", dbPath)
+			return store, nil
+		}
+	default:
+		log.Println("Unknown store type: ", storeType)
+		return nil, fmt.Errorf("unknown store type: %s", storeType)
+	}
 }
 
 type gb3 struct {
@@ -86,7 +119,7 @@ func (g *gb3) addMiaoliTribunes() {
 	}
 }
 
-func newGb3(httpClient *http.Client, maxPostsInHistory int) *gb3 {
+func newGb3(httpClient *http.Client, store Store) *gb3 {
 	g := &gb3{
 		join:    make(chan *Coincoin),
 		leave:   make(chan *Coincoin),
@@ -100,7 +133,7 @@ func newGb3(httpClient *http.Client, maxPostsInHistory int) *gb3 {
 		},
 		poll:    make(chan *Tribune),
 		indexer: NewIndexer(),
-		store:   NewStore(maxPostsInHistory),
+		store:   store,
 		client:  NewTribuneClient(httpClient),
 	}
 	g.addGb0Tribunes()
@@ -256,9 +289,12 @@ func (g *gb3) pollLoop(t *Tribune) {
 
 func main() {
 	httpClient := newHttpClient()
-	maxPostsInHistory := getMaxPostsInHistory()
+	store, err := newStore()
+	if nil != err {
+		log.Fatal(err)
+	}
 
-	g := newGb3(httpClient, maxPostsInHistory)
+	g := newGb3(httpClient, store)
 	go g.forwardLoop()
 	for _, t := range g.tribunes {
 		go g.pollLoop(t)

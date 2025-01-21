@@ -56,7 +56,7 @@ func (m memStore) RetrieveLatests(tribune string) (Posts, error) {
 	return posts.(Posts), nil
 }
 
-// NewStore create store
-func NewStore(maxPostsInHistory int) Store {
+// NewMemStore creates a memory-backed store
+func NewMemStore(maxPostsInHistory int) Store {
 	return &memStore{postsMap: new(sync.Map), maxPostsInHistory: maxPostsInHistory}
 }
