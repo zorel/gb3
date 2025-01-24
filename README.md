@@ -65,6 +65,10 @@ Maximum number of posts returned in TSV backend.
 
 Maximum number of days in the past to consider for building TSV backend.
 
+#### TZ
+
+The timezone used by gb0 (default: Europe/Paris).
+
 ### Endpoints
 
 gb0 exposes two endpoint to retrieve and post messages.

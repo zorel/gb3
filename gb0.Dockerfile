@@ -11,6 +11,7 @@ WORKDIR /
 COPY --from=gb0_builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=gb0_builder /go/src/codeberg.org/devnewton/gb3/gb0 /bin/gb0
 ENV GB0_STORE_DIRECTORY=/data
+ENV TZ=Europe/Paris
 VOLUME /data
 EXPOSE 16667
 CMD ["/bin/gb0"]
