@@ -17,10 +17,13 @@ services:
    - gb0
   environment:
    - "GB2C_GB0_TRIBUNES=taiste:http://gb0:16667"
+#   - "GB2C_STORE=sqlite"
+#   - "GB2C_SQLITE_MAX_POSTS_IN_STORAGE=0"
   ports:
    - "16666:16666"
   volumes:
    - gb2c-attachments:/data/attachments
+   - gb2c_posts:/data/posts
  reverse-proxy:
   image: docker.io/nginx
   depends_on:
@@ -35,3 +38,4 @@ services:
 volumes:
   gb0-data: ~
   gb2c-attachments: ~
+  gb2c-posts: ~
