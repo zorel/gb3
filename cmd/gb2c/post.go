@@ -1,6 +1,6 @@
 package main
 
-//Post tribune post
+// Post tribune post
 type Post struct {
 	ID      int64  `json:"id"`
 	Time    string `json:"time"`
@@ -10,7 +10,7 @@ type Post struct {
 	Tribune string `json:"tribune"`
 }
 
-//Posts post array
+// Posts post array
 type Posts []Post
 
 func (p Posts) Len() int           { return len(p) }

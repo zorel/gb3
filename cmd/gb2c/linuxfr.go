@@ -24,8 +24,8 @@ type LinuxfrAccessRefreshData struct {
 	ExpiresIn    int64  `json:"expires_in"`
 }
 
-//RegisterLinuxfrAPI setup http linuxfr API endpoints
-func RegisterLinuxfrAPI() {
+// RegisterLinuxfrAPI setup http linuxfr API endpoints
+func RegisterLinuxfrAPI(httpClient *http.Client) {
 	clientID := os.Getenv("GB2C_LINUXFR_CLIENT_ID")
 	clientSecret := os.Getenv("GB2C_LINUXFR_CLIENT_SECRET")
 	if len(clientID) == 0 || len(clientSecret) == 0 {
@@ -72,7 +72,7 @@ func RegisterLinuxfrAPI() {
 		}
 		tokenRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		tokenRequest.Header.Set("User-Agent", "gb3")
-		tokenResponse, err := gb2cHttpClient.Do(tokenRequest)
+		tokenResponse, err := httpClient.Do(tokenRequest)
 		if nil != err {
 			http.Error(w, fmt.Sprintf("Cannot retrieve linuxfr token: %s", err), 500)
 			return
@@ -89,7 +89,7 @@ func RegisterLinuxfrAPI() {
 		}
 
 		//retrieve login
-		meResponse, err := gb2cHttpClient.Get(fmt.Sprintf("https://linuxfr.org/api/v1/me?bearer_token=%s", url.QueryEscape(linuxfrAccessData.AccessToken)))
+		meResponse, err := httpClient.Get(fmt.Sprintf("https://linuxfr.org/api/v1/me?bearer_token=%s", url.QueryEscape(linuxfrAccessData.AccessToken)))
 		if nil != err {
 			http.Error(w, fmt.Sprintf("linuxfr me request failed: %s", err), 500)
 			return
@@ -130,7 +130,7 @@ func RegisterLinuxfrAPI() {
 		}
 		tokenRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		tokenRequest.Header.Set("User-Agent", "gb3")
-		tokenResponse, err := gb2cHttpClient.Do(tokenRequest)
+		tokenResponse, err := httpClient.Do(tokenRequest)
 		if nil != err {
 			http.Error(w, fmt.Sprintf("Cannot refresh linuxfr token: %s", err), 500)
 			return

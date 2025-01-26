@@ -30,6 +30,7 @@ type gb3 struct {
 	poll     chan *Tribune
 	indexer  Indexer
 	store    Store
+	client   *TribuneClient
 }
 
 type forwardMessage struct {
@@ -71,7 +72,7 @@ func (g *gb3) addMiaoliTribunes() {
 	}
 }
 
-func newGb3() *gb3 {
+func newGb3(httpClient *http.Client) *gb3 {
 	g := &gb3{
 		join:    make(chan *Coincoin),
 		leave:   make(chan *Coincoin),
@@ -86,6 +87,7 @@ func newGb3() *gb3 {
 		poll:    make(chan *Tribune),
 		indexer: NewIndexer(),
 		store:   NewStore(),
+		client:  NewTribuneClient(httpClient),
 	}
 	g.addGb0Tribunes()
 	g.addMiaoliTribunes()
@@ -188,7 +190,7 @@ func (g *gb3) handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 	t := g.tribunes[r.PostFormValue("tribune")]
 	if nil != t {
-		t.Post(r)
+		g.client.Post(t, r)
 		g.poll <- t
 	}
 }
@@ -213,7 +215,7 @@ func (g *gb3) pollTribune(t *Tribune) {
 	if verboseMode {
 		log.Printf("Poll %s\n", t.Name)
 	}
-	posts, err := t.Poll()
+	posts, err := g.client.Poll(t)
 	if nil != err {
 		log.Println(err)
 		return
@@ -239,12 +241,14 @@ func (g *gb3) pollLoop(t *Tribune) {
 }
 
 func main() {
-	g := newGb3()
+	httpClient := newHttpClient()
+
+	g := newGb3(httpClient)
 	go g.forwardLoop()
 	for _, t := range g.tribunes {
 		go g.pollLoop(t)
 	}
-	RegisterLinuxfrAPI()
+	RegisterLinuxfrAPI(httpClient)
 	RegisterAttachmentAPI()
 	http.HandleFunc("/gb2c/list", func(w http.ResponseWriter, r *http.Request) {
 		g.handleList(w, r)
@@ -258,7 +262,7 @@ func main() {
 	http.HandleFunc("/gb2c/search", func(w http.ResponseWriter, r *http.Request) {
 		g.handleSearch(w, r)
 	})
-	http.HandleFunc("/gb2c/totoz/search", TotozSearch)
+	http.HandleFunc("/gb2c/totoz/search", TotozSearch(httpClient))
 	http.HandleFunc("/gb2c/emoji/search", EmojiSearch)
 
 	gc2Path := os.Getenv("GB2C_GC2_FROM_PATH")

@@ -8,13 +8,13 @@ import (
 	"sync"
 )
 
-//Store tribune's posts
+// Store tribune's posts
 type Store interface {
 	Save(tribune string, posts Posts) error
 	RetrieveLatests(tribune string) (Posts, error)
 }
 
-//MaxPostsInHistory is the number of latests posts to store
+// MaxPostsInHistory is the number of latests posts to store
 var MaxPostsInHistory = 200
 
 func init() {
@@ -73,7 +73,7 @@ func (m memStore) RetrieveLatests(tribune string) (Posts, error) {
 	return posts.(Posts), nil
 }
 
-//NewStore create store
+// NewStore create store
 func NewStore() Store {
 	return &memStore{postsMap: new(sync.Map)}
 }

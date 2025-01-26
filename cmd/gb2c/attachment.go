@@ -130,7 +130,7 @@ func (a *AttachmentHandler) getAttachment(w http.ResponseWriter, r *http.Request
 	http.ServeFile(w, r, attachmentFilename)
 }
 
-//RegisterAttachmentAPI setup http attachment API endpoints
+// RegisterAttachmentAPI setup http attachment API endpoints
 func RegisterAttachmentAPI() {
 	attachmentHandler := &AttachmentHandler{attachmentDirectory: os.Getenv("GB2C_ATTACHMENT_DIRECTORY")}
 	if len(attachmentHandler.attachmentDirectory) == 0 {

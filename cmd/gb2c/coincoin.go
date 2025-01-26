@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-//Coincoin connected to gb3
+// Coincoin connected to gb3
 type Coincoin struct {
 	w                   http.ResponseWriter
 	flusher             http.Flusher
@@ -13,7 +13,7 @@ type Coincoin struct {
 	TribunesFilter      []string
 }
 
-//NewCoincoin create coincoin
+// NewCoincoin create coincoin
 func NewCoincoin(w http.ResponseWriter, flusher http.Flusher) *Coincoin {
 	return &Coincoin{w: w, flusher: flusher, LastPostIDByTribune: make(map[string]int64)}
 }
@@ -30,7 +30,7 @@ func (c *Coincoin) shouldWritePost(post Post) (result bool) {
 	return false
 }
 
-//Write write events to coincoin
+// Write write events to coincoin
 func (c *Coincoin) Write(post Post, data []byte) (err error) {
 	if !c.shouldWritePost(post) {
 		return err
