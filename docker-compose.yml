@@ -7,19 +7,31 @@ services:
    dockerfile: gb0.Dockerfile
   ports:
    - "16667:16667"
+  volumes:
+   - gb0-data:/data
  gb2c:
   build:
    context: .
    dockerfile: gb2c.Dockerfile
+  depends_on:
+   - gb0
   environment:
    - "GB2C_GB0_TRIBUNES=taiste:http://gb0:16667"
   ports:
    - "16666:16666"
+  volumes:
+   - gb2c-attachments:/data/attachments
  reverse-proxy:
   image: docker.io/nginx
+  depends_on:
+   - gb0
+   - gb2c
   volumes:
    - ./nginx.conf:/etc/nginx/conf.d/default.conf
    - ./gc2:/srv/gc2
   ports:
    - "8080:80"
 
+volumes:
+  gb0-data: ~
+  gb2c-attachments: ~
