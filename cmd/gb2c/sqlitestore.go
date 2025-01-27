@@ -23,7 +23,7 @@ func formatPostTime(postTime time.Time, location *time.Location) string {
 }
 
 func NewSqliteStore(dbPath string, maxPostsInHistory int, maxPostsInStorage int) (Store, error) {
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open SQLite database: %v", err)
 	}
