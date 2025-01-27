@@ -88,7 +88,21 @@ GB2C_MIAOLI_TRIBUNES=reveildutroll:https://miaoli.im/%2B6VtcdSCI0Y
 
 #### GB2C_MAX_POSTS_IN_HISTORY
 
-Maximum number of posts returned by poll requests.
+Maximum number of posts returned by poll requests. Default value is 200.
+
+#### GB2C_STORE
+
+The type of store to use: "sqlite" or "memory". Defaults to "memory".
+
+#### GB2C_SQLITE_PATH
+
+The path to the SQLite database where history can be saved
+
+If not set, a temporary folder will be used.
+
+#### GB2C_SQLITE_MAX_POSTS_IN_STORAGE
+
+The number of posts to keep in storage, 0 for unlimited. Default value is the current value of GB2C_MAX_POSTS_IN_HISTORY.
 
 ### Endpoints
 

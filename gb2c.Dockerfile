@@ -8,8 +8,11 @@ RUN GOOS=linux CGO_ENABLED=0 go build ./cmd/gb2c
 FROM scratch as gb2c
 WORKDIR /
 COPY --from=gb2c_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=gb2c_builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=gb2c_builder /go/src/github.com/devnewton/gb3/gb2c /bin/gb2c
 ENV GB2C_ATTACHMENT_DIRECTORY=/data/attachments
+ENV GB2C_SQLITE_PATH=/data/posts/posts.sqlite
 VOLUME /data/attachments
+VOLUME /data/posts
 EXPOSE 16666
 CMD ["/bin/gb2c"]
