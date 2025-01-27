@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -48,10 +49,11 @@ func newStore() (Store, error) {
 		var err error
 		dbPath := os.Getenv("GB2C_SQLITE_PATH")
 		if dbPath == "" {
-			dbPath, err = os.MkdirTemp("", "gb2c_posts")
+			dbPath, err = os.MkdirTemp("", "gb2c")
 			if err != nil {
 				return nil, fmt.Errorf("could not create temporary store directory: %v", err)
 			}
+			dbPath = path.Join(dbPath, "posts.sqlite")
 		}
 
 		maxStoredPosts := getIntFromEnv("GB2C_SQLITE_MAX_POSTS_IN_STORAGE", maxPostsInHistory)

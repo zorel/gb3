@@ -3,7 +3,7 @@ WORKDIR /go/src/github.com/devnewton/gb3
 COPY . .
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 RUN update-ca-certificates
-RUN GOOS=linux CGO_ENABLED=0 go build ./cmd/gb2c
+RUN GO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags sqlite ./cmd/gb2c
 
 FROM scratch as gb2c
 WORKDIR /

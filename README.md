@@ -98,7 +98,7 @@ The type of store to use: "sqlite" or "memory". Defaults to "memory".
 
 The path to the SQLite database where history can be saved
 
-If not set, a temporary folder will be used.
+If not set, a temporary file will be used.
 
 #### GB2C_SQLITE_MAX_POSTS_IN_STORAGE
 
