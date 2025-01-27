@@ -1,4 +1,4 @@
-//go:build cgo && sqlite
+//go:build sqlite
 
 package main
 
