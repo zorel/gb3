@@ -1,5 +1,8 @@
 FROM docker.io/golang:1.24 AS gb2c_builder
 WORKDIR /go/src/codeberg.org/devnewton/gb3
+# Only download updates if modules files have changed
+COPY go.mod go.sum .
+RUN go mod download
 COPY . .
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 RUN update-ca-certificates
