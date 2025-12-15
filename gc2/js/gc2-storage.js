@@ -8,7 +8,7 @@ export class Gc2StoredTribunes {
     /**
      * @type Array<String>
      */
-    static DEFAULT_TRIBUNES = ["devnewton", "dlfp", "euromussels", "gabuzomeu", "sveetch"];
+    static DEFAULT_TRIBUNES = ["devnewton", "dlfp", "gabuzomeu", "sveetch"];
 
     /**
      * @type Array<String>
