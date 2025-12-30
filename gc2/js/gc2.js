@@ -3,6 +3,7 @@ import { Gc2Tribune } from "./gc2-tribune.js";
 import { Gc2Menu } from "./gc2-menu.js";
 import { Gc2Alarm } from "./gc2-alarm.js";
 import { GC2_STORAGE } from "./gc2-storage.js";
+import peggy from "./peggy-esm-5.0.6.js"
 
 class Gc2Main extends HTMLElement {
 
