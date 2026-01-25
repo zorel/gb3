@@ -36,6 +36,27 @@ class Gc2Settings {
         }
     }
 
+    handlePlopList() {
+        let plopInput = document.getElementById("plopList");
+        if (!plopInput) return;
+        plopInput.value = GC2_STORAGE.getItem("plop_list") || "";
+        plopInput.oninput = (e) => {
+            // store raw CSV; the storage accessor getPlopList() will parse it when used
+            GC2_STORAGE.setItem("plop_list", e.target.value);
+        };
+    }
+
+    handleDarkMode() {
+        let checkbox = document.getElementById("darkMode");
+        if (!checkbox) return;
+        // initialize from storage (treat "1" or "true" as enabled)
+        let stored = GC2_STORAGE.getItem("dark_mode");
+        checkbox.checked = stored === "1" || stored === "true" || (stored === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        checkbox.onchange = (e) => {
+            GC2_STORAGE.setItem("dark_mode", checkbox.checked ? "1" : "0");
+        };
+    }
+
     handleBackButton() {
         let backButton = document.getElementById("backButton");
         backButton.onclick = () => {
@@ -46,4 +67,6 @@ class Gc2Settings {
 const GC2_SETTINGS = new Gc2Settings();
 GC2_SETTINGS.handleNickname();
 GC2_SETTINGS.handleTribunes();
+GC2_SETTINGS.handlePlopList();
+GC2_SETTINGS.handleDarkMode();
 GC2_SETTINGS.handleBackButton();

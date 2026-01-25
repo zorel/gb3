@@ -73,6 +73,14 @@ class Gc2Main extends HTMLElement {
         this.selectTribune();
         this.appendChild(this.controls);
         this.setupAlarm();
+        // Apply theme based on stored setting or system preference
+        this.applyThemeFromStorage();
+        // Listen for changes made in other tabs (settings page)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'dark_mode') {
+                this.applyThemeFromStorage();
+            }
+        });
         this.storedTribunes = await GC2_STORAGE.getTribunes();
         this.poll();
         setInterval(() => this.poll(), 10000);
@@ -339,6 +347,17 @@ class Gc2Main extends HTMLElement {
                 this.lastPostSourceActivity = Date.now();
                 let wasAtbottom = this.isScrollAtBottom();
                 let post = JSON.parse(event.data);
+
+                // If the post's info matches an entry in the plop list, replace random words
+                try {
+                    let plopList = GC2_STORAGE.getPlopList ? GC2_STORAGE.getPlopList() : [];
+                    if (plopList && plopList.includes(post.info)) {
+                        post.message = this.replaceRandomWordsInMessage(post.message);
+                    }
+                } catch (e) {
+                    // ignore errors
+                }
+
                 post.message = this.backend2html.parse(post.message);
                 this.getTribuneElement(post.tribune).insertPost(post);
                 this.updateNotifications();
@@ -558,6 +577,56 @@ class Gc2Main extends HTMLElement {
         this.messageInput.value = this.messageInput.value.substring(0, this.messageInput.selectionStart) + text + this.messageInput.value.substring(this.messageInput.selectionEnd);
         this.messageInput.focus();
         this.messageInput.setSelectionRange(selectionEnd, selectionEnd);
+    }
+
+    replaceRandomWordsInMessage(text) {
+        if (!text || typeof text !== 'string') return text;
+        // split preserving whitespace tokens
+        let tokens = text.split(/(\s+)/);
+        // collect indices of tokens that are words
+        let wordIndices = [];
+        for (let i = 0; i < tokens.length; i++) {
+            if (tokens[i].trim().length > 0 && !/\s+/.test(tokens[i])) {
+                wordIndices.push(i);
+            }
+        }
+        if (wordIndices.length === 0) return text;
+        let replaceCount = Math.max(1, Math.floor(wordIndices.length * 0.85));
+        let selected = new Set();
+        while (selected.size < replaceCount) {
+            let idx = wordIndices[Math.floor(Math.random() * wordIndices.length)];
+            selected.add(idx);
+        }
+        const repl = ["plop", "prout", "grouik"];
+        selected.forEach((idx) => {
+            let w = tokens[idx];
+            let m = w.match(/^(\W*)(.*?)(\W*)$/);
+            let replacement = repl[Math.floor(Math.random() * repl.length)];
+            if (m) {
+                tokens[idx] = m[1] + replacement + m[3];
+            } else {
+                tokens[idx] = replacement;
+            }
+        });
+        return tokens.join('');
+    }
+
+    applyThemeFromStorage() {
+        try {
+            let stored = GC2_STORAGE.getItem('dark_mode');
+            let useDark;
+            if (stored === null || stored === undefined || stored === '') {
+                useDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            } else {
+                useDark = (stored === '1' || stored === 'true');
+            }
+            let link = document.getElementById('gc2-theme-link');
+            if (link) {
+                link.href = useDark ? 'css/gc2-dark.css' : 'css/gc2.css';
+            }
+        } catch (e) {
+            // ignore
+        }
     }
 
     async setupBouchotSuffixor() {

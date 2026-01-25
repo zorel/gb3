@@ -93,6 +93,32 @@ class Gc2Storage {
         result.selectedTribunes = storedTribunesString ? storedTribunesString.split(",") : Gc2StoredTribunes.DEFAULT_TRIBUNES;
         return result;
     }
+
+    /**
+     * Get the "plop list" as an array of strings. Stored under key "plop_list" as comma-separated values.
+     * @returns {Array<string>}
+     */
+    getPlopList() {
+        try {
+            let stored = this.getItem("plop_list");
+            if (!stored || stored.length === 0) return [];
+            return stored.split(",").map(s => s.trim()).filter(Boolean);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    /**
+     * Set the "plop list" from an array of strings
+     * @param {Array<string>} list
+     */
+    setPlopList(list) {
+        try {
+            this.setItem("plop_list", list.join(","));
+        } catch (e) {
+            // ignore
+        }
+    }
 }
 
 export const GC2_STORAGE = new Gc2Storage();
