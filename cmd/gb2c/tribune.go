@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -68,6 +69,10 @@ func (tc *TribuneClient) Poll(tribune *Tribune) (Posts, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("erreur de %s : %d %s", tribune.BackendURL, resp.StatusCode, resp.Status)
+	}
 
 	posts, err := tc.parseTSVBackend(tribune, resp.Body)
 	if err != nil {
