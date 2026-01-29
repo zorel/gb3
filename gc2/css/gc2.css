@@ -1,8 +1,68 @@
+:root {
+	--body-color: #000;
+  --body-background-color: #eeeeee;
+  --gc2-alarm-color: #0000aa;
+  --gc2-alarm-color-preums: #ff0000;
+  --gc2-tribune-navigator-button-background-hover: #d7d2d2;
+  --gc2-post-background-color-even: #FFFFFF;
+  --gc2-post-background-color-odd: #FBFBFB;
+  --gc2-norloge-is-reply-color: #ff0000;
+  --gc2-message-gc2-norloge-color: #5F7FBF;
+  --gc2-moule-color: #833;
+  --gc2-message-color: #000;
+  --gc2-message-a-color: #1690f3;
+  --gc2-message-a-visited-color: #d00b5d;
+  --gc2-message-cite-color: #F00;
+  --gc2-highlighted-color: #FFD202;
+  --gc2-spoiler-color: #000;
+  --gc2-revealed-spoiler-color: #ff0000;
+  --gc2-bigorno-color: #D00;
+  --gb3-post-popup-content-background-color: #f3f3f3;
+  --gc2-tribune-color: #007700;
+  --gc2-post-norloge-color: #000;
+  --gc2-totoz-search-results-figure-background-color: #d7d2d2;
+  --gc2-totoz-color: #0A1;
+  --gc2-post-norloge-border-color: #808080;
+  --gc2-moule-border-color: #808080;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+	--body-color: #ffffff;
+  --body-background-color: #18181a;
+  --gc2-alarm-color: #0000dd;
+  --gc2-alarm-color-preums: #ff0000;
+  --gc2-tribune-navigator-button-background-hover: #d7d2d2;
+  --gc2-post-background-color-even: #232327;
+  --gc2-post-background-color-odd: #18181a;
+  --gc2-norloge-is-reply-color: #ff0000;
+  --gc2-message-gc2-norloge-color: #5F7FBF;
+  --gc2-moule-color: #cc3333;
+  --gc2-message-color: #ffffff;
+  --gc2-message-a-color: #1690f3;
+  --gc2-message-a-visited-color: #d00b5d;
+  --gc2-message-cite-color: #F00;
+  --gc2-highlighted-color: #FFD202;
+  --gc2-spoiler-color: #000;
+  --gc2-revealed-spoiler-color: #ff0000;
+  --gc2-bigorno-color: #D00;
+  --gb3-post-popup-content-background-color: #f3f3f3;
+  --gc2-tribune-color: #007700;
+  --gc2-post-norloge-color: #ffffff;
+  --gc2-totoz-search-results-figure-background-color: #d7d2d2;
+  --gc2-totoz-color: #0A1;
+  --gc2-post-norloge-border-color: #808080;
+  --gc2-moule-border-color: #808080;
+  }
+}
+
+
 body {
 	display: flex;
 	align-items: flex-end;
 
-	background-color: #eeeeee;
+	color: var(--body-color);
+	background-color: var(--body-background-color);
 	font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Open Sans,Helvetica Neue,sans-serif;
 	font-weight: 400;
 	line-height: 1.55;
@@ -23,12 +83,12 @@ body {
 gc2-alarm {
 	font-family: monospace;
 	font-size: 1.5em;
-  color: #0000aa;
+  color: var(--gc2-alarm-color);
   text-align: center;
 }
 
 gc2-alarm[preums] {
-  color: #ff0000;
+  color: var(--gc2-alarm-color-preums);
 }
 
 gc2-tribune-navigator {
@@ -41,7 +101,7 @@ gc2-tribune-navigator-button {
 }
 
 gc2-tribune-navigator-button:hover {
-	background: #d7d2d2
+	background: var(--gc2-tribune-navigator-button-background-hover)
 }
 
 gc2-tribune-navigator-button[active] {
@@ -114,7 +174,7 @@ gc2-tribunes {
 
 gc2-tribune {
 	display: table;
-	color: #007700;
+	color: var(--gc2-tribune-color);
 	width: 100%;
 }
 
@@ -123,11 +183,11 @@ gc2-post {
 }
 
 gc2-post:nth-of-type(even) {
-	background-color: #FFFFFF;
+	background-color: var(--gc2-post-background-color-even);
 }
 
 gc2-post:nth-of-type(odd) {
-	background-color: #FBFBFB;
+	background-color: var(--gc2-post-background-color-odd);
 }
 
 gc2-post-icon {
@@ -139,18 +199,18 @@ gc2-post-norloge {
 	display: table-cell;
 	width: 1em;
 	padding-right: 0.5em;
-	color: black;
+	color: var(--gc2-post-norloge-color);
 	font-weight: bold;
 	white-space: nowrap;
 	cursor: pointer;
 }
 
 .gc2-norloge-is-reply {
-	color: red;
+	color: var(--gc2-norloge-is-reply-color);
 }
 
 gc2-message gc2-norloge {
-	color: #5F7FBF;
+	color: var(--gc2-message-gc2-norloge-color);
 	cursor: pointer;
 }
 
@@ -159,7 +219,7 @@ gc2-moule {
 	width: 1em;
 	max-width: 8em;
 	padding-right: 0.5em;
-	color: #833;
+	color: var(--gc2-moule-color);
 	white-space: nowrap;
 	overflow-wrap: break-word;
 	overflow: hidden;
@@ -169,13 +229,13 @@ gc2-moule {
 
 gc2-message {
 	display: table-cell;
-	color: black;
+	color: var(--gc2-message-color);
 	overflow-wrap: anywhere;
 }
 
 gc2-message a {
 	font-weight: bold;
-	color: #1690f3;
+	color: var(--gc2-message-a-color);
 }
 
 gc2-message a:hover {
@@ -183,11 +243,11 @@ gc2-message a:hover {
 }
 
 gc2-message a:visited {
-	color: #0b78d0;
+	color:  var(--gc2-message-a-visited-color);
 }
 
 gc2-message cite {
-	border: 1px solid #F00;
+	border: 1px solid  var(--gc2-message-cite-color);
 	cursor: pointer;
 }
 
@@ -196,11 +256,11 @@ gc2-message cite:after {
 }
 
 .gc2-highlighted {
-	background-color: #FFD202 !important;
+	background-color: var(--gc2-highlighted-color) !important;
 }
 
 .gc2-highlighted > * {
-	background-color: #FFD202 !important;
+	background-color: var(--gc2-highlighted-color) !important;
 }
 
 .gc2-totoz-search-results {
@@ -209,7 +269,7 @@ gc2-message cite:after {
 }
 
 .gc2-totoz-search-results figure:hover {
-	background: #d7d2d2;
+	background: var(--gc2-totoz-search-results-figure-background-color);
 }
 
 .gc2-emoji-search-results {
@@ -218,14 +278,14 @@ gc2-message cite:after {
 }
 
 .gc2-emoji-search-results figure:hover {
-	background: #d7d2d2;
+	background: var(--gc2-totoz-search-results-figure-background-color);
 }
 
 gc2-totoz {
 	display: inline;
 	position: relative;
 	font-weight: bold;
-	color: #0A1;
+	color: var(--gc2-totoz-color);
 	margin: unset;
 }
 
@@ -243,8 +303,8 @@ gc2-totoz:hover img {
 }
 
 gc2-spoiler {
-	background-color: black;
-	color: black;
+	background-color: var(--gc2-spoiler-color);
+	color: var(--gc2-spoiler-color);
 }
 
 gc2-spoiler:hover {
@@ -253,11 +313,11 @@ gc2-spoiler:hover {
 
 gc2-revealed-spoiler {
 	background-color: inherit;
-	color: red;
+	color: var(--gc2-revealed-spoiler-color);
 }
 
 gc2-bigorno {
-	color: #D00;
+	color: var(--gc2-bigorno-color);
 	font-weight: bold;
 }
 
@@ -304,7 +364,7 @@ gc2-attach audio {
 }
 
 #gb3-post-popup-content {
-    background-color: #f3f3f3;
+    background-color: var(--gb3-post-popup-content-background-color);
     border-radius: 4px;
 }
 
@@ -330,7 +390,7 @@ gc2-attach audio {
     	padding-left: 5px;
 		margin-right: 8px;
 		border-radius: 8px;
-    	border: 1px solid grey;
+    	border: 1px solid var(--gc2-post-norloge-border-color);
 	}
 
 	gc2-moule {
@@ -340,7 +400,7 @@ gc2-attach audio {
 		padding-right: 5px;
     	padding-left: 5px;
 	  	border-radius: 8px;
-    	border: 1px solid grey;
+    	border: 1px solid var(--gc2-moule-border-color);
 	}
 
 	gc2-message {
@@ -359,4 +419,3 @@ gc2-attach audio {
 		display: none;
 	}
 }
-
