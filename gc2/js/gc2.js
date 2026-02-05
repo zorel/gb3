@@ -352,7 +352,7 @@ class Gc2Main extends HTMLElement {
                 try {
                     let plopList = GC2_STORAGE.getPlopList ? GC2_STORAGE.getPlopList() : [];
                     if (plopList && plopList.includes(post.info)) {
-                        post.message = this.replaceRandomWordsInMessage(post.message);
+                        post.message = this.replaceWholeMessage(post.message);
                     }
                 } catch (e) {
                     // ignore errors
@@ -579,36 +579,9 @@ class Gc2Main extends HTMLElement {
         this.messageInput.setSelectionRange(selectionEnd, selectionEnd);
     }
 
-    replaceRandomWordsInMessage(text) {
-        if (!text || typeof text !== 'string') return text;
-        // split preserving whitespace tokens
-        let tokens = text.split(/(\s+)/);
-        // collect indices of tokens that are words
-        let wordIndices = [];
-        for (let i = 0; i < tokens.length; i++) {
-            if (tokens[i].trim().length > 0 && !/\s+/.test(tokens[i])) {
-                wordIndices.push(i);
-            }
-        }
-        if (wordIndices.length === 0) return text;
-        let replaceCount = Math.max(1, Math.floor(wordIndices.length * 0.85));
-        let selected = new Set();
-        while (selected.size < replaceCount) {
-            let idx = wordIndices[Math.floor(Math.random() * wordIndices.length)];
-            selected.add(idx);
-        }
-        const repl = ["plop", "prout", "grouik"];
-        selected.forEach((idx) => {
-            let w = tokens[idx];
-            let m = w.match(/^(\W*)(.*?)(\W*)$/);
-            let replacement = repl[Math.floor(Math.random() * repl.length)];
-            if (m) {
-                tokens[idx] = m[1] + replacement + m[3];
-            } else {
-                tokens[idx] = replacement;
-            }
-        });
-        return tokens.join('');
+    replaceWholeMessage(text) {
+        const repl = ["pika", "plop", "prout", "grouik", "meuh"];
+        return repl[Math.floor(Math.random() * repl.length)];
     }
 
     applyThemeFromStorage() {

@@ -333,8 +333,20 @@ gc2-attach audio {
 		margin-right: 8px;
 		border-radius: 8px;
 		border: 1px solid #555555;
-		border-radius: 8px;
+	}
+
+	gc2-moule {
+		display: inline-block;
+		width: initial;
+		vertical-align: text-top;
+		padding-right: 5px;
+    	padding-left: 5px;
+	  	border-radius: 8px;
 		border: 1px solid #555555;
+	}
+
+		gc2-message {
+		display: block;
 	}
 }
 
