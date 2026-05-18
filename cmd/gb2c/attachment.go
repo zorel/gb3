@@ -137,6 +137,6 @@ func RegisterAttachmentAPI() {
 		log.Println("GB2C_ATTACHMENT_DIRECTORY is not defined, attachments will be stored in temporary directory")
 		attachmentHandler.attachmentDirectory, _ = os.MkdirTemp("", "gb2c_attachments")
 	}
-
+	fmt.Println("Attachments will be stored in", attachmentHandler.attachmentDirectory)
 	http.Handle(attachmentEndpointPath, attachmentHandler)
 }

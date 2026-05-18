@@ -122,6 +122,7 @@ func NewStore() Store {
 	if nil != err {
 		log.Fatalf("Cannot create tmp directory, try to set GB0_STORE_DIRECTORY to a writable directory : %s\n", err)
 	}
+	fmt.Println("Posts will be stored in", fileStore.postsDirectory)
 	return fileStore
 }
 
