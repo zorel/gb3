@@ -18,37 +18,31 @@ export class Gc2Tribune extends HTMLElement {
     }
 
     insertPost(post) {
-        if (!document.getElementById(`${post.id}@${post.tribune}`)) {
-            let postElement = new Gc2Post();
-            postElement.setup(post);
-            this.appendChild(postElement);
-            this.sortPosts();
+        if (document.getElementById(`${post.id}@${post.tribune}`)) {
+            return;
         }
-    }
 
-    sortPosts() {
-        let postElements = this.getElementsByTagName('gc2-post');
-        Array.prototype.slice.call(postElements).sort((a, b) => {
-            if (a.postId < b.postId) {
-                return -1;
-            } else if (a.postId > b.postId) {
-                return 1;
-            }
-            return 0;
-        }).forEach((p) => {
-            this.appendChild(p);
-        });
+        let postElement = new Gc2Post();
+        postElement.setup(post);
 
-        this.hasBigorno = false;
-        this.hasReply = false;
-        let lastReadPostId =  GC2_STORAGE.getItem(`${this.getAttribute("name")}_lastReadPostId`) || -1;
-        for (let i = postElements.length - 1; i > 0; --i) {
-            let post = postElements[i];
-            if(post.id <= lastReadPostId || post.isMine) {
-                break;
+        // Find post that would be just after the one we just received.
+        // In the typical case, the loop should just never run and nextSibling
+        // will be undefined, so the post will be appended.
+        let nextSibling = undefined;
+        let i = this.children.length - 1;
+        while (i > 0 && this.children[i].postId > post.id) {
+            nextSibling = this.children[i];
+            --i;
+        }
+
+        this.insertBefore(postElement, nextSibling);
+
+        if (!post.isMine) {
+            let lastReadPostId =  GC2_STORAGE.getItem(`${this.getAttribute("name")}_lastReadPostId`) || -1;
+            if (post.id > lastReadPostId) {
+                this.hasReply |= post.isReply;
+                this.hasBigorno |= post.isBigorno;
             }
-            this.hasReply |= post.isReply;
-            this.hasBigorno |= post.isBigorno;
         }
     }
 
