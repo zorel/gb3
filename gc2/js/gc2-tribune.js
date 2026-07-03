@@ -25,14 +25,13 @@ export class Gc2Tribune extends HTMLElement {
         let postElement = new Gc2Post();
         postElement.setup(post);
 
-        // Find post that would be just after the one we just received.
-        // In the typical case, the loop should just never run and nextSibling
-        // will be undefined, so the post will be appended.
-        let nextSibling = undefined;
-        let i = this.children.length - 1;
-        while (i > 0 && this.children[i].postId > post.id) {
-            nextSibling = this.children[i];
-            --i;
+        let nextSibling = null;
+        for(let i = this.children.length - 1; i > 0; --i) {
+            let child = this.children[i];
+            if(child.postId > post.id) {
+                nextSibling = child;
+                break;
+            }
         }
 
         this.insertBefore(postElement, nextSibling);
