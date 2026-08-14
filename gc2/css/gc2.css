@@ -28,33 +28,44 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-	--body-color: #ffffff;
-  --body-background-color: #18181a;
-  --gc2-alarm-color: #0000dd;
-  --gc2-alarm-color-preums: #ff0000;
-  --gc2-tribune-navigator-button-background-hover: #d7d2d2;
-  --gc2-post-background-color-even: #232327;
-  --gc2-post-background-color-odd: #18181a;
-  --gc2-norloge-is-reply-color: #ff0000;
-  --gc2-message-gc2-norloge-color: #5F7FBF;
-  --gc2-moule-color: #cc3333;
-  --gc2-message-color: #ffffff;
-  --gc2-message-a-color: #1690f3;
-  --gc2-message-a-visited-color: #d00b5d;
-  --gc2-message-cite-color: #F00;
-  --gc2-highlighted-color: #FFD202;
-  --gc2-spoiler-color: #000;
-  --gc2-revealed-spoiler-color: #ff0000;
-  --gc2-bigorno-color: #D00;
-  --gb3-post-popup-content-background-color: #f3f3f3;
-  --gc2-tribune-color: #007700;
-  --gc2-post-norloge-color: #ffffff;
-  --gc2-totoz-search-results-figure-background-color: #d7d2d2;
-  --gc2-totoz-color: #0A1;
-  --gc2-post-norloge-border-color: #808080;
-  --gc2-moule-border-color: #808080;
+	--body-color: #e8efbf;
+  --body-background-color: #33292e;
+  --gc2-alarm-color:  #78adaf ;
+  --gc2-alarm-color-preums:  #913a40 ;
+  --gc2-tribune-navigator-button-background-hover:  #6f6087 ;
+  --gc2-post-background-color-even: #1d1922;
+  --gc2-post-background-color-odd: #33292e;
+  --gc2-norloge-is-reply-color: #913a40;
+  --gc2-message-gc2-norloge-color: #78adaf;
+  --gc2-moule-color: #eb8d3c;
+  --gc2-message-color:  #e8efbf;
+  --gc2-message-a-color: #78adaf;
+  --gc2-message-a-visited-color: #ad7d98;
+  --gc2-message-cite-color:  #913a40 ;
+  --gc2-highlighted-color: #b26950;
+  --gc2-spoiler-color:  #b26950 ;
+  --gc2-revealed-spoiler-color: #ae4d5d ;
+  --gc2-bigorno-color: #eb8d3c;
+  --gb3-post-popup-content-background-color: #b26950;
+  --gc2-tribune-color: #4b806a;
+  --gc2-post-norloge-color: #78adaf ;
+  --gc2-totoz-search-results-figure-background-color: #b26950;
+  --gc2-totoz-color: #a0ccad;
+  --gc2-post-norloge-border-color:#6a83a8;
+  --gc2-moule-border-color: #6f6087;
   }
+	
+	form * {
+		color: #e8efbf;
+		background-color: #33292e;
+	}
+
+	gc2-menu * {
+		color: #e8efbf;
+		background-color: #33292e;
+	}
 }
+
 
 
 body {
