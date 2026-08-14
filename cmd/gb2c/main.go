@@ -289,6 +289,17 @@ func (g *gb3) pollLoop(t *Tribune) {
 	}
 }
 
+func RegisterGc2() {
+	for _, path := range []string{os.Getenv("GB2C_GC2_FROM_PATH"), "../../gc2", "gc2"} {
+		pathInfo, err := os.Stat(path)
+		if nil == err && pathInfo.IsDir() {
+			http.Handle("/", http.FileServer(http.Dir(path)))
+			log.Printf("gc2 files served from %s\n", path)
+			return
+		}
+	}
+}
+
 func main() {
 	httpClient := newHttpClient()
 	store, err := newStore()
@@ -317,15 +328,7 @@ func main() {
 	})
 	http.HandleFunc("/gb2c/totoz/search", TotozSearch(httpClient))
 	http.HandleFunc("/gb2c/emoji/search", EmojiSearch)
-
-	gc2Path := os.Getenv("GB2C_GC2_FROM_PATH")
-	if len(gc2Path) == 0 {
-		gc2Path = "../../gc2"
-	}
-	gc2PathInfo, err := os.Stat(gc2Path)
-	if nil == err && gc2PathInfo.IsDir() {
-		http.Handle("/", http.FileServer(http.Dir(gc2Path)))
-	}
+	RegisterGc2()
 
 	listenAddress := os.Getenv("GB2C_LISTEN")
 	if len(listenAddress) == 0 {
