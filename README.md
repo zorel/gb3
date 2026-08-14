@@ -2,6 +2,11 @@
 
 gb3 is a KISS cloud native tribune stack powered by [Go](https://golang.org/)
 
+## Build and run locally
+
+  ./build-frugal.sh
+  ./gb2c
+
 ## gb0
 
 gb0 is a guiless bouchot.
