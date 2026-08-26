@@ -1,0 +1,17 @@
+[Unit]
+Description=API Webservice for coincoins
+After=gb0.service
+
+[Container]
+ContainerName=gb2c
+Image=localhost/gb2c
+Volume=gb2c-attachments:/data/attachments
+Volume=gb2c-posts:/data/posts
+Network=gb3net.network
+PublishPort=127.0.0.1:16666:16666
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target
