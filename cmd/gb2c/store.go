@@ -1,8 +1,12 @@
 package main
 
 import (
-	"sort"
-	"sync"
+	"fmt"
+	"log"
+	"os"
+	"path"
+	"strconv"
+	"strings"
 )
 
 // Store tribune's posts
@@ -11,52 +15,49 @@ type Store interface {
 	RetrieveLatests(tribune string) (Posts, error)
 }
 
-type memStore struct {
-	postsMap          *sync.Map
-	maxPostsInHistory int //  number of latests posts to store
-}
-
-func constainsById(posts Posts, id int64) bool {
-	for _, p := range posts {
-		if p.ID == id {
-			return true
+func getIntFromEnv(envVar string, defaultValue int) int {
+	value, isPresent := os.LookupEnv(envVar)
+	if isPresent {
+		intValue, err := strconv.Atoi(value)
+		if nil != err {
+			log.Printf("Invalid value for %s: %v\n", envVar, err)
+		} else {
+			return intValue
 		}
 	}
-	return false
+	return defaultValue
 }
 
-func appendUniquePosts(posts Posts, elements ...Post) Posts {
-	for _, e := range elements {
-		if !constainsById(posts, e.ID) {
-			posts = append(posts, e)
+func newStore() (Store, error) {
+	maxPostsInHistory := getIntFromEnv("GB2C_MAX_POSTS_IN_HISTORY", 200)
+
+	storeType := strings.ToLower(os.Getenv("GB2C_STORE"))
+	switch storeType {
+	case "", "memory":
+		log.Println("Using in-memory store")
+		return NewMemStore(maxPostsInHistory), nil
+	case "sqlite":
+		var err error
+		dbPath := os.Getenv("GB2C_SQLITE_PATH")
+		if dbPath == "" {
+			dbPath, err = os.MkdirTemp("", "gb2c")
+			if err != nil {
+				return nil, fmt.Errorf("could not create temporary store directory: %v", err)
+			}
+			dbPath = path.Join(dbPath, "posts.sqlite")
 		}
-	}
-	return posts
-}
 
-func (m memStore) Save(tribune string, posts Posts) error {
-	newPosts := make(Posts, 0, m.maxPostsInHistory)
-	oldPosts, ok := m.postsMap.Load(tribune)
-	if ok {
-		newPosts = append(newPosts, oldPosts.(Posts)...)
-		newPosts = appendUniquePosts(newPosts, posts...)
-	} else {
-		newPosts = append(newPosts, posts...)
-	}
-	sort.Sort(newPosts)
-	if len(newPosts) > m.maxPostsInHistory {
-		newPosts = newPosts[len(newPosts)-m.maxPostsInHistory:]
-	}
-	m.postsMap.Store(tribune, newPosts)
-	return nil
-}
+		maxStoredPosts := getIntFromEnv("GB2C_SQLITE_MAX_POSTS_IN_STORAGE", maxPostsInHistory)
 
-func (m memStore) RetrieveLatests(tribune string) (Posts, error) {
-	posts, _ := m.postsMap.LoadOrStore(tribune, make(Posts, 0, m.maxPostsInHistory))
-	return posts.(Posts), nil
-}
-
-// NewMemStore creates a memory-backed store
-func NewMemStore(maxPostsInHistory int) Store {
-	return &memStore{postsMap: new(sync.Map), maxPostsInHistory: maxPostsInHistory}
+		store, err := NewSqliteStore(dbPath, maxPostsInHistory, maxStoredPosts)
+		if err != nil {
+			return nil, fmt.Errorf("could not create SQLite store: %v", err)
+		} else {
+			log.Printf("Using SQLite store in %s\n", dbPath)
+			return store, nil
+		}
+	default:
+		log.Println("Unknown store type: ", storeType)
+		return nil, fmt.Errorf("unknown store type: %s", storeType)
+	}
 }
