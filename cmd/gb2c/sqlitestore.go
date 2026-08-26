@@ -4,12 +4,13 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	_ "modernc.org/sqlite"
 	"os"
 	"path"
-	"sort"
+	"slices"
 	"time"
 )
 
@@ -112,8 +113,7 @@ func (s *SqliteStore) Save(tribune string, posts Posts) error {
 		}
 	}
 	if len(errs) > 0 {
-		// FIXME: In Go 1.20+, replace the following with: return errors.Join(errs...)
-		return fmt.Errorf("%v", errs)
+		return errors.Join(errs...)
 	}
 
 	if s.maxPostsInStorage > 0 {
@@ -153,8 +153,7 @@ func (s *SqliteStore) RetrieveLatests(tribune string) (Posts, error) {
 		posts = append(posts, p)
 	}
 
-	// FIXME: In Go 1.21+, replace the following with:slices.Reverse(posts)
-	sort.Sort(posts)
+	slices.Reverse(posts)
 
 	return posts, nil
 }
