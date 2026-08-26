@@ -1,11 +1,21 @@
+//go:build sqlite
+
 package main
 
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	_ "modernc.org/sqlite"
+	"os"
+	"path"
 	"sort"
 	"time"
 )
+
+func init() {
+	storeMap["sqlite"] = NewSqliteStore
+}
 
 type SqliteStore struct {
 	db                *sql.DB
@@ -22,13 +32,8 @@ func formatPostTime(postTime time.Time, location *time.Location) string {
 	return postTime.In(location).Format("20060102150405")
 }
 
-func NewSqliteStore(dbPath string, maxPostsInHistory int, maxPostsInStorage int) (Store, error) {
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open SQLite database: %v", err)
-	}
-
-	_, err = db.Exec(`
+func initSqliteDatabase(db *sql.DB) error {
+	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS posts (
 			Tribune TEXT,
 			ID INTEGER,
@@ -39,12 +44,38 @@ func NewSqliteStore(dbPath string, maxPostsInHistory int, maxPostsInStorage int)
 			PRIMARY KEY (Tribune, ID)
 		);`)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create posts table: %v", err)
+		return fmt.Errorf("failed to create posts table: %v", err)
 	}
 
 	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS tribune_and_time_idx ON posts (Tribune, Time);`)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create index on posts table: %v", err)
+		return fmt.Errorf("failed to create index on posts table: %v", err)
+	}
+
+	return nil
+}
+
+func NewSqliteStore() (Store, error) {
+	var err error
+	dbPath := os.Getenv("GB2C_SQLITE_PATH")
+	if dbPath == "" {
+		dbPath, err = os.MkdirTemp("", "gb2c")
+		if err != nil {
+			return nil, fmt.Errorf("could not create temporary store directory: %v", err)
+		}
+		dbPath = path.Join(dbPath, "posts.sqlite")
+	}
+
+	maxPostsInHistory := getIntFromEnv("GB2C_MAX_POSTS_IN_HISTORY", 200)
+	maxPostsInStorage := getIntFromEnv("GB2C_SQLITE_MAX_POSTS_IN_STORAGE", maxPostsInHistory)
+
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open SQLite database: %v", err)
+	}
+
+	if err := initSqliteDatabase(db); err != nil {
+		return nil, err
 	}
 
 	location, err := time.LoadLocation("Europe/Paris")
@@ -52,6 +83,7 @@ func NewSqliteStore(dbPath string, maxPostsInHistory int, maxPostsInStorage int)
 		return nil, fmt.Errorf("failed to load time location: %v", err)
 	}
 
+	log.Printf("Using SQLite store in %s\n", dbPath)
 	return &SqliteStore{
 		db:                db,
 		location:          location,

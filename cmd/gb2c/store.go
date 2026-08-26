@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 )
+
+var storeMap = make(map[string]func() (Store, error))
 
 // Store tribune's posts
 type Store interface {
@@ -29,35 +30,12 @@ func getIntFromEnv(envVar string, defaultValue int) int {
 }
 
 func newStore() (Store, error) {
-	maxPostsInHistory := getIntFromEnv("GB2C_MAX_POSTS_IN_HISTORY", 200)
-
 	storeType := strings.ToLower(os.Getenv("GB2C_STORE"))
-	switch storeType {
-	case "", "memory":
-		log.Println("Using in-memory store")
-		return NewMemStore(maxPostsInHistory), nil
-	case "sqlite":
-		var err error
-		dbPath := os.Getenv("GB2C_SQLITE_PATH")
-		if dbPath == "" {
-			dbPath, err = os.MkdirTemp("", "gb2c")
-			if err != nil {
-				return nil, fmt.Errorf("could not create temporary store directory: %v", err)
-			}
-			dbPath = path.Join(dbPath, "posts.sqlite")
-		}
-
-		maxStoredPosts := getIntFromEnv("GB2C_SQLITE_MAX_POSTS_IN_STORAGE", maxPostsInHistory)
-
-		store, err := NewSqliteStore(dbPath, maxPostsInHistory, maxStoredPosts)
-		if err != nil {
-			return nil, fmt.Errorf("could not create SQLite store: %v", err)
-		} else {
-			log.Printf("Using SQLite store in %s\n", dbPath)
-			return store, nil
-		}
-	default:
+	storeCtor, found := storeMap[storeType]
+	if !found {
 		log.Println("Unknown store type: ", storeType)
 		return nil, fmt.Errorf("unknown store type: %s", storeType)
 	}
+
+	return storeCtor()
 }

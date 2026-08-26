@@ -1,9 +1,15 @@
 package main
 
 import (
+	"log"
 	"sort"
 	"sync"
 )
+
+func init() {
+	storeMap["memory"] = NewMemStore
+	storeMap[""] = NewMemStore // Default store implementation
+}
 
 type memStore struct {
 	postsMap          *sync.Map
@@ -51,6 +57,9 @@ func (m memStore) RetrieveLatests(tribune string) (Posts, error) {
 }
 
 // NewMemStore creates a memory-backed store
-func NewMemStore(maxPostsInHistory int) Store {
-	return &memStore{postsMap: new(sync.Map), maxPostsInHistory: maxPostsInHistory}
+func NewMemStore() (Store, error) {
+	maxPostsInHistory := getIntFromEnv("GB2C_MAX_POSTS_IN_HISTORY", 200)
+
+	log.Println("Using in-memory store")
+	return &memStore{postsMap: new(sync.Map), maxPostsInHistory: maxPostsInHistory}, nil
 }
