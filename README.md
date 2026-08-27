@@ -77,6 +77,11 @@ Set to true to enable full logging.
 
 Oauth credentials for linuxfr API.
 
+When creating the linuxfr oAuth application, you need to set the following values:
+
+- Name: the user-agent that will be displayed in the tooltip, typically 'gb3'
+- Redirection URL: `https://<your domain>/gb2c/linuxfr/connected`
+
 #### GB2C_GB0_TRIBUNES
 
 List of gb0 tribunes url. Default value is:
