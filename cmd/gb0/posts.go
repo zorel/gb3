@@ -35,8 +35,7 @@ func (p *Post) PrintTsv(w io.Writer) {
 }
 
 func tsvSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	for i := 0; i < len(data); i++ {
-		d := data[i]
+	for i, d := range data {
 		if d == '\t' || d == '\n' {
 			return i + 1, data[:i], nil
 		}

@@ -89,8 +89,8 @@ func (tc *TribuneClient) parseTSVBackend(tribune *Tribune, body io.ReadCloser) (
 	if nil != err {
 		return nil, err
 	}
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(string(data), "\n")
+	for line := range lines {
 		record := strings.Split(line, "\t")
 		if len(record) < 5 {
 			continue

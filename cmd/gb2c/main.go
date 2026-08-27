@@ -42,7 +42,7 @@ func (g *gb3) addGb0Tribunes() {
 	if len(gb0Tribunes) == 0 {
 		gb0Tribunes = "devnewton:https://gb3.devnewton.fr,gabuzomeu:https://gb3.plop.cc"
 	}
-	for _, gb0Tribune := range strings.Split(gb0Tribunes, ",") {
+	for gb0Tribune := range strings.SplitSeq(gb0Tribunes, ",") {
 		gb0TribuneSplitted := strings.SplitN(gb0Tribune, ":", 2)
 		if len(gb0TribuneSplitted) != 2 {
 			fmt.Printf("Invalid gb0 tribune description in GB2C_GB0_TRIBUNES: %s\n", gb0Tribune)
@@ -59,7 +59,7 @@ func (g *gb3) addMiaoliTribunes() {
 	if len(miaoliTribunes) == 0 {
 		miaoliTribunes = "reveildutroll:https://miaoli.im/%2B6VtcdSCI0Y"
 	}
-	for _, miaoliTribune := range strings.Split(miaoliTribunes, ",") {
+	for miaoliTribune := range strings.SplitSeq(miaoliTribunes, ",") {
 		miaoliTribuneSplitted := strings.SplitN(miaoliTribune, ":", 2)
 		if len(miaoliTribuneSplitted) != 2 {
 			fmt.Printf("Invalid miaoli tribune description in GB2C_MIAOLI_TRIBUNES: %s\n", miaoliTribune)

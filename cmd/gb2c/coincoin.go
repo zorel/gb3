@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"slices"
 )
 
 // Coincoin connected to gb3
@@ -22,12 +23,7 @@ func (c *Coincoin) shouldWritePost(post Post) (result bool) {
 	if nil == c.TribunesFilter {
 		return true
 	}
-	for _, t := range c.TribunesFilter {
-		if post.Tribune == t {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.TribunesFilter, post.Tribune)
 }
 
 // Write write events to coincoin
