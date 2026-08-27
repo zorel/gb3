@@ -68,7 +68,6 @@ export class Gc2Menu extends HTMLElement {
         this.clear();
 
         let component = document.createElement(componentName);
-        component.setup();
         this.appendChild(component);
         component.focus();
 
@@ -96,7 +95,6 @@ export class Gc2Menu extends HTMLElement {
         this.clear();
 
         let component = document.createElement(componentName);
-        component.setup();
         this.appendChild(component);
         component.focus();
 
@@ -131,7 +129,7 @@ class Gc2TotozSearch extends HTMLElement {
         super();
     }
 
-    setup() {
+    connectedCallback() {
         let form = document.createElement("form");
 
         this.searchInput = document.createElement("input");
@@ -226,7 +224,7 @@ class Gc2EmojiSearch extends HTMLElement {
      */
     searchInput;
 
-    setup() {
+    connectedCallback() {
         let form = document.createElement("form");
 
         this.searchInput = document.createElement("input");
@@ -318,7 +316,7 @@ class Gc2Attach extends HTMLElement {
         super();
     }
 
-    setup() {
+    connectedCallback() {
         let form = document.createElement("form");
         form.enctype = "multipart/form-data";
         form.method = "post";
@@ -446,7 +444,7 @@ class Gc2Alt extends HTMLElement {
         super();
     }
 
-    setup() {
+    connectedCallback() {
         let blamButton = document.createElement("button");
         blamButton.innerText = "BLAM";
         blamButton.onclick = () => {
