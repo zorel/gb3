@@ -410,30 +410,41 @@ class Gc2Main extends HTMLElement {
     }
 
     setupGesture() {
-        delete Hammer.defaults.cssProps.userSelect;
-        let hammertime = new Hammer(document.querySelector("gc2-main"), {
-            inputClass: Hammer.TouchInput
-        });
-        hammertime.on('swipeleft', (_e) => {
-            if (this.tribuneSelect.selectedIndex === 0) {
-                this.tribuneSelect.selectedIndex = this.tribuneSelect.options.length - 1;
-            } else {
-                this.tribuneSelect.selectedIndex = this.tribuneSelect.selectedIndex - 1;
+        let startX, startY, startTime;
+        this.addEventListener("pointerdown", event => {
+            if (event.pointerType !== "touch") {
+                return; // not a valid touch event
             }
-            this.setActiveTribune(this.tribuneSelect.value);
-            this.scrollToBottom();
-        }
-        );
-        hammertime.on('swiperight', (_e) => {
-            if (this.tribuneSelect.selectedIndex >= (this.tribuneSelect.options.length - 1)) {
-                this.tribuneSelect.selectedIndex = 0;
-            } else {
-                this.tribuneSelect.selectedIndex = this.tribuneSelect.selectedIndex + 1;
-            }
-            this.setActiveTribune(this.tribuneSelect.value);
-            this.scrollToBottom();
+            startX = event.clientX;
+            startY = event.clientY;
+            startTime = performance.now();
         });
+        this.addEventListener("pointerup", event => {
+            if (event.pointerType !== "touch" || startX === null) {
+                return; // not a valid touch event
+            }
 
+            const dx = Math.abs(event.clientX - startX);
+            const dy = Math.abs(event.clientY - startY);
+            const dt = performance.now() - startTime;
+            const dir = Math.sign(event.clientX - startX);
+
+            startX = null;
+            startX = null;
+            startTime = null;
+
+            if (dx < 10 || dx/dy < 2.0 || dx/dt < 0.3) {
+                console.log("Not a swipe!", {'dx': dx, 'dx/dt': dx/dt, 'dx/dy': dx/dy});
+                return // not a horizontal swipe
+            }
+
+            console.log("Swipe detected", {'dx': dx, 'dx/dt': dx/dt, 'dx/dy': dx/dy, 'dir': dir > 0 ? 'right' : 'left'});
+            const cur = this.tribuneSelect.selectedIndex;
+            const n = this.tribuneSelect.options.length;
+            this.tribuneSelect.selectedIndex = (cur + dir + n) % n;
+            this.setActiveTribune(this.tribuneSelect.value);
+            this.scrollToBottom();
+        });
     }
 
     async listTribunes() {
