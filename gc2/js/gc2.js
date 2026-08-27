@@ -207,50 +207,28 @@ class Gc2Main extends HTMLElement {
     }
 
     setupShortcutButtons() {
-        let totozButton = document.createElement("button");
-        totozButton.type = "button";
-        totozButton.classList.add("gc2-shortcuts-button");
-        totozButton.innerText = "😱";
-        totozButton.onclick = () => {
-            this.style.display = "none";
-            /**
-             * @type Gc2Menu
-             */
-            let menu = document.querySelector("gc2-menu");
-            menu.style.display = "";
-            menu.showOnlyTotozSearch();
-        };
-        this.controls.appendChild(totozButton);
+        const shortcutButtons = [
+            ["😱", "gc2-totozsearch"],
+            ["💩", "gc2-emojisearch"],
+            ["📎", "gc2-attach"],
+        ];
 
-        let emojiButton = document.createElement("button");
-        emojiButton.type = "button";
-        emojiButton.classList.add("gc2-shortcuts-button");
-        emojiButton.innerText = "💩";
-        emojiButton.onclick = () => {
-            this.style.display = "none";
-            /**
-             * @type Gc2Menu
-             */
-            let menu = document.querySelector("gc2-menu");
-            menu.style.display = "";
-            menu.showOnlyEmojiSearch();
-        };
-        this.controls.appendChild(emojiButton);
-
-        let attachButton = document.createElement("button");
-        attachButton.type = "button";
-        attachButton.classList.add("gc2-shortcuts-button");
-        attachButton.innerText = "📎";
-        attachButton.onclick = () => {
-            this.style.display = "none";
-            /**
-             * @type Gc2Menu
-             */
-            let menu = document.querySelector("gc2-menu");
-            menu.style.display = "";
-            menu.showOnlyAttach();
-        };
-        this.controls.appendChild(attachButton);
+        for (const [label, component] of shortcutButtons) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.classList.add("gc2-shortcuts-button");
+            button.innerText = label;
+            button.onclick = () => {
+                this.style.display = "none";
+                /**
+                 * @type Gc2Menu
+                 */
+                let menu = document.querySelector("gc2-menu");
+                menu.style.display = "";
+                menu.showComponent(component, true);
+            };
+            this.controls.appendChild(button);
+        }
     }
 
     setupMenuButton() {
@@ -492,112 +470,63 @@ class Gc2Main extends HTMLElement {
         }
     }
 
-    altBlam() {
-        this.insertTextInMessage("_o/* <b>BLAM</b>! ");
-    }
+    alt(name) {
+        if (name === "lastPosted") {
+            let lastPostedMessage = GC2_STORAGE.getItem("last_posted_message");
+            if (lastPostedMessage) {
+                this.messageInput.value = lastPostedMessage;
+                this.messageInput.focus();
+            }
+            return;
+        }
 
-    altMoment() {
-        this.insertTextInMessage(
-            `====> <b>Moment ${this.getSelectedText()}</b> <====`,
-            16,
-        );
-    }
+        const alts = {
+            // name: text (%s is the selection)
+            blam: "_o/* <b>BLAM</b>! ",
+            moment: "====> <b>Moment %s</b> <====",
+            phi: "\u03C6",
+            bold: "<b>%s</b>",
+            italic: "<i>%s</i>",
+            underline: "<u>%s</u>",
+            strikeThrough: "<s>%s</s>",
+            teletext: "<tt>%s</tt>",
+            code: "<code>%s</code>",
+            spoiler: "<spoiler>%s</spoiler>",
+            paf: "_o/* <b>paf!</b> ",
+            acappella: "\u266A <i>%s</i> \u266A",
+        };
 
-    altPhi() {
-        this.insertTextInMessage("\u03C6");
-    }
-
-    altBold() {
-        this.insertTextInMessage(`<b>${this.getSelectedText()}</b>`, 3);
-    }
-
-    altItalic() {
-        this.insertTextInMessage(`<i>${this.getSelectedText()}</i>`, 3);
-    }
-
-    altUnderline() {
-        this.insertTextInMessage(`<u>${this.getSelectedText()}</u>`, 3);
-    }
-
-    altStrikeThrough() {
-        this.insertTextInMessage(`<s>${this.getSelectedText()}</s>`, 3);
-    }
-
-    altTeletext() {
-        this.insertTextInMessage(`<tt>${this.getSelectedText()}</tt>`, 4);
-    }
-
-    altCode() {
-        this.insertTextInMessage(`<code>${this.getSelectedText()}</code>`, 6);
-    }
-
-    altSpoiler() {
-        this.insertTextInMessage(
-            `<spoiler>${this.getSelectedText()}</spoiler>`,
-            9,
-        );
-    }
-
-    altPaf() {
-        this.insertTextInMessage("_o/* <b>paf!</b> ");
-    }
-
-    altAcappella() {
-        this.insertTextInMessage(
-            `\u266A <i>${this.getSelectedText()}</i> \u266A`,
-            5,
-        );
-    }
-
-    altLastPosted() {
-        let lastPostedMessage = GC2_STORAGE.getItem("last_posted_message");
-        if (lastPostedMessage) {
-            this.messageInput.value = lastPostedMessage;
-            this.messageInput.focus();
+        let text = alts[name];
+        if (text) {
+            let pos = text.indexOf("%s");
+            if (pos >= 0) {
+                text = text.replace("%s", this.getSelectedText());
+            }
+            this.insertTextInMessage(text, pos);
         }
     }
 
     handleAltShortcut(keychar) {
-        switch (keychar) {
-            case "o":
-                this.altBlam();
-                return true;
-            case "m":
-                this.altMoment();
-                return true;
-            case "f":
-                this.altPhi();
-                return true;
-            case "b":
-                this.altBold();
-                return true;
-            case "i":
-                this.altItalic();
-                return true;
-            case "u":
-                this.altUnderline();
-                return true;
-            case "s":
-                this.altStrikeThrough();
-                return true;
-            case "t":
-                this.altTeletext();
-                return true;
-            case "c":
-                this.altCode();
-                return true;
-            case "d":
-                this.altSpoiler();
-                return true;
-            case "p":
-                this.altPaf();
-                return true;
-            case "a":
-                this.altAcappella();
-                return true;
-            case "z":
-                this.altLastPosted();
-                return true;
+        const shortcuts = {
+            o: "blam",
+            m: "moment",
+            f: "phi",
+            b: "bold",
+            i: "italic",
+            u: "underline",
+            s: "strikeThrough",
+            t: "teletext",
+            c: "code",
+            d: "spoiler",
+            p: "paf",
+            a: "acappella",
+            z: "lastPosted",
+        };
+
+        const altName = shortcuts[keychar];
+        if (altName) {
+            this.alt(altName);
+            return true;
         }
         return false;
     }
@@ -609,8 +538,8 @@ class Gc2Main extends HTMLElement {
         );
     }
 
-    insertTextInMessage(text, pos) {
-        if (!pos) {
+    insertTextInMessage(text, pos = -1) {
+        if (pos < 0) {
             pos = text.length;
         }
         var selectionEnd = this.messageInput.selectionStart + pos;

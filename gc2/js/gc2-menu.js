@@ -15,47 +15,25 @@ export class Gc2Menu extends HTMLElement {
     showSelector() {
         this.clear();
 
-        let totozButton = document.createElement("button");
-        totozButton.innerText = "😱 Totoz";
-        totozButton.onclick = () => {
-            this.showComponent("gc2-totozsearch");
-        };
-        this.appendChild(totozButton);
+        const buttons = [
+            ["😱 Totoz", "gc2-totozsearch"],
+            ["💩 Emoji", "gc2-emojisearch"],
+            ["📎 Attach", "gc2-attach"],
+            ["⎇ ALT", "gc2-alt"],
+            ["⚙ Settings", () => (window.location.href = "/settings.html")],
+            ["↩ Back", gc2CloseMenu],
+        ];
 
-        let emojiButton = document.createElement("button");
-        emojiButton.innerText = "💩 Emoji";
-        emojiButton.onclick = () => {
-            this.showComponent("gc2-emojisearch");
-        };
-        this.appendChild(emojiButton);
-
-        let attachButton = document.createElement("button");
-        attachButton.innerText = "📎 Attach";
-        attachButton.onclick = () => {
-            this.showComponent("gc2-attach");
-        };
-        this.appendChild(attachButton);
-
-        let altButton = document.createElement("button");
-        altButton.innerText = "⎇ ALT";
-        altButton.onclick = () => {
-            this.showComponent("gc2-alt");
-        };
-        this.appendChild(altButton);
-
-        let settingsButton = document.createElement("button");
-        settingsButton.innerText = "⚙ Settings";
-        settingsButton.onclick = () => {
-            window.location.href = "/settings.html";
-        };
-        this.appendChild(settingsButton);
-
-        let backButton = document.createElement("button");
-        backButton.innerText = "↩ Back";
-        backButton.onclick = () => {
-            gc2CloseMenu();
-        };
-        this.appendChild(backButton);
+        for (const [label, target] of buttons) {
+            const button = document.createElement("button");
+            button.innerText = label;
+            if (typeof target === "string") {
+                button.onclick = () => this.showComponent(target);
+            } else {
+                button.onclick = target;
+            }
+            this.appendChild(button);
+        }
 
         let aboutLink = document.createElement("a");
         aboutLink.innerText = "About gb3";
@@ -64,7 +42,7 @@ export class Gc2Menu extends HTMLElement {
         this.appendChild(aboutLink);
     }
 
-    showComponent(componentName) {
+    showComponent(componentName, standalone = false) {
         this.clear();
 
         let component = document.createElement(componentName);
@@ -74,34 +52,11 @@ export class Gc2Menu extends HTMLElement {
         let backButton = document.createElement("button");
         backButton.innerText = "Back";
         backButton.onclick = () => {
-            this.showSelector();
-        };
-        this.appendChild(backButton);
-    }
-
-    showOnlyTotozSearch() {
-        this.showOnlyComponent("gc2-totozsearch");
-    }
-
-    showOnlyEmojiSearch() {
-        this.showOnlyComponent("gc2-emojisearch");
-    }
-
-    showOnlyAttach() {
-        this.showOnlyComponent("gc2-attach");
-    }
-
-    showOnlyComponent(componentName) {
-        this.clear();
-
-        let component = document.createElement(componentName);
-        this.appendChild(component);
-        component.focus();
-
-        let backButton = document.createElement("button");
-        backButton.innerText = "Back";
-        backButton.onclick = () => {
-            gc2CloseMenu();
+            if (standalone) {
+                gc2CloseMenu();
+            } else {
+                this.showSelector();
+            }
         };
         this.appendChild(backButton);
     }
@@ -429,122 +384,32 @@ customElements.define("gc2-attach", Gc2Attach);
 
 class Gc2Alt extends HTMLElement {
     connectedCallback() {
-        let blamButton = document.createElement("button");
-        blamButton.innerText = "BLAM";
-        blamButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altBlam();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(blamButton);
+        const buttons = [
+            ["BLAM", "blam"],
+            ["Moment", "moment"],
+            ["φ", "phi"],
+            ["Bold", "bold"],
+            ["Italic", "italic"],
+            ["Underline", "underline"],
+            ["Strike through", "strikeThrough"],
+            ["Teletext", "teletext"],
+            ["Code", "code"],
+            ["Spoiler", "spoiler"],
+            ["Paf", "paf"],
+            ["♪", "acappella"],
+            ["Last posted", "lastPosted"],
+        ];
 
-        let momentButton = document.createElement("button");
-        momentButton.innerText = "Moment";
-        momentButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altMoment();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(momentButton);
-
-        let phiButton = document.createElement("button");
-        phiButton.innerText = "φ";
-        phiButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altPhi();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(phiButton);
-
-        let boldButton = document.createElement("button");
-        boldButton.innerText = "Bold";
-        boldButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altBold();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(boldButton);
-
-        let italicButton = document.createElement("button");
-        italicButton.innerText = "Italic";
-        italicButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altItalic();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(italicButton);
-
-        let underlineButton = document.createElement("button");
-        underlineButton.innerText = "Underline";
-        underlineButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altUnderline();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(underlineButton);
-
-        let strikeThroughButton = document.createElement("button");
-        strikeThroughButton.innerText = "Strike through";
-        strikeThroughButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altStrikeThrough();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(strikeThroughButton);
-
-        let teletextButton = document.createElement("button");
-        teletextButton.innerText = "Teletext";
-        teletextButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altTeletext();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(teletextButton);
-
-        let codeButton = document.createElement("button");
-        codeButton.innerText = "Code";
-        codeButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altCode();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(codeButton);
-
-        let spoilerButton = document.createElement("button");
-        spoilerButton.innerText = "Spoiler";
-        spoilerButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altSpoiler();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(spoilerButton);
-
-        let pafButton = document.createElement("button");
-        pafButton.innerText = "Paf";
-        pafButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altPaf();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(pafButton);
-
-        let acappellaButton = document.createElement("button");
-        acappellaButton.innerText = "♪";
-        acappellaButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altAcappella();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(acappellaButton);
-
-        let lastPostedButton = document.createElement("button");
-        lastPostedButton.innerText = "Last posted";
-        lastPostedButton.onclick = () => {
-            document.getElementsByTagName("gc2-main")[0].altLastPosted();
-            gc2CloseMenu();
-            document.getElementById("gc2-message").focus();
-        };
-        this.appendChild(lastPostedButton);
+        for (const [label, altName] of buttons) {
+            const button = document.createElement("button");
+            button.innerText = label;
+            button.onclick = () => {
+                document.getElementsByTagName("gc2-main")[0].alt(altName);
+                gc2CloseMenu();
+                document.getElementById("gc2-message").focus();
+            };
+            this.appendChild(button);
+        }
     }
 
     focus() {
