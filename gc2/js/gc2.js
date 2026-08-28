@@ -154,21 +154,21 @@ class Gc2Main extends HTMLElement {
                     headers.set("Authorization", `Bearer ${accessToken}`);
                 }
             }
-            fetch("/gb2c/post", {
-                body: data,
-                method: "POST",
-                headers: headers,
-            })
-                .then((_data) => {
-                    this.messageInput.classList.toggle("gc2-loading", false);
-                })
-                .catch((error) => {
-                    this.messageInput.classList.toggle("gc2-loading", false);
-                    console.log(
-                        `Cannot post message '${data.get("message")}'. Error: `,
-                        error,
-                    );
+
+            try {
+                await fetch("/gb2c/post", {
+                    body: data,
+                    method: "POST",
+                    headers: headers,
                 });
+            } catch (error) {
+                console.log(
+                    `Cannot post message '${data.get("message")}'. Error: `,
+                    error,
+                );
+            } finally {
+                this.messageInput.classList.toggle("gc2-loading", false);
+            }
         }
     }
 

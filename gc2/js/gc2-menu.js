@@ -145,23 +145,18 @@ class Gc2TotozSearch extends HTMLElement {
         searchButton.type = "submit";
         form.appendChild(searchButton);
 
-        form.onsubmit = (e) => {
+        form.onsubmit = async (e) => {
             e.preventDefault();
-            fetch(
-                `/gb2c/totoz/search?terms=${encodeURIComponent(this.searchInput.value)}`,
-                {
-                    method: "GET",
-                },
-            )
-                .then((response) => {
-                    return response.json();
-                })
-                .then((data) => {
-                    this.setResults(data);
-                })
-                .catch((error) => {
-                    console.log(`Cannot search totoz. Error: `, error);
-                });
+
+            try {
+                const response = await fetch(
+                    `/gb2c/totoz/search?terms=${encodeURIComponent(this.searchInput.value)}`,
+                    { method: "GET" },
+                );
+                this.setResults(await response.json());
+            } catch (error) {
+                console.log(`Cannot search totoz. Error: `, error);
+            }
         };
         this.appendChild(form);
 
@@ -244,23 +239,17 @@ class Gc2EmojiSearch extends HTMLElement {
         searchButton.innerText = "Search";
         form.appendChild(searchButton);
 
-        form.onsubmit = (e) => {
+        form.onsubmit = async (e) => {
             e.preventDefault();
-            fetch(
-                `/gb2c/emoji/search?terms=${encodeURIComponent(this.searchInput.value)}`,
-                {
-                    method: "GET",
-                },
-            )
-                .then((response) => {
-                    return response.json();
-                })
-                .then((data) => {
-                    this.setResults(data);
-                })
-                .catch((error) => {
-                    console.log(`Cannot search emoji. Error: `, error);
-                });
+            try {
+                const response = await fetch(
+                    `/gb2c/emoji/search?terms=${encodeURIComponent(this.searchInput.value)}`,
+                    { method: "GET" },
+                );
+                this.setResults(await response.json());
+            } catch (error) {
+                console.log(`Cannot search emoji. Error: `, error);
+            }
         };
         this.appendChild(form);
 
@@ -348,39 +337,41 @@ class Gc2Attach extends HTMLElement {
 
         let uploadError = document.createElement("p");
 
-        form.onsubmit = (e) => {
+        form.onsubmit = async (e) => {
             e.preventDefault();
             progress.src = "/img/loading.svg";
-            fetch(`/gb2c/attachment/`, {
-                method: "POST",
-                body: new FormData(form),
-            })
-                .then((response) => {
-                    progress.src = "";
-                    let location = response.headers.get("Location");
-                    if (location) {
-                        uploadError.innerText = "";
-                        let message = document.getElementById("gc2-message");
-                        message.value += `${message.value && " "}${location} `;
-                        gc2CloseMenu();
-                        message.focus();
-                    } else {
-                        switch (response.status) {
-                            case 413:
-                                uploadError.innerText =
-                                    "Cannot attach file: file is too large, try less than 1mo.";
-                                break;
-                            default:
-                                uploadError.innerText = `Cannot attach file: http response is ${response.status} ${response.statusText}`;
-                                break;
-                        }
-                    }
-                })
-                .catch((error) => {
-                    progress.src = "";
-                    uploadError.innerText = "Cannot attach file: unknown error";
-                    console.log(`Cannot attach file. Error: `, error);
+
+            try {
+                const response = await fetch(`/gb2c/attachment/`, {
+                    method: "POST",
+                    body: new FormData(form),
                 });
+
+                progress.src = "";
+                let location = response.headers.get("Location");
+                if (location) {
+                    uploadError.innerText = "";
+                    let message = document.getElementById("gc2-message");
+                    message.value += `${message.value && " "}${location} `;
+                    gc2CloseMenu();
+                    message.focus();
+                    return;
+                }
+
+                switch (response.status) {
+                    case 413:
+                        uploadError.innerText =
+                            "Cannot attach file: file is too large, try less than 1mo.";
+                        break;
+                    default:
+                        uploadError.innerText = `Cannot attach file: http response is ${response.status} ${response.statusText}`;
+                        break;
+                }
+            } catch (error) {
+                progress.src = "";
+                uploadError.innerText = "Cannot attach file: unknown error";
+                console.log(`Cannot attach file. Error: `, error);
+            }
         };
         this.appendChild(form);
 
