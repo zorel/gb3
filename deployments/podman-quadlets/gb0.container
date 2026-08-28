@@ -1,0 +1,15 @@
+[Unit]
+Description=Guiless bouchot
+
+[Container]
+ContainerName=gb0
+Image=localhost/gb0
+Volume=gb0-data:/data
+Network=gb3net.network
+PublishPort=127.0.0.1:16667:16667
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target
