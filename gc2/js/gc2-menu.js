@@ -125,10 +125,6 @@ class Gc2TotozSearch extends HTMLElement {
      */
     resultsContainer;
 
-    constructor() {
-        super();
-    }
-
     connectedCallback() {
         let form = document.createElement("form");
 
@@ -215,10 +211,6 @@ class Gc2TotozSearch extends HTMLElement {
 customElements.define("gc2-totozsearch", Gc2TotozSearch);
 
 class Gc2EmojiSearch extends HTMLElement {
-    constructor() {
-        super();
-    }
-
     /**
      * @type HTMLInputElement
      */
@@ -312,10 +304,6 @@ class Gc2EmojiSearch extends HTMLElement {
 customElements.define("gc2-emojisearch", Gc2EmojiSearch);
 
 class Gc2Attach extends HTMLElement {
-    constructor() {
-        super();
-    }
-
     connectedCallback() {
         let form = document.createElement("form");
         form.enctype = "multipart/form-data";
@@ -440,10 +428,6 @@ class Gc2Attach extends HTMLElement {
 customElements.define("gc2-attach", Gc2Attach);
 
 class Gc2Alt extends HTMLElement {
-    constructor() {
-        super();
-    }
-
     connectedCallback() {
         let blamButton = document.createElement("button");
         blamButton.innerText = "BLAM";

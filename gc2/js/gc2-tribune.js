@@ -12,10 +12,6 @@ export class Gc2Tribune extends HTMLElement {
      */
     hasReply = false;
 
-    constructor() {
-        super();
-    }
-
     insertPost(post) {
         if (document.getElementById(`${post.id}@${post.tribune}`)) {
             return;
@@ -61,9 +57,5 @@ export class Gc2Tribune extends HTMLElement {
 }
 customElements.define("gc2-tribune", Gc2Tribune);
 
-class Gc2Tribunes extends HTMLElement {
-    constructor() {
-        super();
-    }
-}
+class Gc2Tribunes extends HTMLElement {}
 customElements.define("gc2-tribunes", Gc2Tribunes);

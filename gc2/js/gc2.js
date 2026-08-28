@@ -56,10 +56,6 @@ class Gc2Main extends HTMLElement {
      */
     storedTribunes;
 
-    constructor() {
-        super();
-    }
-
     async connectedCallback() {
         this.setupNickname();
         this.setupTribunesContainer();

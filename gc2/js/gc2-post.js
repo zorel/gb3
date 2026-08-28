@@ -67,10 +67,6 @@ class Gc2PostIcon extends HTMLElement {
             this.innerText = "📢";
         }
     }
-
-    constructor() {
-        super();
-    }
 }
 customElements.define("gc2-post-icon", Gc2PostIcon);
 
@@ -247,11 +243,7 @@ class Gc2Moule extends HTMLElement {
 }
 customElements.define("gc2-moule", Gc2Moule);
 
-class Gc2Message extends HTMLElement {
-    constructor() {
-        super();
-    }
-}
+class Gc2Message extends HTMLElement {}
 customElements.define("gc2-message", Gc2Message);
 
 export class Gc2Post extends HTMLElement {
@@ -269,10 +261,6 @@ export class Gc2Post extends HTMLElement {
      * @type Gc2PostIcon
      */
     postIcon;
-
-    constructor() {
-        super();
-    }
 
     setupWithTribune(post) {
         let tribuneElement = document.createElement("gc2-post-tribune");

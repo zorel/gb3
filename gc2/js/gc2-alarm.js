@@ -1,8 +1,4 @@
 export class Gc2Alarm extends HTMLElement {
-    constructor() {
-        super();
-    }
-
     start() {
         setInterval(() => {
             let dateLocal = new Date();

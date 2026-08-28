@@ -3,10 +3,6 @@ class Gc2TribuneNavigatorButton extends HTMLElement {
      * @type string
      */
     tribuneName;
-
-    constructor() {
-        super();
-    }
 }
 
 customElements.define(
@@ -20,10 +16,6 @@ customElements.define(
  */
 
 export class Gc2TribuneNavigator extends HTMLElement {
-    constructor() {
-        super();
-    }
-
     /**
      * @type Gc2TribuneNavigator~navigateCallback
      */
