@@ -17,8 +17,10 @@ import (
 
 var totozCacheDir string
 
-const maxTagsToRetrieve = 100
-const durationBetweenRetrieve = time.Hour
+const (
+	maxTagsToRetrieve       = 100
+	durationBetweenRetrieve = time.Hour
+)
 
 func initCacheDir() {
 	totozCacheDir = os.Getenv("CACHETOTOZ_CACHE_DIRECTORY")
@@ -49,12 +51,12 @@ func cacheTotozTags(totozName string) (cached bool, err error) {
 		return false, nil
 	}
 
-	totozUrl, err := url.JoinPath("https://nsfw.totoz.eu/totoz", totozName)
+	totozURL, err := url.JoinPath("https://nsfw.totoz.eu/totoz", totozName)
 	if nil != err {
 		return false, err
 	}
 
-	res, err := http.Get(totozUrl)
+	res, err := http.Get(totozURL)
 	if nil != err {
 		return false, err
 	}
@@ -74,10 +76,14 @@ func cacheTotozTags(totozName string) (cached bool, err error) {
 	if nil != err {
 		return false, err
 	}
-	defer totozTagsFile.Close()
+	if _, err := io.WriteString(totozTagsFile, totozTags); err != nil {
+		return false, err
+	}
+	if err := totozTagsFile.Close(); err != nil {
+		return false, err
+	}
 
-	_, err = io.WriteString(totozTagsFile, totozTags)
-	return true, err
+	return true, nil
 }
 
 func cacheTotozImage(totozName string) (cached bool, err error) {
@@ -88,12 +94,12 @@ func cacheTotozImage(totozName string) (cached bool, err error) {
 		return false, nil
 	}
 
-	totozImageUrl, err := url.JoinPath("https://nsfw.totoz.eu/img", totozName)
+	totozImageURL, err := url.JoinPath("https://nsfw.totoz.eu/img", totozName)
 	if nil != err {
 		return false, err
 	}
 
-	res, err := http.Get(totozImageUrl)
+	res, err := http.Get(totozImageURL)
 	if nil != err {
 		return false, err
 	}
@@ -106,10 +112,14 @@ func cacheTotozImage(totozName string) (cached bool, err error) {
 	if nil != err {
 		return false, err
 	}
-	defer totozImageFile.Close()
+	if _, err = io.Copy(totozImageFile, res.Body); err != nil {
+		return false, err
+	}
+	if err := totozImageFile.Close(); err != nil {
+		return false, err
+	}
 
-	_, err = io.Copy(totozImageFile, res.Body)
-	return true, err
+	return true, nil
 }
 
 func retrieveLastestTotozes() {
@@ -133,9 +143,8 @@ func retrieveLastestTotozes() {
 	nbTotozFound := 0
 	nbImagesCached := 0
 	nbTagsCached := 0
-	doc.Find(".totoz").Each(func(i int, s *goquery.Selection) {
-
-		//totoz regex /^[A-Za-z0-9-_ ]+$/ ?
+	doc.Find(".totoz").Each(func(_ int, s *goquery.Selection) {
+		// totoz regex /^[A-Za-z0-9-_ ]+$/ ?
 		totozNameWithMarkup := s.Find(".name").Text()
 		totozName := strings.TrimPrefix(totozNameWithMarkup, "[:")
 		totozName = strings.TrimSuffix(totozName, "]")
@@ -200,11 +209,11 @@ func retrieveMissingTags() {
 	}
 	fmt.Printf("Found %d totozes without tags, cached %d tags\n", nbTotozFoundWithMissingTags, nbTagsCached)
 }
-func main() {
 
+func main() {
 	initCacheDir()
 
-	go ServeTotozCacheApi()
+	go ServeTotozCacheAPI()
 
 	for {
 		retrieveLastestTotozes()

@@ -79,7 +79,7 @@ func totozCacheSearch(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ServeTotozCacheApi() {
+func ServeTotozCacheAPI() {
 	http.HandleFunc("/search.xml", totozCacheSearch)
 
 	listenAddress := os.Getenv("CACHETOTOZ_LISTEN")

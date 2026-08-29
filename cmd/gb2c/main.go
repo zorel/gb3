@@ -33,8 +33,8 @@ type gb3 struct {
 }
 
 type forwardMessage struct {
-	Post
-	*Coincoin
+	Post     Post
+	Coincoin *Coincoin
 }
 
 func (g *gb3) addGb0Tribunes() {
@@ -141,7 +141,7 @@ func (g *gb3) sendStoredPostsTo(c *Coincoin) {
 	}
 }
 
-func (g *gb3) handleList(w http.ResponseWriter, r *http.Request) {
+func (g *gb3) handleList(w http.ResponseWriter) {
 	tribunes := make([]string, 0, len(g.tribunes))
 	for t := range g.tribunes {
 		tribunes = append(tribunes, t)
@@ -180,7 +180,7 @@ func (g *gb3) handlePoll(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *gb3) handlePost(w http.ResponseWriter, r *http.Request) {
+func (g *gb3) handlePost(_ http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if nil != err {
 		log.Println(err)
@@ -205,7 +205,9 @@ func (g *gb3) pollTribune(t *Tribune) {
 	for _, p := range posts {
 		g.forward <- forwardMessage{Post: p}
 	}
-	g.store.Save(t.Name, posts)
+	if err := g.store.Save(t.Name, posts); err != nil {
+		log.Printf("Error while saving posts: %v\n", err)
+	}
 }
 
 func (g *gb3) pollLoop(t *Tribune) {
@@ -233,7 +235,7 @@ func RegisterGc2() {
 }
 
 func main() {
-	httpClient := newHttpClient()
+	httpClient := newHTTPClient()
 	store, err := newStore()
 	if nil != err {
 		log.Fatal(err)
@@ -246,8 +248,8 @@ func main() {
 	}
 	RegisterLinuxfrAPI(httpClient)
 	RegisterAttachmentAPI()
-	http.HandleFunc("/gb2c/list", func(w http.ResponseWriter, r *http.Request) {
-		g.handleList(w, r)
+	http.HandleFunc("/gb2c/list", func(w http.ResponseWriter, _ *http.Request) {
+		g.handleList(w)
 	})
 	http.HandleFunc("/gb2c/poll", func(w http.ResponseWriter, r *http.Request) {
 		g.handlePoll(w, r)

@@ -7,11 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	_ "modernc.org/sqlite"
 	"os"
 	"path"
 	"slices"
 	"time"
+
+	_ "modernc.org/sqlite"
 )
 
 func init() {

@@ -30,8 +30,9 @@ func (p Posts) Len() int           { return len(p) }
 func (p Posts) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 func (p Posts) Less(i, j int) bool { return p[i].Time < p[j].Time }
 
-func (p *Post) PrintTsv(w io.Writer) {
-	fmt.Fprintf(w, "%s\t%s\t%s\t\t%s\n", p.Time, p.Time, p.Info, p.Message)
+func (p *Post) PrintTSV(w io.Writer) error {
+	_, err := fmt.Fprintf(w, "%s\t%s\t%s\t\t%s\n", p.Time, p.Time, p.Info, p.Message)
+	return err
 }
 
 func tsvSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -49,13 +50,13 @@ func tsvSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
 func scanTsv(r io.Reader) (*Post, error) {
 	scanner := bufio.NewScanner(r)
 	scanner.Split(tsvSplit)
-	scanner.Scan() //first field is useless id
+	scanner.Scan() // first field is useless id
 	scanner.Scan()
 	var p Post
 	p.Time = scanner.Text()
 	scanner.Scan()
 	p.Info = scanner.Text()
-	scanner.Scan() //next field is useless login
+	scanner.Scan() // next field is useless login
 	scanner.Scan()
 	p.Message = scanner.Text()
 	return &p, scanner.Err()
@@ -113,11 +114,11 @@ func NewStore() Store {
 		storeDirectory, _ = os.MkdirTemp("", "gb0")
 	}
 	fileStore := &FileStore{postsDirectory: path.Join(storeDirectory, "posts"), tmpDirectory: path.Join(storeDirectory, "tmp")}
-	err := os.MkdirAll(fileStore.postsDirectory, 0755)
+	err := os.MkdirAll(fileStore.postsDirectory, 0o755)
 	if nil != err {
 		log.Fatalf("Cannot create posts directory, try to set GB0_STORE_DIRECTORY to a writable directory : %s\n", err)
 	}
-	err = os.MkdirAll(fileStore.tmpDirectory, 0755)
+	err = os.MkdirAll(fileStore.tmpDirectory, 0o755)
 	if nil != err {
 		log.Fatalf("Cannot create tmp directory, try to set GB0_STORE_DIRECTORY to a writable directory : %s\n", err)
 	}
@@ -176,7 +177,7 @@ func readPostFromFile(file string) (*Post, error) {
 	if nil != err {
 		return nil, err
 	}
-	defer tsvFile.Close()
+	defer tsvFile.Close() //nolint:errcheck
 	var post *Post
 	post, err = scanTsv(tsvFile)
 	return post, err
@@ -205,15 +206,18 @@ func (f *FileStore) tryToWritePost(p *Post) error {
 	if nil != err {
 		return err
 	}
-	defer tmpFile.Close()
-	defer os.Remove(tmpFile.Name())
-	p.PrintTsv(tmpFile)
+	defer os.Remove(tmpFile.Name()) //nolint:errcheck
+	if err := p.PrintTSV(tmpFile); err != nil {
+		return fmt.Errorf("cannot write post: %w", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		return fmt.Errorf("cannot write post: %w", err)
+	}
 
 	postDir := f.postsDirectory + "/" + t.Format("2006/01/02")
-	err = os.MkdirAll(postDir, 0755)
+	err = os.MkdirAll(postDir, 0o755)
 	if nil != err {
-		log.Printf("Cannot create directory %s : %s\n", postDir, err)
-		return err
+		return fmt.Errorf("cannot create directory %s: %w", postDir, err)
 	}
 	return os.Link(tmpFile.Name(), path.Join(postDir, p.Time+".tsv"))
 }

@@ -16,7 +16,7 @@ type memStore struct {
 	maxPostsInHistory int //  number of latests posts to store
 }
 
-func containsById(posts Posts, id int64) bool {
+func containsByID(posts Posts, id int64) bool {
 	for _, p := range posts {
 		if p.ID == id {
 			return true
@@ -27,7 +27,7 @@ func containsById(posts Posts, id int64) bool {
 
 func appendUniquePosts(posts Posts, elements ...Post) Posts {
 	for _, e := range elements {
-		if !containsById(posts, e.ID) {
+		if !containsByID(posts, e.ID) {
 			posts = append(posts, e)
 		}
 	}

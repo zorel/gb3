@@ -56,10 +56,11 @@ func (tc *TribuneClient) Post(tribune *Tribune, inRequest *http.Request) {
 	if tribune.AuthentificationType == OAuth2Authentification {
 		outRequest.Header.Set("Authorization", inRequest.Header.Get("Authorization"))
 	}
-	_, err = tc.httpClient.Do(outRequest)
+	response, err := tc.httpClient.Do(outRequest)
 	if nil != err {
 		log.Println(err)
 	}
+	response.Body.Close()
 }
 
 // Poll Retrieve backend

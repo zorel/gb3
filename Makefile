@@ -1,3 +1,5 @@
+GOLANGCI_LINT=github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2
+
 ifneq "" "$(shell command -v podman)"
 CONTAINERCMD=podman
 else
@@ -14,11 +16,11 @@ clean:
 
 .PHONY: fmt
 fmt:
-	go fmt ./...
+	go run $(GOLANGCI_LINT) fmt
 
 .PHONY: check
 check:
-	go vet ./...
+	go run $(GOLANGCI_LINT) run
 
 .PHONY: build-containers
 build-containers:
