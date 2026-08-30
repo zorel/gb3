@@ -1,4 +1,4 @@
-FROM docker.io/golang:1.24 AS gb0_builder
+FROM docker.io/golang:1.26 AS gb0_builder
 WORKDIR /go/src/codeberg.org/devnewton/gb3
 # Only download updates if modules files have changed
 COPY go.mod go.sum .
