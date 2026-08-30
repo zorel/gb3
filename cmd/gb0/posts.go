@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path"
-	"path/filepath"
 	"sort"
 	"strconv"
+	"sync/atomic"
 	"time"
 )
 
@@ -107,35 +108,47 @@ func initMaxDaysInHistory() {
 }
 
 // NewStore create posts store
-func NewStore() Store {
+func NewStore() (Store, error) {
 	storeDirectory := os.Getenv("GB0_STORE_DIRECTORY")
 	if len(storeDirectory) == 0 {
 		log.Println("GB0_STORE_DIRECTORY is not defined, posts will be stored in temporary directory")
 		storeDirectory, _ = os.MkdirTemp("", "gb0")
 	}
-	fileStore := &FileStore{postsDirectory: path.Join(storeDirectory, "posts"), tmpDirectory: path.Join(storeDirectory, "tmp")}
-	err := os.MkdirAll(fileStore.postsDirectory, 0o755)
-	if nil != err {
+
+	root, err := os.OpenRoot(storeDirectory)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := root.MkdirAll("posts", 0o755); err != nil {
+		root.Close()
 		log.Fatalf("Cannot create posts directory, try to set GB0_STORE_DIRECTORY to a writable directory : %s\n", err)
 	}
-	err = os.MkdirAll(fileStore.tmpDirectory, 0o755)
-	if nil != err {
+	if err := root.MkdirAll("tmp", 0o755); err != nil {
+		root.Close()
 		log.Fatalf("Cannot create tmp directory, try to set GB0_STORE_DIRECTORY to a writable directory : %s\n", err)
 	}
-	fmt.Println("Posts will be stored in", fileStore.postsDirectory)
-	return fileStore
+
+	fileStore := &FileStore{root: root}
+	fmt.Printf("Posts will be stored in %s/posts\n", fileStore.root.Name())
+	return fileStore, nil
 }
 
 // Store posts
 type Store interface {
 	ReadPosts() (p Posts)
 	WritePost(p *Post)
+	Close()
 }
 
 // FileStore store posts in file
 type FileStore struct {
-	postsDirectory string
-	tmpDirectory   string
+	root    *os.Root
+	counter atomic.Uint32
+}
+
+func (f *FileStore) Close() {
+	f.root.Close()
 }
 
 // ReadPosts Load from file
@@ -144,22 +157,22 @@ func (f *FileStore) ReadPosts() Posts {
 	now := time.Now().In(timeLocation)
 	for day := 0; day <= maxDaysInHistory; day++ {
 		dayTime := now.AddDate(0, 0, -day)
-		dayDir := f.postsDirectory + "/" + dayTime.Format("2006/01/02")
-		posts = readPostsFromDirectory(posts, dayDir)
+		dayDir := "posts/" + dayTime.Format("2006/01/02")
+		posts = f.readPostsFromDirectory(posts, dayDir)
 	}
 	sort.Sort(posts)
 	return posts
 }
 
-func readPostsFromDirectory(posts Posts, directory string) Posts {
-	files, err := filepath.Glob(directory + "/*.tsv")
+func (f *FileStore) readPostsFromDirectory(posts Posts, directory string) Posts {
+	files, err := fs.Glob(f.root.FS(), directory+"/*.tsv")
 	if nil != err {
 		log.Printf("Cannot read posts from %s", directory)
 		return make(Posts, 0)
 	}
 	sort.Sort(sort.Reverse(sort.StringSlice(files)))
 	for _, file := range files {
-		post, err := readPostFromFile(file)
+		post, err := f.readPostFromFile(file)
 		if nil == err {
 			posts = append(posts, *post)
 		} else {
@@ -172,8 +185,8 @@ func readPostsFromDirectory(posts Posts, directory string) Posts {
 	return posts
 }
 
-func readPostFromFile(file string) (*Post, error) {
-	tsvFile, err := os.Open(file)
+func (f *FileStore) readPostFromFile(file string) (*Post, error) {
+	tsvFile, err := f.root.Open(file)
 	if nil != err {
 		return nil, err
 	}
@@ -194,19 +207,20 @@ func (f *FileStore) WritePost(p *Post) {
 			log.Printf("New post %s from %s\n", p.Time, p.ip)
 			return
 		}
+		log.Printf("Cannot write post %s from %s: %v (tentative %d of %d)\n", p.Time, p.ip, err, i, maxWritePostTry)
 		time.Sleep(time.Duration(i) * time.Second)
 	}
-	log.Printf("Cannot write post %s from %s : %s\n", p.Time, p.ip, err)
 }
 
 func (f *FileStore) tryToWritePost(p *Post) error {
 	t := time.Now().In(timeLocation)
 	p.Time = t.Format("20060102150405")
-	tmpFile, err := os.CreateTemp(f.tmpDirectory, p.Time+"*.tsv")
+	tmpFileName := fmt.Sprintf("tmp/%s%d.tsv", p.Time, f.counter.Add(1))
+	tmpFile, err := f.root.Create(tmpFileName)
 	if nil != err {
 		return err
 	}
-	defer os.Remove(tmpFile.Name()) //nolint:errcheck
+	defer f.root.Remove(tmpFileName) //nolint:errcheck
 	if err := p.PrintTSV(tmpFile); err != nil {
 		return fmt.Errorf("cannot write post: %w", err)
 	}
@@ -214,10 +228,9 @@ func (f *FileStore) tryToWritePost(p *Post) error {
 		return fmt.Errorf("cannot write post: %w", err)
 	}
 
-	postDir := f.postsDirectory + "/" + t.Format("2006/01/02")
-	err = os.MkdirAll(postDir, 0o755)
-	if nil != err {
+	postDir := path.Join("posts", t.Format("2006/01/02"))
+	if err := f.root.MkdirAll(postDir, 0o755); err != nil {
 		return fmt.Errorf("cannot create directory %s: %w", postDir, err)
 	}
-	return os.Link(tmpFile.Name(), path.Join(postDir, p.Time+".tsv"))
+	return f.root.Link(tmpFileName, path.Join(postDir, p.Time+".tsv"))
 }

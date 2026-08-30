@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -45,8 +44,14 @@ func isValidTotozName(totozName string) bool {
 }
 
 func cacheTotozTags(totozName string) (cached bool, err error) {
-	totozTagsFilename := path.Join(totozCacheDir, totozName+".tags")
-	_, err = os.Stat(totozTagsFilename)
+	root, err := os.OpenRoot(totozCacheDir)
+	if err != nil {
+		return
+	}
+	defer root.Close()
+
+	totozTagsFilename := totozName + ".tags"
+	_, err = root.Stat(totozTagsFilename)
 	if nil == err {
 		return false, nil
 	}
@@ -72,7 +77,7 @@ func cacheTotozTags(totozName string) (cached bool, err error) {
 
 	totozTags := doc.Find(".totoz .tags").Text()
 
-	totozTagsFile, err := os.Create(totozTagsFilename)
+	totozTagsFile, err := root.Create(totozTagsFilename)
 	if nil != err {
 		return false, err
 	}
@@ -87,9 +92,15 @@ func cacheTotozTags(totozName string) (cached bool, err error) {
 }
 
 func cacheTotozImage(totozName string) (cached bool, err error) {
-	totozImageFilename := path.Join(totozCacheDir, totozName)
+	root, err := os.OpenRoot(totozCacheDir)
+	if err != nil {
+		return
+	}
+	defer root.Close()
 
-	_, err = os.Stat(totozImageFilename)
+	totozImageFilename := totozName
+
+	_, err = root.Stat(totozImageFilename)
 	if nil == err {
 		return false, nil
 	}
@@ -108,7 +119,7 @@ func cacheTotozImage(totozName string) (cached bool, err error) {
 		return false, fmt.Errorf("erreur de nsfw.totoz.eu : %d %s", res.StatusCode, res.Status)
 	}
 
-	totozImageFile, err := os.Create(totozImageFilename)
+	totozImageFile, err := root.Create(totozImageFilename)
 	if nil != err {
 		return false, err
 	}

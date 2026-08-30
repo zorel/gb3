@@ -26,6 +26,7 @@ linters:
         - (net/http.ResponseWriter).Write
         - (io.ReadCloser).Close
         - (mime/multipart.File).Close
+        - (*os.Root).Close
 
     revive:
       severity: warning

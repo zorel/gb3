@@ -44,14 +44,26 @@ func isAttachmentID(attachmentID string) bool {
 
 func (a *AttachmentHandler) deleteOldAttachments() {
 	cleanupTime := time.Now().Add(-48 * time.Hour)
-	err := filepath.WalkDir(a.attachmentDirectory, func(path string, d fs.DirEntry, _ error) error {
+
+	root, err := os.OpenRoot(a.attachmentDirectory)
+	if err != nil {
+		log.Printf("Could not open attachment directory: %v\n", err)
+		return
+	}
+	defer root.Close()
+
+	err = fs.WalkDir(root.FS(), ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if !d.IsDir() {
 			info, err := d.Info()
 			if nil != err {
 				return err
 			}
 			if info.ModTime().Before(cleanupTime) {
-				return os.Remove(path)
+				return root.Remove(path)
 			}
 		}
 		return nil
@@ -96,7 +108,15 @@ func (a *AttachmentHandler) postAttachment(w http.ResponseWriter, r *http.Reques
 		attachmentID += ".webm"
 	}
 
-	attachmentDestFile, err := os.Create(a.attachmentDirectory + "/" + attachmentID)
+	root, err := os.OpenRoot(a.attachmentDirectory)
+	if err != nil {
+		http.Error(w, "Cannot create attachment file", http.StatusInternalServerError)
+		log.Println("Cannot create attachment file: ", err)
+		return
+	}
+	defer root.Close()
+
+	attachmentDestFile, err := root.Create("/" + attachmentID)
 	if nil != err {
 		http.Error(w, "Cannot create attachment file", http.StatusInternalServerError)
 		log.Println("Cannot create attachment file: ", err)
@@ -131,12 +151,35 @@ func (a *AttachmentHandler) getAttachment(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Attachment id is not valid", http.StatusBadRequest)
 		return
 	}
-	attachmentFilename := a.attachmentDirectory + "/" + attachmentID
+
+	root, err := os.OpenRoot(a.attachmentDirectory)
+	if err != nil {
+		http.Error(w, "Cannot read attachment file", http.StatusInternalServerError)
+		log.Println("Cannot read attachment file: ", err)
+		return
+	}
+	defer root.Close()
+
+	attachmentFile, err := root.Open(attachmentID)
+	if err != nil {
+		http.Error(w, "Attachment not found", http.StatusNotFound)
+		return
+	}
+	defer attachmentFile.Close() //nolint:errcheck // file opened readonly, not modified
+
+	info, err := attachmentFile.Stat()
+	if err != nil {
+		http.Error(w, "Cannot read attachment file", http.StatusInternalServerError)
+		log.Println("Cannot read attachment file: ", err)
+		return
+	}
+
 	if len(filepath.Ext(attachmentID)) == 0 {
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Disposition", "attachment; filename="+attachmentID)
 	}
-	http.ServeFile(w, r, attachmentFilename)
+
+	http.ServeContent(w, r, attachmentID, info.ModTime(), attachmentFile)
 }
 
 // RegisterAttachmentAPI setup http attachment API endpoints

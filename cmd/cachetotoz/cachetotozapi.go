@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"golang.org/x/text/language"
@@ -29,16 +29,22 @@ type Totoz struct {
 func searchTotozesInCache(terms string) (totozes Totozes, err error) {
 	totozes = Totozes{}
 
-	files, err := filepath.Glob(totozCacheDir + "/*.tags")
+	root, err := os.OpenRoot(totozCacheDir)
+	if err != nil {
+		return
+	}
+	defer root.Close()
+
+	files, err := fs.Glob(root.FS(), "*.tags")
 	if nil != err {
-		return totozes, err
+		return
 	}
 
 	matcher := search.New(language.French, search.Loose)
 	pattern := matcher.CompileString(terms)
 
 	appendTotoz := func(file string) {
-		totozes.Totozes = append(totozes.Totozes, Totoz{Name: strings.TrimSuffix(filepath.Base(file), ".tags")})
+		totozes.Totozes = append(totozes.Totozes, Totoz{Name: strings.TrimSuffix(file, ".tags")})
 	}
 
 	for _, file := range files {
@@ -47,7 +53,7 @@ func searchTotozesInCache(terms string) (totozes Totozes, err error) {
 			continue
 		}
 
-		fileContent, err := os.ReadFile(file)
+		fileContent, err := root.ReadFile(file)
 		if nil != err {
 			log.Printf("Cannot read totoz tags from %s", file)
 			continue
@@ -56,9 +62,8 @@ func searchTotozesInCache(terms string) (totozes Totozes, err error) {
 			appendTotoz(file)
 			continue
 		}
-
 	}
-	return totozes, err
+	return
 }
 
 // TotozSearch handler

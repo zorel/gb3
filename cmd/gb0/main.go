@@ -69,7 +69,14 @@ func handleGetTSV(w http.ResponseWriter, _ *http.Request) {
 }
 
 func main() {
-	postStore = NewStore()
+	var err error
+
+	postStore, err = NewStore()
+	if err != nil {
+		log.Fatalf("Could not initialize store: %v", err)
+	}
+	defer postStore.Close()
+
 	http.HandleFunc("/gb0/tsv", handleGetTSV)
 	http.HandleFunc("/gb0/post", handlePost)
 
