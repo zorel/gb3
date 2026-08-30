@@ -225,7 +225,7 @@ func (g *gb3) pollLoop(t *Tribune) {
 
 func RegisterGc2() {
 	for _, path := range []string{os.Getenv("GB2C_GC2_FROM_PATH"), "../../gc2", "gc2"} {
-		pathInfo, err := os.Stat(path)
+		pathInfo, err := os.Stat(path) // #nosec G703 -- GB2C_GC2_FROM_PATH is set by the administrator who knows better
 		if nil == err && pathInfo.IsDir() {
 			http.Handle("/", http.FileServer(http.Dir(path)))
 			log.Printf("gc2 files served from %s\n", path)
@@ -266,8 +266,13 @@ func main() {
 		listenAddress = ":16666"
 	}
 	log.Printf("Listen to %s\n", listenAddress)
-	err = http.ListenAndServe(listenAddress, nil)
-	if nil != err {
+
+	server := http.Server{
+		Addr:        listenAddress,
+		ReadTimeout: 10 * time.Second,
+		IdleTimeout: 60 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

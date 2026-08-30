@@ -37,7 +37,7 @@ func initCacheDir() {
 	fmt.Println("Totozes will be cached in", totozCacheDir)
 }
 
-var totozRegex = regexp.MustCompile("^[A-Za-z0-9-_ !$'*+-.:²µ¸¹ÃÇßæèøûвмотԝ①③⑦愛]+$")
+var totozRegex = regexp.MustCompile("^[A-Za-z0-9_ !$'*+.:²µ¸¹ÃÇßæèøûвмотԝ①③⑦愛-]+$")
 
 func isValidTotozName(totozName string) bool {
 	return totozRegex.MatchString(totozName) && !strings.HasSuffix(totozName, ".tags")
@@ -61,6 +61,7 @@ func cacheTotozTags(totozName string) (cached bool, err error) {
 		return false, err
 	}
 
+	// #nosec G107 -- totozURL is safe because totozName was validated to be a path component (no /)
 	res, err := http.Get(totozURL)
 	if nil != err {
 		return false, err
@@ -110,6 +111,7 @@ func cacheTotozImage(totozName string) (cached bool, err error) {
 		return false, err
 	}
 
+	// #nosec G107 -- totozImageURL is safe because totozName was validated to be a path component (no /)
 	res, err := http.Get(totozImageURL)
 	if nil != err {
 		return false, err

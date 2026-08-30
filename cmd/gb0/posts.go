@@ -120,11 +120,11 @@ func NewStore() (Store, error) {
 		return nil, err
 	}
 
-	if err := root.MkdirAll("posts", 0o755); err != nil {
+	if err := root.MkdirAll("posts", 0o750); err != nil {
 		root.Close()
 		log.Fatalf("Cannot create posts directory, try to set GB0_STORE_DIRECTORY to a writable directory : %s\n", err)
 	}
-	if err := root.MkdirAll("tmp", 0o755); err != nil {
+	if err := root.MkdirAll("tmp", 0o750); err != nil {
 		root.Close()
 		log.Fatalf("Cannot create tmp directory, try to set GB0_STORE_DIRECTORY to a writable directory : %s\n", err)
 	}
@@ -229,7 +229,7 @@ func (f *FileStore) tryToWritePost(p *Post) error {
 	}
 
 	postDir := path.Join("posts", t.Format("2006/01/02"))
-	if err := f.root.MkdirAll(postDir, 0o755); err != nil {
+	if err := f.root.MkdirAll(postDir, 0o750); err != nil {
 		return fmt.Errorf("cannot create directory %s: %w", postDir, err)
 	}
 	return f.root.Link(tmpFileName, path.Join(postDir, p.Time+".tsv"))

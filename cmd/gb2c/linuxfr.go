@@ -103,7 +103,7 @@ func RegisterLinuxfrAPI(httpClient *http.Client) {
 		}
 
 		// encode json access data (token and login) to base64 and send redirect
-		body, err := json.Marshal(linuxfrAccessData)
+		body, err := json.Marshal(linuxfrAccessData) // #nosec G117 -- the whole purpose is to transmit the access token
 		if nil != err {
 			http.Error(w, fmt.Sprintf("Cannot encode linuxfr access data: %s", err), 500)
 			return
@@ -148,7 +148,7 @@ func RegisterLinuxfrAPI(httpClient *http.Client) {
 		w.Header().Set("Content-Type", "application/json")
 
 		e := json.NewEncoder(w)
-		err = e.Encode(&linuxfrAccessRefreshData)
+		err = e.Encode(&linuxfrAccessRefreshData) // #nosec G117 -- the whole purpose is to transmit the access token
 		if nil != err {
 			http.Error(w, fmt.Sprintf("Cannot encode linuxfrAccessRefreshData: %s. Blame dave.", err), 500)
 			return

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -91,8 +92,14 @@ func main() {
 		listenAddress = ":16667"
 	}
 	log.Printf("Listen to %s\n", listenAddress)
-	err = http.ListenAndServe(listenAddress, nil)
-	if nil != err {
+
+	server := http.Server{
+		Addr:         listenAddress,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

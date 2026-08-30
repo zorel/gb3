@@ -11,6 +11,7 @@ linters:
     - bodyclose
     - copyloopvar
     - dupl
+    - gosec
     - govet
     - ineffassign
     - misspell
@@ -27,6 +28,11 @@ linters:
         - (io.ReadCloser).Close
         - (mime/multipart.File).Close
         - (*os.Root).Close
+
+    gosec:
+      excludes:
+        - G104 # Errors unhandled, we use errcheck instead
+        - G706 # Log injection via taint analysis
 
     revive:
       severity: warning
