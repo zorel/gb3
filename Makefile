@@ -1,4 +1,5 @@
 GOLANGCI_LINT=github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2
+GOVULNCHECK=golang.org/x/vuln/cmd/govulncheck@v1.5.0
 
 ifneq "" "$(shell command -v podman)"
 CONTAINERCMD=podman
@@ -21,6 +22,7 @@ fmt:
 .PHONY: check
 check:
 	go run $(GOLANGCI_LINT) run
+	go run $(GOVULNCHECK) -show verbose ./...
 
 .PHONY: build-containers
 build-containers:
