@@ -19,11 +19,17 @@ func init() {
 	storeMap["sqlite"] = NewSqliteStore
 }
 
+type newPosts struct {
+	tribune string
+	posts   Posts
+}
+
 type SqliteStore struct {
 	db                *sql.DB
 	location          *time.Location
 	maxPostsInHistory int // number of posts to return in RetrieveLatest()
 	maxPostsInStorage int // number of posts to store in the database
+	newPosts          chan newPosts
 }
 
 func parsePostTime(postTime string, location *time.Location) (time.Time, error) {
@@ -36,6 +42,18 @@ func formatPostTime(postTime time.Time, location *time.Location) string {
 
 func initSqliteDatabase(db *sql.DB) error {
 	_, err := db.Exec(`
+		PRAGMA journal_mode = WAL;
+		PRAGMA busy_timeout = 5000;
+		PRAGMA synchronous = NORMAL;
+		PRAGMA cache_size = -64000;
+		PRAGMA foreign_keys = TRUE;
+		PRAGMA temp_store = MEMORY;
+	`)
+	if err != nil {
+		return fmt.Errorf("failed initialize database: %w", err)
+	}
+
+	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS posts (
 			Tribune TEXT,
 			ID INTEGER,
@@ -71,7 +89,7 @@ func NewSqliteStore() (Store, error) {
 	maxPostsInHistory := getIntFromEnv("GB2C_MAX_POSTS_IN_HISTORY", 200)
 	maxPostsInStorage := getIntFromEnv("GB2C_SQLITE_MAX_POSTS_IN_STORAGE", maxPostsInHistory)
 
-	db, err := sql.Open("sqlite", dbPath)
+	db, err := sql.Open("sqlite", dbPath+"?_txlock=immediate")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open SQLite database: %v", err)
 	}
@@ -86,16 +104,38 @@ func NewSqliteStore() (Store, error) {
 	}
 
 	log.Printf("Using SQLite store in %s\n", dbPath)
-	return &SqliteStore{
+	store := &SqliteStore{
 		db:                db,
 		location:          location,
 		maxPostsInHistory: maxPostsInHistory,
 		maxPostsInStorage: maxPostsInStorage,
-	}, nil
+		newPosts:          make(chan newPosts),
+	}
+
+	go func() {
+		for s := range store.newPosts {
+			if err := store.savePosts(s.tribune, s.posts); err != nil {
+				log.Printf("Error while saving posts: %v\n", err)
+			}
+		}
+	}()
+
+	return store, nil
 }
 
 func (s *SqliteStore) Save(tribune string, posts Posts) error {
-	stmt, err := s.db.Prepare(`INSERT OR IGNORE INTO posts (Tribune, ID, Time, Info, Login, Message) VALUES (?, ?, ?, ?, ?, ?);`)
+	s.newPosts <- newPosts{tribune, posts}
+	return nil
+}
+
+func (s *SqliteStore) savePosts(tribune string, posts Posts) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`INSERT OR IGNORE INTO posts (Tribune, ID, Time, Info, Login, Message) VALUES (?, ?, ?, ?, ?, ?);`)
 	if err != nil {
 		return err
 	}
@@ -118,7 +158,7 @@ func (s *SqliteStore) Save(tribune string, posts Posts) error {
 	}
 
 	if s.maxPostsInStorage > 0 {
-		_, err := s.db.Exec(
+		_, err := tx.Exec(
 			`DELETE FROM posts WHERE Tribune = ? AND ROWID < (SELECT ROWID FROM posts WHERE Tribune = ? ORDER BY ROWID DESC LIMIT ?, 1)`,
 			tribune,
 			s.maxPostsInStorage,
@@ -128,7 +168,7 @@ func (s *SqliteStore) Save(tribune string, posts Posts) error {
 		}
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 func (s *SqliteStore) RetrieveLatests(tribune string) (Posts, error) {
