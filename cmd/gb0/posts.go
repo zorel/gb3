@@ -155,7 +155,7 @@ func (f *FileStore) Close() {
 func (f *FileStore) ReadPosts() Posts {
 	posts := make(Posts, 0, maxPostsInHistory)
 	now := time.Now().In(timeLocation)
-	for day := 0; day <= maxDaysInHistory; day++ {
+	for day := 0; day <= maxDaysInHistory && len(posts) < maxPostsInHistory; day++ {
 		dayTime := now.AddDate(0, 0, -day)
 		dayDir := "posts/" + dayTime.Format("2006/01/02")
 		posts = f.readPostsFromDirectory(posts, dayDir)
