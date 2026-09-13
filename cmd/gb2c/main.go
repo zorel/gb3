@@ -77,7 +77,6 @@ type gb3 struct {
 	forward  chan forwardMessage
 	tribunes map[string]*Tribune
 	poll     chan *Tribune
-	indexer  Indexer
 	store    Store
 	client   *TribuneClient
 }
@@ -133,10 +132,9 @@ func newGb3(httpClient *http.Client, store Store) *gb3 {
 			"dlfp":        {Name: "dlfp", BackendURL: "https://linuxfr.org/board/index.tsv", PostURL: "https://linuxfr.org/api/v1/board", PostField: "message", AuthentificationType: OAuth2Authentification},
 			"ototu":       {Name: "ototu", BackendURL: "https://www.ototu.me/goboard/backend/tsv", PostURL: "https://www.ototu.me/goboard/post", PostField: "message"},
 		},
-		poll:    make(chan *Tribune),
-		indexer: NewIndexer(),
-		store:   store,
-		client:  NewTribuneClient(httpClient),
+		poll:   make(chan *Tribune),
+		store:  store,
+		client: NewTribuneClient(httpClient),
 	}
 	g.addGb0Tribunes()
 	g.addMiaoliTribunes()
@@ -244,22 +242,6 @@ func (g *gb3) handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *gb3) handleSearch(w http.ResponseWriter, r *http.Request) {
-	terms := r.FormValue("terms")
-	results, err := g.indexer.Search(terms)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
-	err = encoder.Encode(results)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
 func (g *gb3) pollTribune(t *Tribune) {
 	if verboseMode {
 		log.Printf("Poll %s\n", t.Name)
@@ -272,8 +254,7 @@ func (g *gb3) pollTribune(t *Tribune) {
 	for _, p := range posts {
 		g.forward <- forwardMessage{Post: p}
 	}
-	go g.store.Save(t.Name, posts)
-	go g.indexer.Index(posts)
+	g.store.Save(t.Name, posts)
 }
 
 func (g *gb3) pollLoop(t *Tribune) {
@@ -322,9 +303,6 @@ func main() {
 	})
 	http.HandleFunc("/gb2c/post", func(w http.ResponseWriter, r *http.Request) {
 		g.handlePost(w, r)
-	})
-	http.HandleFunc("/gb2c/search", func(w http.ResponseWriter, r *http.Request) {
-		g.handleSearch(w, r)
 	})
 	http.HandleFunc("/gb2c/totoz/search", TotozSearch(httpClient))
 	http.HandleFunc("/gb2c/emoji/search", EmojiSearch)
