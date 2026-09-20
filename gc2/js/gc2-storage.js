@@ -28,13 +28,13 @@ class Gc2Storage {
     getItem(key) {
         try {
             return localStorage.getItem(key);
-        } catch (e) {
+        } catch {
+            try {
+                return sessionStorage.getItem(key);
+            } catch {
+                return this.map.get(key);
+            }
         }
-        try {
-            return sessionStorage.getItem(key);
-        } catch(e) {
-        }
-        return this.map.get(key);
     }
 
 
@@ -47,14 +47,14 @@ class Gc2Storage {
         try {
             localStorage.setItem(key, value);
             return;
-        } catch (e) {
+        } catch {
+            try {
+                sessionStorage.setItem(key, value);
+                return;
+            } catch {
+                this.map.set(key, value);
+            }
         }
-        try {
-            sessionStorage.setItem(key, value);
-            return;
-        } catch(e) {
-        }
-        this.map.set(key, value);
     }
 
     /**
@@ -65,14 +65,14 @@ class Gc2Storage {
         try {
             localStorage.removeItem(key);
             return;
-        } catch (e) {
+        } catch {
+            try {
+                sessionStorage.removeItem(key);
+                return;
+            } catch {
+                this.map.delete(key);
+            }
         }
-        try {
-            sessionStorage.removeItem(key);
-            return;
-        } catch(e) {
-        }
-        this.map.delete(key);
     }
 
 

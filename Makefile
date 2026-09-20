@@ -19,10 +19,15 @@ clean:
 fmt:
 	go run $(GOLANGCI_LINT) fmt
 
-.PHONY: check
-check:
+.PHONY: check check-go check-js
+check-go:
 	go run $(GOLANGCI_LINT) run
 	go run $(GOVULNCHECK) -show verbose ./...
+
+check-js:
+	cd gc2 && npm run lint
+
+check: check-go check-js
 
 .PHONY: build-containers
 build-containers:

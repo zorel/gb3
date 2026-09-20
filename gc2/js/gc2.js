@@ -1,7 +1,7 @@
-import { Gc2TribuneNavigator } from "./gc2-tribune-navigator.js";
-import { Gc2Tribune } from "./gc2-tribune.js";
-import { Gc2Menu } from "./gc2-menu.js";
-import { Gc2Alarm } from "./gc2-alarm.js";
+import "./gc2-tribune-navigator.js";
+import "./gc2-tribune.js";
+import "./gc2-menu.js";
+import "./gc2-alarm.js";
 import { GC2_STORAGE } from "./gc2-storage.js";
 import peggy from "./peggy-esm-5.0.6.js"
 
@@ -185,7 +185,7 @@ class Gc2Main extends HTMLElement {
                 return token.access_token;
             }
         } catch (e) {
-            console.log("Cannot retrieve linuxfr access token");
+            console.log(`Cannot retrieve linuxfr access token: ${e}`);
         }
     }
 
