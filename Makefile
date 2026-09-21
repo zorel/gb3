@@ -15,9 +15,14 @@ all:
 clean:
 	rm -f gb0 gb2c cachetotoz
 
-.PHONY: fmt
-fmt:
+.PHONY: fmt fmt-go fmt-js
+fmt-go:
 	go run $(GOLANGCI_LINT) fmt
+
+fmt-js:
+	cd gc2 && npm run fmt
+
+fmt: fmt-go fmt-js
 
 .PHONY: check check-go check-js
 check-go:

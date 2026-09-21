@@ -1,8 +1,7 @@
-import {Gc2Post} from "./gc2-post.js";
+import { Gc2Post } from "./gc2-post.js";
 import { GC2_STORAGE } from "./gc2-storage.js";
 
 export class Gc2Tribune extends HTMLElement {
-
     /**
      * @type boolean
      */
@@ -26,9 +25,9 @@ export class Gc2Tribune extends HTMLElement {
         postElement.setup(post);
 
         let nextSibling = null;
-        for(let i = this.children.length - 1; i > 0; --i) {
+        for (let i = this.children.length - 1; i > 0; --i) {
             let child = this.children[i];
-            if(child.postId > post.id) {
+            if (child.postId > post.id) {
                 nextSibling = child;
                 break;
             }
@@ -37,7 +36,10 @@ export class Gc2Tribune extends HTMLElement {
         this.insertBefore(postElement, nextSibling);
 
         if (!post.isMine) {
-            let lastReadPostId =  GC2_STORAGE.getItem(`${this.getAttribute("name")}_lastReadPostId`) || -1;
+            let lastReadPostId =
+                GC2_STORAGE.getItem(
+                    `${this.getAttribute("name")}_lastReadPostId`,
+                ) || -1;
             if (post.id > lastReadPostId) {
                 this.hasReply |= post.isReply;
                 this.hasBigorno |= post.isBigorno;
@@ -48,17 +50,20 @@ export class Gc2Tribune extends HTMLElement {
     markAsRead() {
         this.hasBigorno = false;
         this.hasReply = false;
-        let lastPost = this.querySelector('gc2-post:last-of-type');
-        if(lastPost) {
-            GC2_STORAGE.setItem(`${this.getAttribute("name")}_lastReadPostId`, lastPost.id);
+        let lastPost = this.querySelector("gc2-post:last-of-type");
+        if (lastPost) {
+            GC2_STORAGE.setItem(
+                `${this.getAttribute("name")}_lastReadPostId`,
+                lastPost.id,
+            );
         }
     }
 }
-customElements.define('gc2-tribune', Gc2Tribune);
+customElements.define("gc2-tribune", Gc2Tribune);
 
 class Gc2Tribunes extends HTMLElement {
     constructor() {
         super();
     }
 }
-customElements.define('gc2-tribunes', Gc2Tribunes);
+customElements.define("gc2-tribunes", Gc2Tribunes);

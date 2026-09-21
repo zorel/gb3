@@ -1,5 +1,4 @@
 export class Gc2StoredTribunes {
-
     /**
      * @type Array<String>
      */
@@ -17,12 +16,11 @@ export class Gc2StoredTribunes {
 }
 
 class Gc2Storage {
-
     map = new Map();
 
     /**
-     * 
-     * @param {string} key 
+     *
+     * @param {string} key
      * @returns {string}
      */
     getItem(key) {
@@ -37,9 +35,8 @@ class Gc2Storage {
         }
     }
 
-
     /**
-     * 
+     *
      * @param {string} key
      * @param {string} value
      */
@@ -58,7 +55,7 @@ class Gc2Storage {
     }
 
     /**
-     * 
+     *
      * @param {string} key
      */
     removeItem(key) {
@@ -75,7 +72,6 @@ class Gc2Storage {
         }
     }
 
-
     async _retrieveAvailableTribunes() {
         let response = await fetch("/gb2c/list");
         let tribunes = await response.json();
@@ -83,14 +79,16 @@ class Gc2Storage {
     }
 
     /**
-     * 
+     *
      * @returns {Gc2StoredTribunes}
      */
     async getTribunes() {
         let result = new Gc2StoredTribunes();
         result.availableTribunes = await this._retrieveAvailableTribunes();
         let storedTribunesString = GC2_STORAGE.getItem("tribunes");
-        result.selectedTribunes = storedTribunesString ? storedTribunesString.split(",") : Gc2StoredTribunes.DEFAULT_TRIBUNES;
+        result.selectedTribunes = storedTribunesString
+            ? storedTribunesString.split(",")
+            : Gc2StoredTribunes.DEFAULT_TRIBUNES;
         return result;
     }
 }

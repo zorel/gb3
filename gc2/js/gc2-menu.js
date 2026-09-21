@@ -15,49 +15,49 @@ export class Gc2Menu extends HTMLElement {
     showSelector() {
         this.clear();
 
-        let totozButton = document.createElement('button');
+        let totozButton = document.createElement("button");
         totozButton.innerText = "😱 Totoz";
         totozButton.onclick = () => {
             this.showComponent("gc2-totozsearch");
         };
         this.appendChild(totozButton);
 
-        let emojiButton = document.createElement('button');
+        let emojiButton = document.createElement("button");
         emojiButton.innerText = "💩 Emoji";
         emojiButton.onclick = () => {
             this.showComponent("gc2-emojisearch");
         };
         this.appendChild(emojiButton);
 
-        let attachButton = document.createElement('button');
+        let attachButton = document.createElement("button");
         attachButton.innerText = "📎 Attach";
         attachButton.onclick = () => {
             this.showComponent("gc2-attach");
         };
         this.appendChild(attachButton);
 
-        let altButton = document.createElement('button');
+        let altButton = document.createElement("button");
         altButton.innerText = "⎇ ALT";
         altButton.onclick = () => {
             this.showComponent("gc2-alt");
         };
         this.appendChild(altButton);
 
-        let settingsButton = document.createElement('button');
+        let settingsButton = document.createElement("button");
         settingsButton.innerText = "⚙ Settings";
         settingsButton.onclick = () => {
             window.location.href = "/settings.html";
         };
         this.appendChild(settingsButton);
 
-        let backButton = document.createElement('button');
+        let backButton = document.createElement("button");
         backButton.innerText = "↩ Back";
         backButton.onclick = () => {
             gc2CloseMenu();
         };
         this.appendChild(backButton);
 
-        let aboutLink = document.createElement('a');
+        let aboutLink = document.createElement("a");
         aboutLink.innerText = "About gb3";
         aboutLink.href = "https://codeberg.org/devnewton/gb3";
         aboutLink.target = "_blank";
@@ -114,10 +114,9 @@ export class Gc2Menu extends HTMLElement {
         }
     }
 }
-customElements.define('gc2-menu', Gc2Menu);
+customElements.define("gc2-menu", Gc2Menu);
 
 class Gc2TotozSearch extends HTMLElement {
-
     /**
      * @type HTMLInputElement
      */
@@ -141,25 +140,30 @@ class Gc2TotozSearch extends HTMLElement {
         this.searchInput.placeholder = "dont be so vanilla";
         form.appendChild(this.searchInput);
 
-        let searchButton = document.createElement('button');
+        let searchButton = document.createElement("button");
         searchButton.innerText = "Search";
         searchButton.type = "submit";
         form.appendChild(searchButton);
 
         form.onsubmit = (e) => {
             e.preventDefault();
-            fetch(`/gb2c/totoz/search?terms=${encodeURIComponent(this.searchInput.value)}`, {
-                method: "GET",
-            }).then((response) => {
-                return response.json();
-            }).then((data) => {
-                this.setResults(data);
-            }).catch((error) => {
-                console.log(`Cannot search totoz. Error: `, error);
-            });
+            fetch(
+                `/gb2c/totoz/search?terms=${encodeURIComponent(this.searchInput.value)}`,
+                {
+                    method: "GET",
+                },
+            )
+                .then((response) => {
+                    return response.json();
+                })
+                .then((data) => {
+                    this.setResults(data);
+                })
+                .catch((error) => {
+                    console.log(`Cannot search totoz. Error: `, error);
+                });
         };
         this.appendChild(form);
-
 
         this.resultsContainer = document.createElement("div");
         this.resultsContainer.onclick = (e) => {
@@ -169,7 +173,8 @@ class Gc2TotozSearch extends HTMLElement {
                     caption = e.target.querySelector("figcaption");
                     break;
                 case "IMG":
-                    caption = e.target.parentElement.querySelector("figcaption");
+                    caption =
+                        e.target.parentElement.querySelector("figcaption");
                     break;
                 case "FIGCAPTION":
                     caption = e.target;
@@ -177,7 +182,7 @@ class Gc2TotozSearch extends HTMLElement {
             }
             if (caption) {
                 let message = document.getElementById("gc2-message");
-                message.value += `${message.value && ' '}[:${caption.innerText}] `;
+                message.value += `${message.value && " "}[:${caption.innerText}] `;
                 gc2CloseMenu();
                 message.focus();
             }
@@ -235,21 +240,27 @@ class Gc2EmojiSearch extends HTMLElement {
         this.searchInput.placeholder = "poop";
         form.appendChild(this.searchInput);
 
-        let searchButton = document.createElement('button');
+        let searchButton = document.createElement("button");
         searchButton.innerText = "Search";
         form.appendChild(searchButton);
 
         form.onsubmit = (e) => {
             e.preventDefault();
-            fetch(`/gb2c/emoji/search?terms=${encodeURIComponent(this.searchInput.value)}`, {
-                method: "GET",
-            }).then((response) => {
-                return response.json();
-            }).then((data) => {
-                this.setResults(data);
-            }).catch((error) => {
-                console.log(`Cannot search emoji. Error: `, error);
-            });
+            fetch(
+                `/gb2c/emoji/search?terms=${encodeURIComponent(this.searchInput.value)}`,
+                {
+                    method: "GET",
+                },
+            )
+                .then((response) => {
+                    return response.json();
+                })
+                .then((data) => {
+                    this.setResults(data);
+                })
+                .catch((error) => {
+                    console.log(`Cannot search emoji. Error: `, error);
+                });
         };
         this.appendChild(form);
 
@@ -258,10 +269,14 @@ class Gc2EmojiSearch extends HTMLElement {
             let characters;
             switch (e.target.tagName) {
                 case "FIGURE":
-                    characters = e.target.querySelector(".gc2-emoji-characters");
+                    characters = e.target.querySelector(
+                        ".gc2-emoji-characters",
+                    );
                     break;
                 case "FIGCAPTION":
-                    characters = e.target.parentElement.querySelector(".gc2-emoji-characters");
+                    characters = e.target.parentElement.querySelector(
+                        ".gc2-emoji-characters",
+                    );
                     break;
                 default:
                     if (e.target.classList.contains("gc2-emoji-characters")) {
@@ -270,7 +285,7 @@ class Gc2EmojiSearch extends HTMLElement {
             }
             if (characters) {
                 let message = document.getElementById("gc2-message");
-                message.value += `${message.value && ' '}${characters.innerText} `;
+                message.value += `${message.value && " "}${characters.innerText} `;
                 gc2CloseMenu();
                 message.focus();
             }
@@ -324,7 +339,7 @@ class Gc2Attach extends HTMLElement {
         fileInput.type = "file";
         form.appendChild(fileInput);
 
-        let attachButton = document.createElement('button');
+        let attachButton = document.createElement("button");
         attachButton.innerText = "Attach";
         form.appendChild(attachButton);
 
@@ -338,31 +353,34 @@ class Gc2Attach extends HTMLElement {
             progress.src = "/img/loading.svg";
             fetch(`/gb2c/attachment/`, {
                 method: "POST",
-                body: new FormData(form)
-            }).then((response) => {
-                progress.src = "";
-                let location = response.headers.get("Location");
-                if (location) {
-                    uploadError.innerText = "";
-                    let message = document.getElementById("gc2-message");
-                    message.value += `${message.value && ' '}${location} `;
-                    gc2CloseMenu();
-                    message.focus();
-                } else {
-                    switch (response.status) {
-                        case 413:
-                            uploadError.innerText = "Cannot attach file: file is too large, try less than 1mo.";
-                            break;
-                        default:
-                            uploadError.innerText = `Cannot attach file: http response is ${response.status} ${response.statusText}`;
-                            break;
+                body: new FormData(form),
+            })
+                .then((response) => {
+                    progress.src = "";
+                    let location = response.headers.get("Location");
+                    if (location) {
+                        uploadError.innerText = "";
+                        let message = document.getElementById("gc2-message");
+                        message.value += `${message.value && " "}${location} `;
+                        gc2CloseMenu();
+                        message.focus();
+                    } else {
+                        switch (response.status) {
+                            case 413:
+                                uploadError.innerText =
+                                    "Cannot attach file: file is too large, try less than 1mo.";
+                                break;
+                            default:
+                                uploadError.innerText = `Cannot attach file: http response is ${response.status} ${response.statusText}`;
+                                break;
+                        }
                     }
-                }
-            }).catch((error) => {
-                progress.src = "";
-                uploadError.innerText = "Cannot attach file: unknown error";
-                console.log(`Cannot attach file. Error: `, error);
-            });
+                })
+                .catch((error) => {
+                    progress.src = "";
+                    uploadError.innerText = "Cannot attach file: unknown error";
+                    console.log(`Cannot attach file. Error: `, error);
+                });
         };
         this.appendChild(form);
 
@@ -407,11 +425,17 @@ class Gc2Attach extends HTMLElement {
         updatePreview();
         fileInput.onchange = () => updatePreview();
 
-        document.addEventListener('paste', (event) => {
-            if (!(form.offsetWidth || form.offsetHeight || form.getClientRects().length)) {
+        document.addEventListener("paste", (event) => {
+            if (!(
+                form.offsetWidth ||
+                form.offsetHeight ||
+                form.getClientRects().length
+            )) {
                 return;
             }
-            let files = (event.clipboardData || event.originalEvent.clipboardData).files;
+            let files = (
+                event.clipboardData || event.originalEvent.clipboardData
+            ).files;
             if (files && files.length === 1) {
                 fileInput.files = files;
                 updatePreview();
@@ -432,7 +456,7 @@ class Gc2Alt extends HTMLElement {
     }
 
     setup() {
-        let blamButton = document.createElement('button');
+        let blamButton = document.createElement("button");
         blamButton.innerText = "BLAM";
         blamButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altBlam();
@@ -441,7 +465,7 @@ class Gc2Alt extends HTMLElement {
         };
         this.appendChild(blamButton);
 
-        let momentButton = document.createElement('button');
+        let momentButton = document.createElement("button");
         momentButton.innerText = "Moment";
         momentButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altMoment();
@@ -450,7 +474,7 @@ class Gc2Alt extends HTMLElement {
         };
         this.appendChild(momentButton);
 
-        let phiButton = document.createElement('button');
+        let phiButton = document.createElement("button");
         phiButton.innerText = "φ";
         phiButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altPhi();
@@ -459,7 +483,7 @@ class Gc2Alt extends HTMLElement {
         };
         this.appendChild(phiButton);
 
-        let boldButton = document.createElement('button');
+        let boldButton = document.createElement("button");
         boldButton.innerText = "Bold";
         boldButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altBold();
@@ -468,7 +492,7 @@ class Gc2Alt extends HTMLElement {
         };
         this.appendChild(boldButton);
 
-        let italicButton = document.createElement('button');
+        let italicButton = document.createElement("button");
         italicButton.innerText = "Italic";
         italicButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altItalic();
@@ -477,7 +501,7 @@ class Gc2Alt extends HTMLElement {
         };
         this.appendChild(italicButton);
 
-        let underlineButton = document.createElement('button');
+        let underlineButton = document.createElement("button");
         underlineButton.innerText = "Underline";
         underlineButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altUnderline();
@@ -486,7 +510,7 @@ class Gc2Alt extends HTMLElement {
         };
         this.appendChild(underlineButton);
 
-        let strikeThroughButton = document.createElement('button');
+        let strikeThroughButton = document.createElement("button");
         strikeThroughButton.innerText = "Strike through";
         strikeThroughButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altStrikeThrough();
@@ -495,17 +519,16 @@ class Gc2Alt extends HTMLElement {
         };
         this.appendChild(strikeThroughButton);
 
-        let teletextButton = document.createElement('button');
+        let teletextButton = document.createElement("button");
         teletextButton.innerText = "Teletext";
         teletextButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altTeletext();
             gc2CloseMenu();
             document.getElementById("gc2-message").focus();
-            
         };
         this.appendChild(teletextButton);
 
-        let codeButton = document.createElement('button');
+        let codeButton = document.createElement("button");
         codeButton.innerText = "Code";
         codeButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altCode();
@@ -514,7 +537,7 @@ class Gc2Alt extends HTMLElement {
         };
         this.appendChild(codeButton);
 
-        let spoilerButton = document.createElement('button');
+        let spoilerButton = document.createElement("button");
         spoilerButton.innerText = "Spoiler";
         spoilerButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altSpoiler();
@@ -523,7 +546,7 @@ class Gc2Alt extends HTMLElement {
         };
         this.appendChild(spoilerButton);
 
-        let pafButton = document.createElement('button');
+        let pafButton = document.createElement("button");
         pafButton.innerText = "Paf";
         pafButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altPaf();
@@ -532,7 +555,7 @@ class Gc2Alt extends HTMLElement {
         };
         this.appendChild(pafButton);
 
-        let acappellaButton = document.createElement('button');
+        let acappellaButton = document.createElement("button");
         acappellaButton.innerText = "♪";
         acappellaButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altAcappella();
@@ -541,7 +564,7 @@ class Gc2Alt extends HTMLElement {
         };
         this.appendChild(acappellaButton);
 
-        let lastPostedButton = document.createElement('button');
+        let lastPostedButton = document.createElement("button");
         lastPostedButton.innerText = "Last posted";
         lastPostedButton.onclick = () => {
             document.getElementsByTagName("gc2-main")[0].altLastPosted();
