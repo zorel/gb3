@@ -1,5 +1,5 @@
 import { Gc2TribuneNavigator } from "./gc2-tribune-navigator.js";
-import { Gc2Tribune } from "./gc2-tribune.js";
+import { Gc2Tribune, GC2_CONVERSATION_FILTER } from "./gc2-tribune.js";
 import { Gc2Menu } from "./gc2-menu.js";
 import { Gc2Alarm } from "./gc2-alarm.js";
 import { GC2_STORAGE } from "./gc2-storage.js";
@@ -62,6 +62,7 @@ class Gc2Main extends HTMLElement {
     }
 
     async connectedCallback() {
+        await this.setupConversationFilter();
         this.setupNickname();
         this.setupTribunesContainer();
         this.setupControls();
@@ -81,9 +82,27 @@ class Gc2Main extends HTMLElement {
                 this.applyThemeFromStorage();
             }
         });
+        window.addEventListener("gc2-blocked-identities-changed", () => window.location.reload());
         this.storedTribunes = await GC2_STORAGE.getTribunes();
         this.poll();
         setInterval(() => this.poll(), 10000);
+    }
+
+    async setupConversationFilter() {
+        let identities = GC2_STORAGE.getBlockedIdentities ? GC2_STORAGE.getBlockedIdentities() : [];
+        GC2_CONVERSATION_FILTER.setDisplayMode(
+            GC2_STORAGE.getBlockedDisplayMode ? GC2_STORAGE.getBlockedDisplayMode() : "hide"
+        );
+        try {
+            let response = await fetch("/gb2c/config");
+            if (response.ok) {
+                let config = await response.json();
+                identities = identities.concat(config.blockedIdentities || []);
+            }
+        } catch (e) {
+            // Local settings remain usable when running against an older gb2c.
+        }
+        GC2_CONVERSATION_FILTER.setBlockedIdentities(identities);
     }
 
     setupAlarm() {
@@ -347,6 +366,10 @@ class Gc2Main extends HTMLElement {
                 this.lastPostSourceActivity = Date.now();
                 let wasAtbottom = this.isScrollAtBottom();
                 let post = JSON.parse(event.data);
+
+                // Keep the unmodified message for conversation matching. The
+                // plop transformation below can replace clock references.
+                post.conversationMessage = this.backend2html.parse(post.message);
 
                 // If the post's info matches an entry in the plop list, replace random words
                 try {

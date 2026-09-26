@@ -104,6 +104,14 @@ If not set, a temporary file will be used.
 
 The number of posts to keep in storage, 0 for unlimited. Default value is the current value of GB2C_MAX_POSTS_IN_HISTORY.
 
+#### GB2C_BLOCKED_IDENTITIES
+
+Optional comma-separated list of login names or user-agents whose posts, and all
+posts replying to them directly or indirectly, are hidden by the gc2 frontend.
+The list can also be extended per browser from the Settings page.
+The same page lets each user either hide matching posts completely or keep them
+as gray rows with their messages masked.
+
 ### Endpoints
 
 gb2c exposes exports for listing tribunes then polling and posting messages.

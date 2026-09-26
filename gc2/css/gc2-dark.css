@@ -22,6 +22,10 @@ body {
 }
 
 gc2-alarm {
+	display: inline-block;
+	/* Reserve space for HH:MM:SS during the last minute of each hour. */
+	width: 8ch;
+	white-space: nowrap;
 	font-family: monospace;
 	font-size: 1.5em;
   color: #4EADF1;
@@ -129,6 +133,21 @@ gc2-post:nth-of-type(even) {
 
 gc2-post:nth-of-type(odd) {
 	background-color: #2B2B2B;
+}
+
+gc2-post.gc2-post-filtered {
+	background-color: #505050;
+	color: #A0A0A0;
+}
+
+gc2-post.gc2-post-filtered > gc2-message {
+	visibility: hidden;
+}
+
+gc2-post.gc2-post-filtered > gc2-post-icon,
+gc2-post.gc2-post-filtered > gc2-post-norloge,
+gc2-post.gc2-post-filtered > gc2-moule {
+	color: #A0A0A0;
 }
 
 gc2-post-icon {

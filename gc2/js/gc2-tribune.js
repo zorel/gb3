@@ -1,5 +1,8 @@
 import {Gc2Post} from "./gc2-post.js";
 import { GC2_STORAGE } from "./gc2-storage.js";
+import { Gc2ConversationFilter } from "./gc2-conversation-filter.js";
+
+export const GC2_CONVERSATION_FILTER = new Gc2ConversationFilter();
 
 export class Gc2Tribune extends HTMLElement {
 
@@ -18,9 +21,12 @@ export class Gc2Tribune extends HTMLElement {
     }
 
     insertPost(post) {
-        if (!document.getElementById(`${post.id}@${post.tribune}`)) {
+        GC2_CONVERSATION_FILTER.add(post);
+        let shouldRender = !post.hiddenConversation || GC2_CONVERSATION_FILTER.displayMode === "gray";
+        if (shouldRender && !document.getElementById(`${post.id}@${post.tribune}`)) {
             let postElement = new Gc2Post();
             postElement.setup(post);
+            postElement.classList.toggle("gc2-post-filtered", post.hiddenConversation);
             this.appendChild(postElement);
             this.sortPosts();
         }

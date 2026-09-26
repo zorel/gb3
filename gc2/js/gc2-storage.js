@@ -119,6 +119,20 @@ class Gc2Storage {
             // ignore
         }
     }
+
+    getBlockedIdentities() {
+        try {
+            let stored = this.getItem("blocked_identities");
+            if (!stored || stored.length === 0) return [];
+            return stored.split(",").map(s => s.trim()).filter(Boolean);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    getBlockedDisplayMode() {
+        return this.getItem("blocked_display_mode") === "gray" ? "gray" : "hide";
+    }
 }
 
 export const GC2_STORAGE = new Gc2Storage();

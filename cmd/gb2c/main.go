@@ -72,14 +72,15 @@ func newStore() (Store, error) {
 }
 
 type gb3 struct {
-	join     chan *Coincoin
-	leave    chan *Coincoin
-	forward  chan forwardMessage
-	tribunes map[string]*Tribune
-	poll     chan *Tribune
-	indexer  Indexer
-	store    Store
-	client   *TribuneClient
+	join              chan *Coincoin
+	leave             chan *Coincoin
+	forward           chan forwardMessage
+	tribunes          map[string]*Tribune
+	poll              chan *Tribune
+	indexer           Indexer
+	store             Store
+	client            *TribuneClient
+	blockedIdentities []string
 }
 
 type forwardMessage struct {
@@ -133,14 +134,26 @@ func newGb3(httpClient *http.Client, store Store) *gb3 {
 			"dlfp":        {Name: "dlfp", BackendURL: "https://linuxfr.org/board/index.tsv", PostURL: "https://linuxfr.org/api/v1/board", PostField: "message", AuthentificationType: OAuth2Authentification},
 			"ototu":       {Name: "ototu", BackendURL: "https://www.ototu.me/goboard/backend/tsv", PostURL: "https://www.ototu.me/goboard/post", PostField: "message"},
 		},
-		poll:    make(chan *Tribune),
-		indexer: NewIndexer(),
-		store:   store,
-		client:  NewTribuneClient(httpClient),
+		poll:              make(chan *Tribune),
+		indexer:           NewIndexer(),
+		store:             store,
+		client:            NewTribuneClient(httpClient),
+		blockedIdentities: configuredBlockedIdentities(),
 	}
 	g.addGb0Tribunes()
 	g.addMiaoliTribunes()
 	return g
+}
+
+func configuredBlockedIdentities() []string {
+	identities := make([]string, 0)
+	for _, identity := range strings.Split(os.Getenv("GB2C_BLOCKED_IDENTITIES"), ",") {
+		identity = strings.TrimSpace(identity)
+		if identity != "" {
+			identities = append(identities, identity)
+		}
+	}
+	return identities
 }
 
 func (g *gb3) forwardLoop() {
@@ -204,6 +217,15 @@ func (g *gb3) handleList(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+
+func (g *gb3) handleConfig(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(struct {
+		BlockedIdentities []string `json:"blockedIdentities"`
+	}{g.blockedIdentities}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -305,6 +327,9 @@ func main() {
 	RegisterAttachmentAPI()
 	http.HandleFunc("/gb2c/list", func(w http.ResponseWriter, r *http.Request) {
 		g.handleList(w, r)
+	})
+	http.HandleFunc("/gb2c/config", func(w http.ResponseWriter, r *http.Request) {
+		g.handleConfig(w, r)
 	})
 	http.HandleFunc("/gb2c/poll", func(w http.ResponseWriter, r *http.Request) {
 		g.handlePoll(w, r)

@@ -46,6 +46,26 @@ class Gc2Settings {
         };
     }
 
+    handleBlockedIdentities() {
+        let input = document.getElementById("blockedIdentities");
+        if (!input) return;
+        input.value = GC2_STORAGE.getItem("blocked_identities") || "";
+        input.oninput = (e) => {
+            GC2_STORAGE.setItem("blocked_identities", e.target.value);
+            window.dispatchEvent(new Event("gc2-blocked-identities-changed"));
+        };
+    }
+
+    handleBlockedDisplayMode() {
+        let select = document.getElementById("blockedDisplayMode");
+        if (!select) return;
+        select.value = GC2_STORAGE.getBlockedDisplayMode();
+        select.onchange = (e) => {
+            GC2_STORAGE.setItem("blocked_display_mode", e.target.value);
+            window.dispatchEvent(new Event("gc2-blocked-identities-changed"));
+        };
+    }
+
     handleDarkMode() {
         let checkbox = document.getElementById("darkMode");
         if (!checkbox) return;
@@ -68,5 +88,7 @@ const GC2_SETTINGS = new Gc2Settings();
 GC2_SETTINGS.handleNickname();
 GC2_SETTINGS.handleTribunes();
 GC2_SETTINGS.handlePlopList();
+GC2_SETTINGS.handleBlockedIdentities();
+GC2_SETTINGS.handleBlockedDisplayMode();
 GC2_SETTINGS.handleDarkMode();
 GC2_SETTINGS.handleBackButton();
