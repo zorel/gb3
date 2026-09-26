@@ -19,6 +19,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 type Post struct {
@@ -60,9 +62,14 @@ type conversationGraph struct {
 	children map[string][]string
 }
 
+type inlineFormat struct {
+	bold, italic, underline, strike bool
+}
+
 var clockReference = regexp.MustCompile(`(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2}[T# ]|[0-9]{2}/[0-9]{2}#)?([0-9]{2}:[0-9]{2}:[0-9]{2})(?:@([a-z]+))?)`)
 var anchorURL = regexp.MustCompile(`(?is)<a\s+[^>]*href=["']([^"']+)["'][^>]*>.*?</a>`)
 var plainURL = regexp.MustCompile(`https?://[^\s<>"']+`)
+var inlineToken = regexp.MustCompile(`https?://[^\s<>"']+|(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2}[T# ]|[0-9]{2}/[0-9]{2}#)?[0-9]{2}:[0-9]{2}:[0-9]{2}(?:@[a-z]+)?)`)
 
 var (
 	titleStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#7D56F4"))
@@ -518,18 +525,86 @@ func styledMessage(value string) string {
 }
 
 func styledMessageWithClockStyle(value string, referenceStyle lipgloss.Style) string {
+	context := &html.Node{Type: html.ElementNode, Data: "div", DataAtom: atom.Div}
+	nodes, err := html.ParseFragment(strings.NewReader(value), context)
+	if err != nil {
+		return renderStyledText(value, inlineFormat{}, referenceStyle)
+	}
+	var rendered strings.Builder
+	for _, node := range nodes {
+		rendered.WriteString(renderHTMLNode(node, inlineFormat{}, referenceStyle))
+	}
+	return rendered.String()
+}
+
+func renderHTMLNode(node *html.Node, format inlineFormat, referenceStyle lipgloss.Style) string {
+	if node.Type == html.TextNode {
+		return renderStyledText(node.Data, format, referenceStyle)
+	}
+	if node.Type != html.ElementNode {
+		return ""
+	}
+
+	switch strings.ToLower(node.Data) {
+	case "b", "strong":
+		format.bold = true
+	case "i", "em":
+		format.italic = true
+	case "u":
+		format.underline = true
+	case "s", "strike", "del":
+		format.strike = true
+	case "a":
+		for _, attribute := range node.Attr {
+			if strings.EqualFold(attribute.Key, "href") {
+				style := format.style().Foreground(urlStyle.GetForeground()).Underline(true)
+				return style.Render(urlLabel(attribute.Val))
+			}
+		}
+	case "br":
+		return " "
+	case "script", "style":
+		return ""
+	}
+
+	var rendered strings.Builder
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		rendered.WriteString(renderHTMLNode(child, format, referenceStyle))
+	}
+	return rendered.String()
+}
+
+func renderStyledText(value string, format inlineFormat, referenceStyle lipgloss.Style) string {
 	value = clean(value)
-	value = anchorURL.ReplaceAllStringFunc(value, func(anchor string) string {
-		matches := anchorURL.FindStringSubmatch(anchor)
-		return urlStyle.Render(urlLabel(matches[1]))
-	})
-	value = plainURL.ReplaceAllStringFunc(value, func(rawURL string) string {
-		return urlStyle.Render(urlLabel(rawURL))
-	})
-	value = clockReference.ReplaceAllStringFunc(value, func(clock string) string {
-		return referenceStyle.Render(clock)
-	})
-	return value
+	indices := inlineToken.FindAllStringIndex(value, -1)
+	if len(indices) == 0 {
+		return format.style().Render(value)
+	}
+	var rendered strings.Builder
+	position := 0
+	for _, index := range indices {
+		rendered.WriteString(format.style().Render(value[position:index[0]]))
+		token := value[index[0]:index[1]]
+		style := format.style()
+		if plainURL.MatchString(token) {
+			style = style.Foreground(urlStyle.GetForeground()).Underline(true)
+			token = urlLabel(token)
+		} else {
+			style = style.Foreground(referenceStyle.GetForeground()).Bold(true)
+		}
+		rendered.WriteString(style.Render(token))
+		position = index[1]
+	}
+	rendered.WriteString(format.style().Render(value[position:]))
+	return rendered.String()
+}
+
+func (format inlineFormat) style() lipgloss.Style {
+	return lipgloss.NewStyle().
+		Bold(format.bold).
+		Italic(format.italic).
+		Underline(format.underline).
+		Strikethrough(format.strike)
 }
 
 func urlLabel(value string) string {

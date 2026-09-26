@@ -27,6 +27,25 @@ func TestStyledMessageColorsURLsAndClocks(t *testing.T) {
 	}
 }
 
+func TestStyledMessageRendersSupportedHTMLTags(t *testing.T) {
+	got := styledMessage("<b>bold <i>italic</i></b> <u>underlined</u> <s>gone</s>")
+	for _, text := range []string{"bold", "italic", "underlined", "gone"} {
+		if !strings.Contains(got, text) {
+			t.Fatalf("styledMessage() = %q, missing %q", got, text)
+		}
+	}
+	if strings.Contains(got, "<b>") || strings.Contains(got, "<i>") || strings.Contains(got, "<u>") || strings.Contains(got, "<s>") {
+		t.Fatalf("styledMessage() = %q, contains raw HTML tags", got)
+	}
+}
+
+func TestInlineFormatMapsToLipgloss(t *testing.T) {
+	style := (inlineFormat{bold: true, italic: true, underline: true, strike: true}).style()
+	if !style.GetBold() || !style.GetItalic() || !style.GetUnderline() || !style.GetStrikethrough() {
+		t.Fatal("inline format did not enable every requested terminal style")
+	}
+}
+
 func TestConversationGraphConnectsRepliesToTheirRoot(t *testing.T) {
 	posts := []Post{
 		{ID: 1, Time: "20260926120000", Tribune: "moules", Message: "root"},

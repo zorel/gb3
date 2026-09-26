@@ -154,6 +154,8 @@ Use `Tab` or the arrow keys to switch tribunes, `Ctrl-U`/`Ctrl-D` to scroll,
 `Enter` to post, and `q` to quit. The TUI also loads server-side blocked
 identities from `/gb2c/config`. Replies are grouped with a stable conversation
 color: `┏` marks a root, `┣` an intermediate reply, and `┗` the end of a branch.
+Inline `<b>`, `<i>`, `<u>`, and `<s>` formatting is rendered with the matching
+terminal style.
 
 ### cachetotoz
 
