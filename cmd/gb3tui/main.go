@@ -62,6 +62,7 @@ var (
 	titleStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#7D56F4"))
 	mutedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))
 	clockStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFA5"))
+	urlStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#5FAFFF")).Underline(true)
 	nameStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF9D00")).Bold(true)
 	grayStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))
 	footerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#9A9A9A"))
@@ -215,7 +216,7 @@ func (m model) View() string {
 		if name == "" {
 			name = post.Info
 		}
-		line := fmt.Sprintf("%s  %s  %s", clockStyle.Render(post.Time[8:]), nameStyle.Render(name), clean(prettyMessage(post.Message)))
+		line := fmt.Sprintf("%s  %s  %s", clockStyle.Render(post.Time[8:]), nameStyle.Render(name), styledMessage(post.Message))
 		if m.gray && post.Message == "[message hidden]" {
 			line = grayStyle.Render(fmt.Sprintf("%s  %s  %s", post.Time[8:], name, post.Message))
 		}
@@ -423,6 +424,21 @@ func prettyMessage(value string) string {
 		return urlLabel(matches[1])
 	})
 	return plainURL.ReplaceAllStringFunc(value, urlLabel)
+}
+
+func styledMessage(value string) string {
+	value = clean(value)
+	value = anchorURL.ReplaceAllStringFunc(value, func(anchor string) string {
+		matches := anchorURL.FindStringSubmatch(anchor)
+		return urlStyle.Render(urlLabel(matches[1]))
+	})
+	value = plainURL.ReplaceAllStringFunc(value, func(rawURL string) string {
+		return urlStyle.Render(urlLabel(rawURL))
+	})
+	value = clockReference.ReplaceAllStringFunc(value, func(clock string) string {
+		return clockStyle.Render(clock)
+	})
+	return value
 }
 
 func urlLabel(value string) string {

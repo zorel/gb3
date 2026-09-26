@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestPrettyMessageShortensAnchorsAndURLs(t *testing.T) {
 	message := `voir <a href="https://example.org/a/very/long/path">le site</a> ou https://example.net/a/long/path.`
@@ -14,5 +17,12 @@ func TestPrettyMessageKeepsNonHTTPURLs(t *testing.T) {
 	message := "git@github.com:devnewton/gb3"
 	if got := prettyMessage(message); got != message {
 		t.Fatalf("prettyMessage() = %q, want %q", got, message)
+	}
+}
+
+func TestStyledMessageColorsURLsAndClocks(t *testing.T) {
+	got := styledMessage("voir https://example.org/path à 12:34:56")
+	if !strings.Contains(got, "example.org") || !strings.Contains(got, "12:34:56") {
+		t.Fatalf("styledMessage() = %q, missing shortened content", got)
 	}
 }
