@@ -92,6 +92,36 @@ func TestConversationGraphConnectsRepliesToTheirRoot(t *testing.T) {
 	}
 }
 
+func TestConversationLanesSeparateOverlapAndReuseFinishedLane(t *testing.T) {
+	posts := []Post{
+		{ID: 1, Time: "20260926120000", Tribune: "moules", Message: "thread A"},
+		{ID: 2, Time: "20260926120100", Tribune: "moules", Message: "thread B"},
+		{ID: 3, Time: "20260926120200", Tribune: "moules", Message: "12:00:00 reply A"},
+		{ID: 4, Time: "20260926120300", Tribune: "moules", Message: "12:02:00 nested reply A"},
+		{ID: 5, Time: "20260926120400", Tribune: "moules", Message: "12:01:00 reply B"},
+		{ID: 6, Time: "20260926120500", Tribune: "moules", Message: "thread C"},
+		{ID: 7, Time: "20260926120600", Tribune: "moules", Message: "12:05:00 reply C"},
+	}
+	graph := buildConversationGraph(posts)
+	lanes := buildConversationLanes(posts, graph)
+	rootA := postKey(posts[0])
+	rootB := postKey(posts[1])
+	rootC := postKey(posts[5])
+
+	if lanes.count != 2 {
+		t.Fatalf("lane count = %d, want 2", lanes.count)
+	}
+	if lanes.byRoot[rootA].lane == lanes.byRoot[rootB].lane {
+		t.Fatal("overlapping conversations A and B share a lane")
+	}
+	if lanes.byRoot[rootA].lane != lanes.byRoot[rootC].lane {
+		t.Fatal("conversation C did not reuse A's finished lane")
+	}
+	if got := lanes.rootByKey[postKey(posts[3])]; got != rootA {
+		t.Fatalf("nested reply root = %q, want %q", got, rootA)
+	}
+}
+
 func TestShortBrowserUserAgent(t *testing.T) {
 	tests := []struct {
 		userAgent string

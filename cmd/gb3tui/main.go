@@ -62,6 +62,18 @@ type conversationGraph struct {
 	children map[string][]string
 }
 
+type conversationSpan struct {
+	root, firstKey, lastKey string
+	start, end, lane        int
+}
+
+type conversationLanes struct {
+	spans     []conversationSpan
+	byRoot    map[string]conversationSpan
+	rootByKey map[string]string
+	count     int
+}
+
 type inlineFormat struct {
 	bold, italic, underline, strike bool
 }
@@ -218,6 +230,7 @@ func (m model) View() string {
 	}
 	posts := m.visiblePosts()
 	graph := buildConversationGraph(m.allPosts())
+	lanes := buildConversationLanes(posts, graph)
 	contentHeight := m.height - 6
 	if contentHeight < 1 {
 		contentHeight = 1
@@ -239,19 +252,19 @@ func (m model) View() string {
 	}
 
 	body := make([]string, 0, contentHeight)
-	for _, post := range posts[start:end] {
+	for offset, post := range posts[start:end] {
+		row := start + offset
 		name := displayIdentity(post)
-		gutter := "  "
+		gutter, laneStyle, inConversation := lanes.gutter(row, postKey(post))
 		referenceStyle := clockStyle
-		if marker, style, ok := graph.decoration(postKey(post)); ok {
-			gutter = style.Render(marker + " ")
-			referenceStyle = style
+		if inConversation {
+			referenceStyle = laneStyle
 		}
 		line := fmt.Sprintf("%s%s  %s  %s", gutter, clockStyle.Render(post.Time[8:]), nameStyle.Render(name), styledMessageWithClockStyle(post.Message, referenceStyle))
 		if m.gray && post.Message == "[message hidden]" {
 			line = grayStyle.Render(fmt.Sprintf("%s%s  %s  %s", gutter, post.Time[8:], name, post.Message))
 		}
-		body = append(body, lipgloss.NewStyle().Width(max(1, m.width-4)).Render(line))
+		body = append(body, lipgloss.NewStyle().Width(max(1, m.width-2)).Render(line))
 	}
 	for len(body) < contentHeight {
 		body = append(body, "")
@@ -339,6 +352,101 @@ func buildConversationGraph(posts []Post) conversationGraph {
 		}
 	}
 	return graph
+}
+
+func buildConversationLanes(posts []Post, graph conversationGraph) conversationLanes {
+	lanes := conversationLanes{
+		byRoot:    make(map[string]conversationSpan),
+		rootByKey: make(map[string]string),
+	}
+	for index, post := range posts {
+		key := postKey(post)
+		if len(graph.parents[key]) == 0 && len(graph.children[key]) == 0 {
+			continue
+		}
+		root := graph.root(key)
+		lanes.rootByKey[key] = root
+		span, exists := lanes.byRoot[root]
+		if !exists {
+			span = conversationSpan{root: root, firstKey: key, start: index, end: index}
+		}
+		span.lastKey = key
+		span.end = index
+		lanes.byRoot[root] = span
+	}
+
+	spans := make([]conversationSpan, 0, len(lanes.byRoot))
+	for _, span := range lanes.byRoot {
+		spans = append(spans, span)
+	}
+	sort.Slice(spans, func(i, j int) bool {
+		if spans[i].start == spans[j].start {
+			return spans[i].root < spans[j].root
+		}
+		return spans[i].start < spans[j].start
+	})
+	laneEnds := make([]int, 0)
+	for index := range spans {
+		lane := -1
+		for candidate, end := range laneEnds {
+			if end < spans[index].start {
+				lane = candidate
+				break
+			}
+		}
+		if lane < 0 {
+			lane = len(laneEnds)
+			laneEnds = append(laneEnds, spans[index].end)
+		} else {
+			laneEnds[lane] = spans[index].end
+		}
+		spans[index].lane = lane
+		lanes.byRoot[spans[index].root] = spans[index]
+	}
+	lanes.spans = spans
+	lanes.count = len(laneEnds)
+	return lanes
+}
+
+func (lanes conversationLanes) gutter(row int, key string) (string, lipgloss.Style, bool) {
+	root := lanes.rootByKey[key]
+	own := lanes.byRoot[root]
+
+	var gutter strings.Builder
+	for lane := 0; lane < lanes.count; lane++ {
+		marker := " "
+		var active *conversationSpan
+		for index := range lanes.spans {
+			span := &lanes.spans[index]
+			if span.lane == lane && row >= span.start && row <= span.end {
+				active = span
+				break
+			}
+		}
+		if active != nil {
+			marker = "│"
+			if active.root == root {
+				switch {
+				case active.start == active.end:
+					marker = "●"
+				case row == active.start:
+					marker = "┏"
+				case row == active.end:
+					marker = "┗"
+				default:
+					marker = "┣"
+				}
+			}
+			gutter.WriteString(threadStyle(active.root).Render(marker))
+		} else {
+			gutter.WriteString(marker)
+		}
+	}
+	gutter.WriteString(" ")
+	if root == "" {
+		return gutter.String(), lipgloss.Style{}, false
+	}
+	return gutter.String(), threadStyle(own.root), true
 }
 
 func (g conversationGraph) decoration(key string) (string, lipgloss.Style, bool) {
