@@ -539,7 +539,7 @@ func urlLabel(value string) string {
 	if err != nil || parsed.Hostname() == "" {
 		return value
 	}
-	return parsed.Hostname() + suffix
+	return parsed.Scheme + "://" + parsed.Host + suffix
 }
 
 func max(a, b int) int {

@@ -7,7 +7,7 @@ import (
 
 func TestPrettyMessageShortensAnchorsAndURLs(t *testing.T) {
 	message := `voir <a href="https://example.org/a/very/long/path">le site</a> ou https://example.net/a/long/path.`
-	want := "voir example.org ou example.net."
+	want := "voir https://example.org ou https://example.net."
 	if got := prettyMessage(message); got != want {
 		t.Fatalf("prettyMessage() = %q, want %q", got, want)
 	}
@@ -22,7 +22,7 @@ func TestPrettyMessageKeepsNonHTTPURLs(t *testing.T) {
 
 func TestStyledMessageColorsURLsAndClocks(t *testing.T) {
 	got := styledMessage("voir https://example.org/path à 12:34:56")
-	if !strings.Contains(got, "example.org") || !strings.Contains(got, "12:34:56") {
+	if !strings.Contains(got, "https://example.org") || !strings.Contains(got, "12:34:56") {
 		t.Fatalf("styledMessage() = %q, missing shortened content", got)
 	}
 }
