@@ -152,7 +152,8 @@ make tui
 
 Use `Tab` or the arrow keys to switch tribunes, `Ctrl-U`/`Ctrl-D` to scroll,
 `Enter` to post, and `q` to quit. The TUI also loads server-side blocked
-identities from `/gb2c/config`.
+identities from `/gb2c/config`. Replies are grouped with a stable conversation
+color: `┏` marks a root, `┣` an intermediate reply, and `┗` the end of a branch.
 
 ### cachetotoz
 

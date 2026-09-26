@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"hash/fnv"
 	"net/http"
 	"net/url"
 	"os"
@@ -54,18 +55,27 @@ type model struct {
 	stream        *postStream
 }
 
+type conversationGraph struct {
+	parents  map[string][]string
+	children map[string][]string
+}
+
 var clockReference = regexp.MustCompile(`(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2}[T# ]|[0-9]{2}/[0-9]{2}#)?([0-9]{2}:[0-9]{2}:[0-9]{2})(?:@([a-z]+))?)`)
 var anchorURL = regexp.MustCompile(`(?is)<a\s+[^>]*href=["']([^"']+)["'][^>]*>.*?</a>`)
 var plainURL = regexp.MustCompile(`https?://[^\s<>"']+`)
 
 var (
-	titleStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#7D56F4"))
-	mutedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))
-	clockStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFA5"))
-	urlStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#5FAFFF")).Underline(true)
-	nameStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF9D00")).Bold(true)
-	grayStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))
-	footerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#9A9A9A"))
+	titleStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#7D56F4"))
+	mutedStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))
+	clockStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFA5"))
+	urlStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#5FAFFF")).Underline(true)
+	nameStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF9D00")).Bold(true)
+	grayStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))
+	footerStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#9A9A9A"))
+	threadColors = []lipgloss.Color{
+		"#FF5F87", "#5FAFFF", "#5FD787", "#FFD75F",
+		"#AF87FF", "#FF875F", "#5FFFFF", "#D7AF5F",
+	}
 )
 
 func main() {
@@ -190,6 +200,7 @@ func (m model) View() string {
 		return "connecting..."
 	}
 	posts := m.visiblePosts()
+	graph := buildConversationGraph(m.allPosts())
 	contentHeight := m.height - 6
 	if contentHeight < 1 {
 		contentHeight = 1
@@ -216,9 +227,15 @@ func (m model) View() string {
 		if name == "" {
 			name = post.Info
 		}
-		line := fmt.Sprintf("%s  %s  %s", clockStyle.Render(post.Time[8:]), nameStyle.Render(name), styledMessage(post.Message))
+		gutter := "  "
+		referenceStyle := clockStyle
+		if marker, style, ok := graph.decoration(postKey(post)); ok {
+			gutter = style.Render(marker + " ")
+			referenceStyle = style
+		}
+		line := fmt.Sprintf("%s%s  %s  %s", gutter, clockStyle.Render(post.Time[8:]), nameStyle.Render(name), styledMessageWithClockStyle(post.Message, referenceStyle))
 		if m.gray && post.Message == "[message hidden]" {
-			line = grayStyle.Render(fmt.Sprintf("%s  %s  %s", post.Time[8:], name, post.Message))
+			line = grayStyle.Render(fmt.Sprintf("%s%s  %s  %s", gutter, post.Time[8:], name, post.Message))
 		}
 		body = append(body, lipgloss.NewStyle().Width(max(1, m.width-4)).Render(line))
 	}
@@ -234,11 +251,7 @@ func (m model) View() string {
 }
 
 func (m model) visiblePosts() []Post {
-	all := make([]Post, 0, len(m.posts))
-	for _, post := range m.posts {
-		all = append(all, post)
-	}
-	sort.Slice(all, func(i, j int) bool { return all[i].ID < all[j].ID })
+	all := m.allPosts()
 	hidden := make(map[string]bool)
 	changed := true
 	for changed {
@@ -276,6 +289,80 @@ func (m model) visiblePosts() []Post {
 		visible = append(visible, post)
 	}
 	return visible
+}
+
+func (m model) allPosts() []Post {
+	all := make([]Post, 0, len(m.posts))
+	for _, post := range m.posts {
+		all = append(all, post)
+	}
+	sort.Slice(all, func(i, j int) bool { return all[i].ID < all[j].ID })
+	return all
+}
+
+func buildConversationGraph(posts []Post) conversationGraph {
+	graph := conversationGraph{
+		parents:  make(map[string][]string),
+		children: make(map[string][]string),
+	}
+	for _, post := range posts {
+		child := postKey(post)
+		for _, reference := range clockReference.FindAllStringSubmatch(post.Message, -1) {
+			tribune := post.Tribune
+			if reference[2] != "" {
+				tribune = reference[2]
+			}
+			var parent string
+			for _, candidate := range posts {
+				if candidate.Tribune == tribune && len(candidate.Time) >= 14 && candidate.Time[8:] == strings.ReplaceAll(reference[1], ":", "") {
+					parent = postKey(candidate)
+				}
+			}
+			if parent != "" && parent != child && !contains(graph.parents[child], parent) {
+				graph.parents[child] = append(graph.parents[child], parent)
+				graph.children[parent] = append(graph.children[parent], child)
+			}
+		}
+	}
+	return graph
+}
+
+func (g conversationGraph) decoration(key string) (string, lipgloss.Style, bool) {
+	if len(g.parents[key]) == 0 && len(g.children[key]) == 0 {
+		return "", lipgloss.Style{}, false
+	}
+	marker := "┣"
+	if len(g.parents[key]) == 0 {
+		marker = "┏"
+	} else if len(g.children[key]) == 0 {
+		marker = "┗"
+	}
+	return marker, threadStyle(g.root(key)), true
+}
+
+func (g conversationGraph) root(key string) string {
+	seen := make(map[string]bool)
+	for len(g.parents[key]) > 0 && !seen[key] {
+		seen[key] = true
+		key = g.parents[key][0]
+	}
+	return key
+}
+
+func threadStyle(root string) lipgloss.Style {
+	hash := fnv.New32a()
+	_, _ = hash.Write([]byte(root))
+	color := threadColors[int(hash.Sum32())%len(threadColors)]
+	return lipgloss.NewStyle().Foreground(color).Bold(true)
+}
+
+func contains(values []string, wanted string) bool {
+	for _, value := range values {
+		if value == wanted {
+			return true
+		}
+	}
+	return false
 }
 
 func newPostStream(client *http.Client, baseURL string, tribunes []string) *postStream {
@@ -427,6 +514,10 @@ func prettyMessage(value string) string {
 }
 
 func styledMessage(value string) string {
+	return styledMessageWithClockStyle(value, clockStyle)
+}
+
+func styledMessageWithClockStyle(value string, referenceStyle lipgloss.Style) string {
 	value = clean(value)
 	value = anchorURL.ReplaceAllStringFunc(value, func(anchor string) string {
 		matches := anchorURL.FindStringSubmatch(anchor)
@@ -436,7 +527,7 @@ func styledMessage(value string) string {
 		return urlStyle.Render(urlLabel(rawURL))
 	})
 	value = clockReference.ReplaceAllStringFunc(value, func(clock string) string {
-		return clockStyle.Render(clock)
+		return referenceStyle.Render(clock)
 	})
 	return value
 }
