@@ -122,6 +122,22 @@ func TestConversationLanesSeparateOverlapAndReuseFinishedLane(t *testing.T) {
 	}
 }
 
+func TestConversationLanesDescribeSingleVisibleMember(t *testing.T) {
+	root := Post{ID: 1, Time: "20260926120000", Tribune: "moules", Message: "root"}
+	reply := Post{ID: 2, Time: "20260926120100", Tribune: "moules", Message: "12:00:00 reply"}
+	graph := buildConversationGraph([]Post{root, reply})
+
+	rootOnly := buildConversationLanes([]Post{root}, graph)
+	if got := rootOnly.byRoot[postKey(root)].singleMarker; got != "╷" {
+		t.Fatalf("single root marker = %q, want ╷", got)
+	}
+
+	replyOnly := buildConversationLanes([]Post{reply}, graph)
+	if got := replyOnly.byRoot[postKey(root)].singleMarker; got != "╵" {
+		t.Fatalf("single reply marker = %q, want ╵", got)
+	}
+}
+
 func TestShortBrowserUserAgent(t *testing.T) {
 	tests := []struct {
 		userAgent string

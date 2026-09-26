@@ -65,6 +65,7 @@ type conversationGraph struct {
 type conversationSpan struct {
 	root, firstKey, lastKey string
 	start, end, lane        int
+	singleMarker            string
 }
 
 type conversationLanes struct {
@@ -377,6 +378,12 @@ func buildConversationLanes(posts []Post, graph conversationGraph) conversationL
 
 	spans := make([]conversationSpan, 0, len(lanes.byRoot))
 	for _, span := range lanes.byRoot {
+		if span.start == span.end {
+			span.singleMarker = "╷"
+			if len(graph.parents[span.firstKey]) > 0 {
+				span.singleMarker = "╵"
+			}
+		}
 		spans = append(spans, span)
 	}
 	sort.Slice(spans, func(i, j int) bool {
@@ -428,7 +435,7 @@ func (lanes conversationLanes) gutter(row int, key string) (string, lipgloss.Sty
 			if active.root == root {
 				switch {
 				case active.start == active.end:
-					marker = "●"
+					marker = active.singleMarker
 				case row == active.start:
 					marker = "┏"
 				case row == active.end:
