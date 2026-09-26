@@ -66,3 +66,39 @@ func TestConversationGraphConnectsRepliesToTheirRoot(t *testing.T) {
 		t.Fatalf("leaf decoration = %q, %t; want ┗, true", leafMarker, ok)
 	}
 }
+
+func TestShortBrowserUserAgent(t *testing.T) {
+	tests := []struct {
+		userAgent string
+		want      string
+	}{
+		{
+			"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0.0.0 Safari/537.36",
+			"Chrome 140 · Linux",
+		},
+		{
+			"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0",
+			"Edge 140 · Windows",
+		},
+		{
+			"Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 Version/18.6 Mobile/15E148 Safari/604.1",
+			"Safari 18 · iOS",
+		},
+		{
+			"Mozilla/5.0 (Android 16; Mobile; rv:143.0) Gecko/143.0 Firefox/143.0",
+			"Firefox 143 · Android",
+		},
+	}
+	for _, test := range tests {
+		if got := shortBrowserUserAgent(test.userAgent); got != test.want {
+			t.Errorf("shortBrowserUserAgent() = %q, want %q", got, test.want)
+		}
+	}
+}
+
+func TestShortBrowserUserAgentKeepsCustomInfo(t *testing.T) {
+	const info = "coincoin-from-the-future"
+	if got := shortBrowserUserAgent(info); got != info {
+		t.Fatalf("shortBrowserUserAgent() = %q, want %q", got, info)
+	}
+}

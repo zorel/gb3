@@ -70,6 +70,16 @@ var clockReference = regexp.MustCompile(`(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2}[T# ]|[
 var anchorURL = regexp.MustCompile(`(?is)<a\s+[^>]*href=["']([^"']+)["'][^>]*>.*?</a>`)
 var plainURL = regexp.MustCompile(`https?://[^\s<>"']+`)
 var inlineToken = regexp.MustCompile(`https?://[^\s<>"']+|(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2}[T# ]|[0-9]{2}/[0-9]{2}#)?[0-9]{2}:[0-9]{2}:[0-9]{2}(?:@[a-z]+)?)`)
+var browserVersions = []struct {
+	name       string
+	expression *regexp.Regexp
+}{
+	{"Edge", regexp.MustCompile(`(?:Edg|EdgiOS|EdgA)/([0-9]+)`)},
+	{"Opera", regexp.MustCompile(`(?:OPR|Opera)/([0-9]+)`)},
+	{"Firefox", regexp.MustCompile(`(?:Firefox|FxiOS)/([0-9]+)`)},
+	{"Chrome", regexp.MustCompile(`(?:Chrome|CriOS)/([0-9]+)`)},
+	{"Safari", regexp.MustCompile(`Version/([0-9]+)(?:\.[0-9]+)*.*Safari/`)},
+}
 
 var (
 	titleStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#7D56F4"))
@@ -230,10 +240,7 @@ func (m model) View() string {
 
 	body := make([]string, 0, contentHeight)
 	for _, post := range posts[start:end] {
-		name := post.Login
-		if name == "" {
-			name = post.Info
-		}
+		name := displayIdentity(post)
 		gutter := "  "
 		referenceStyle := clockStyle
 		if marker, style, ok := graph.decoration(postKey(post)); ok {
@@ -474,6 +481,49 @@ func fetchBlockedIdentities(client *http.Client, baseURL string) []string {
 }
 
 func postKey(post Post) string { return post.Tribune + ":" + strconv.FormatInt(post.ID, 10) }
+
+func displayIdentity(post Post) string {
+	if post.Login != "" {
+		return post.Login
+	}
+	return shortBrowserUserAgent(post.Info)
+}
+
+func shortBrowserUserAgent(userAgent string) string {
+	for _, browser := range browserVersions {
+		matches := browser.expression.FindStringSubmatch(userAgent)
+		if len(matches) < 2 {
+			continue
+		}
+		identity := browser.name + " " + matches[1]
+		if platform := browserPlatform(userAgent); platform != "" {
+			identity += " · " + platform
+		}
+		return identity
+	}
+	return userAgent
+}
+
+func browserPlatform(userAgent string) string {
+	switch {
+	case strings.Contains(userAgent, "Android"):
+		return "Android"
+	case strings.Contains(userAgent, "iPad"):
+		return "iPadOS"
+	case strings.Contains(userAgent, "iPhone"), strings.Contains(userAgent, "iPod"):
+		return "iOS"
+	case strings.Contains(userAgent, "Windows"):
+		return "Windows"
+	case strings.Contains(userAgent, "CrOS"):
+		return "ChromeOS"
+	case strings.Contains(userAgent, "Macintosh"), strings.Contains(userAgent, "Mac OS X"):
+		return "macOS"
+	case strings.Contains(userAgent, "Linux"):
+		return "Linux"
+	default:
+		return ""
+	}
+}
 
 func defaultInfo() string {
 	if value := os.Getenv("GB3_TUI_INFO"); value != "" {
