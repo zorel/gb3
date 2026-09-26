@@ -46,6 +46,31 @@ func TestInlineFormatMapsToLipgloss(t *testing.T) {
 	}
 }
 
+func TestStyledMessageClosesUnterminatedFormattingTags(t *testing.T) {
+	tests := []struct {
+		name    string
+		message string
+		text    string
+	}{
+		{"bold", "<b>bold without end", "bold without end"},
+		{"italic", "<i>italic without end", "italic without end"},
+		{"underline", "<u>underline without end", "underline without end"},
+		{"strike", "<s>strike without end", "strike without end"},
+		{"nested", "<b>bold <i>and italic <u>and underlined", "bold and italic and underlined"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := styledMessage(test.message)
+			if !strings.Contains(got, test.text) {
+				t.Fatalf("styledMessage() = %q, want text %q", got, test.text)
+			}
+			if strings.Contains(got, "<") || strings.Contains(got, ">") {
+				t.Fatalf("styledMessage() = %q, contains a raw unterminated tag", got)
+			}
+		})
+	}
+}
+
 func TestConversationGraphConnectsRepliesToTheirRoot(t *testing.T) {
 	posts := []Post{
 		{ID: 1, Time: "20260926120000", Tribune: "moules", Message: "root"},
