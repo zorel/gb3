@@ -55,6 +55,8 @@ type model struct {
 }
 
 var clockReference = regexp.MustCompile(`(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2}[T# ]|[0-9]{2}/[0-9]{2}#)?([0-9]{2}:[0-9]{2}:[0-9]{2})(?:@([a-z]+))?)`)
+var anchorURL = regexp.MustCompile(`(?is)<a\s+[^>]*href=["']([^"']+)["'][^>]*>.*?</a>`)
+var plainURL = regexp.MustCompile(`https?://[^\s<>"']+`)
 
 var (
 	titleStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#7D56F4"))
@@ -213,7 +215,7 @@ func (m model) View() string {
 		if name == "" {
 			name = post.Info
 		}
-		line := fmt.Sprintf("%s  %s  %s", clockStyle.Render(post.Time[8:]), nameStyle.Render(name), clean(post.Message))
+		line := fmt.Sprintf("%s  %s  %s", clockStyle.Render(post.Time[8:]), nameStyle.Render(name), clean(prettyMessage(post.Message)))
 		if m.gray && post.Message == "[message hidden]" {
 			line = grayStyle.Render(fmt.Sprintf("%s  %s  %s", post.Time[8:], name, post.Message))
 		}
@@ -413,6 +415,24 @@ func clean(value string) string {
 		}
 		return character
 	}, strings.ReplaceAll(strings.ReplaceAll(value, "\r", " "), "\n", " "))
+}
+
+func prettyMessage(value string) string {
+	value = anchorURL.ReplaceAllStringFunc(value, func(anchor string) string {
+		matches := anchorURL.FindStringSubmatch(anchor)
+		return urlLabel(matches[1])
+	})
+	return plainURL.ReplaceAllStringFunc(value, urlLabel)
+}
+
+func urlLabel(value string) string {
+	core := strings.TrimRight(value, ".,!?;:)]")
+	suffix := value[len(core):]
+	parsed, err := url.Parse(core)
+	if err != nil || parsed.Hostname() == "" {
+		return value
+	}
+	return parsed.Hostname() + suffix
 }
 
 func max(a, b int) int {
