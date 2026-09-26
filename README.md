@@ -141,6 +141,19 @@ curl -X POST -d "info=dave" -d "message=plop" -d "tribune=euromussels" 'http://l
 
 A simple coincoin frontend for gb2c.
 
+### gb3tui
+
+A Bubble Tea terminal client for gb2c. Build and run it with:
+
+```bash
+make tui
+./gb3tui -url http://localhost:16666 -info dave -blocked thoasm -gray
+```
+
+Use `Tab` or the arrow keys to switch tribunes, `Ctrl-U`/`Ctrl-D` to scroll,
+`Enter` to post, and `q` to quit. The TUI also loads server-side blocked
+identities from `/gb2c/config`.
+
 ### cachetotoz
 
 A simple utility to cache [totoz](https://nsfw.totoz.eu) image and tags.
