@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+var timeLocation *time.Location
+
 // Post a moule post
 type Post struct {
 	Time    string
@@ -62,8 +64,19 @@ func scanTsv(r io.Reader) (*Post, error) {
 }
 
 func init() {
+	initTimeLocation()
 	initMaxPostsInHistory()
 	initMaxDaysInHistory()
+}
+
+func initTimeLocation() {
+	tl, err := time.LoadLocation("Europe/Paris")
+	if nil != err {
+		log.Println("Cannot load Europe/Paris time location. It is mandatory to comply with tribune standard ( https://rfm.devnewton.fr/standard/norloge.html#datetime-based-norloge )", err)
+		timeLocation = time.UTC
+	} else {
+		timeLocation = tl
+	}
 }
 
 var maxPostsInHistory = 200
@@ -141,7 +154,7 @@ func (f *FileStore) Close() {
 // ReadPosts Load from file
 func (f *FileStore) ReadPosts() Posts {
 	posts := make(Posts, 0, maxPostsInHistory)
-	now := time.Now()
+	now := time.Now().In(timeLocation)
 	for day := 0; day <= maxDaysInHistory && len(posts) < maxPostsInHistory; day++ {
 		dayTime := now.AddDate(0, 0, -day)
 		dayDir := "posts/" + dayTime.Format("2006/01/02")
@@ -200,7 +213,7 @@ func (f *FileStore) WritePost(p *Post) {
 }
 
 func (f *FileStore) tryToWritePost(p *Post) error {
-	t := time.Now()
+	t := time.Now().In(timeLocation)
 	p.Time = t.Format("20060102150405")
 	tmpFileName := fmt.Sprintf("tmp/%s%d.tsv", p.Time, f.counter.Add(1))
 	tmpFile, err := f.root.Create(tmpFileName)
