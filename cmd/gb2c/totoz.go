@@ -24,7 +24,9 @@ type Totoz struct {
 // TotozSearch handler
 func TotozSearch(httpClient *http.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		searchURL := fmt.Sprintf("https://nsfw.totoz.eu/search.xml?terms=%s", url.QueryEscape(r.FormValue("terms")))
+		params := url.Values{}
+		params.Set("terms", r.FormValue("terms"))
+		searchURL := "https://nsfw.totoz.eu/search.xml?" + params.Encode()
 		totozSearchResults, err := httpClient.Get(searchURL)
 		if nil != err {
 			http.Error(w, fmt.Sprintf("Totoz server error: %s. Blame fork.", err), 500)
