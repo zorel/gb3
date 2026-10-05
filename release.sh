@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 CODEBERG_USER="devnewton"
-GB3_VERSION=0.70
+GB3_VERSION=0.71
 
 curl --user "${CODEBERG_USER}:${CODEBERG_TOKEN}" --upload-file gb0 https://codeberg.org/api/packages/devnewton/generic/gb3/${GB3_VERSION}/gb0
 curl --user "${CODEBERG_USER}:${CODEBERG_TOKEN}" --upload-file gb2c https://codeberg.org/api/packages/devnewton/generic/gb3/${GB3_VERSION}/gb2c
