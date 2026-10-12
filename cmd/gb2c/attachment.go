@@ -116,7 +116,7 @@ func (a *AttachmentHandler) postAttachment(w http.ResponseWriter, r *http.Reques
 	}
 	defer root.Close()
 
-	attachmentDestFile, err := root.Create("/" + attachmentID)
+	attachmentDestFile, err := root.Create(attachmentID)
 	if nil != err {
 		http.Error(w, "Cannot create attachment file", http.StatusInternalServerError)
 		log.Println("Cannot create attachment file: ", err)
