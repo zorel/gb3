@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"io"
 	"log"
 	"net/http"
@@ -36,12 +37,12 @@ func NewTribuneClient(httpClient *http.Client) *TribuneClient {
 }
 
 // Post message to tribune
-func (tc *TribuneClient) Post(tribune *Tribune, inRequest *http.Request) {
+func (tc *TribuneClient) Post(tribune *Tribune, message, info, authorization string) {
 	data := url.Values{
-		tribune.PostField: []string{inRequest.PostFormValue("message")},
+		tribune.PostField: []string{message},
 	}
 	if len(tribune.InfoField) > 0 {
-		data[tribune.InfoField] = []string{inRequest.PostFormValue("info")}
+		data[tribune.InfoField] = []string{info}
 	}
 	outRequest, err := http.NewRequest("POST", tribune.PostURL, strings.NewReader(data.Encode()))
 	if nil != err {
@@ -50,10 +51,10 @@ func (tc *TribuneClient) Post(tribune *Tribune, inRequest *http.Request) {
 	}
 	outRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if len(tribune.InfoField) == 0 {
-		outRequest.Header.Set("User-Agent", inRequest.PostFormValue("info"))
+		outRequest.Header.Set("User-Agent", info)
 	}
 	if tribune.AuthentificationType == OAuth2Authentification {
-		outRequest.Header.Set("Authorization", inRequest.Header.Get("Authorization"))
+		outRequest.Header.Set("Authorization", authorization)
 	}
 	_, err = tc.httpClient.Do(outRequest)
 	if nil != err {
@@ -78,15 +79,12 @@ func (tc *TribuneClient) Poll(tribune *Tribune) (Posts, error) {
 	return posts, nil
 }
 
-func (tc *TribuneClient) parseTSVBackend(tribune *Tribune, body io.ReadCloser) (Posts, error) {
+func (tc *TribuneClient) parseTSVBackend(tribune *Tribune, body io.Reader) (Posts, error) {
 	posts := make(Posts, 0, 100) // 100 seems to be a good starting point depending on the tribune
-	data, err := io.ReadAll(body)
-	if nil != err {
-		return nil, err
-	}
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		record := strings.Split(line, "\t")
+	scanner := bufio.NewScanner(body)
+	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
+	for scanner.Scan() {
+		record := strings.Split(scanner.Text(), "\t")
 		if len(record) < 5 {
 			continue
 		}
@@ -97,6 +95,9 @@ func (tc *TribuneClient) parseTSVBackend(tribune *Tribune, body io.ReadCloser) (
 		}
 		post := Post{ID: id, Time: record[1], Info: record[2], Login: record[3], Message: record[4], Tribune: tribune.Name}
 		posts = append(posts, post)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
 	return posts, nil
 }

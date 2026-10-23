@@ -17,7 +17,7 @@ class Gc2PostIcon extends HTMLElement {
      */
     isReply;
 
-    updateIcon(post, messageElement) {
+    updateIcon(post, messageElement, ownerTribune) {
         let nickname = GC2_STORAGE.getItem("nickname") || "";
         let login = GC2_STORAGE.getItem("linuxfr_login") || "";
 
@@ -34,8 +34,15 @@ class Gc2PostIcon extends HTMLElement {
 
         this.isReply = false;
         let norlogesInMessage = messageElement.getElementsByTagName('gc2-norloge');
+        // Limit the lookup to the owning tribune instead of scanning the whole
+        // document for every clock reference. ownerTribune is set by Gc2Tribune
+        // before the post is attached to the DOM.
+        let tribuneElement = ownerTribune || this.closest('gc2-tribune');
         for (let norlogeInMessage of norlogesInMessage) {
-            let postNorloges = document.querySelectorAll(`gc2-tribune[name="${post.tribune}"] gc2-post-norloge[title*=" ${norlogeInMessage.title.slice(-8)}"]`);
+            let norlogeSelector = `gc2-post-norloge[title*=" ${norlogeInMessage.title.slice(-8)}"]`;
+            let postNorloges = tribuneElement
+                ? tribuneElement.querySelectorAll(norlogeSelector)
+                : document.querySelectorAll(`gc2-tribune[name="${post.tribune}"] ${norlogeSelector}`);
             let postNorloge = postNorloges.item(postNorloges.length-1);
             if (postNorloge) {
                 let postIcon = postNorloge.parentElement.querySelector('gc2-post-icon');
@@ -202,7 +209,14 @@ class Gc2Norloge extends HTMLElement {
         if(gc2Main) {
             gc2Main.setActiveTribune(bouchot);
         }
-        let results = document.querySelectorAll(`gc2-tribune[name="${bouchot}"] gc2-post-norloge[title*=" ${this.title.slice(-8)}"]`);
+        let titleSuffix = `gc2-post-norloge[title*=" ${this.title.slice(-8)}"]`;
+        let ownTribune = this.closest('gc2-tribune');
+        let results;
+        if (ownTribune && ownTribune.getAttribute('name') === bouchot) {
+            results = ownTribune.querySelectorAll(titleSuffix);
+        } else {
+            results = document.querySelectorAll(`gc2-tribune[name="${bouchot}"] ${titleSuffix}`);
+        }
         return results.item(results.length-1);
     }
 }
@@ -239,6 +253,11 @@ export class Gc2Post extends HTMLElement {
      * @type string
      */
     tribune;
+
+    /**
+     * @type Gc2Tribune
+     */
+    ownerTribune;
 
     /**
      * @type Gc2PostIcon
@@ -281,7 +300,7 @@ export class Gc2Post extends HTMLElement {
         messageElement.innerHTML = post.message;
         this.appendChild(messageElement);
 
-        this.iconElement.updateIcon(post, messageElement);
+        this.iconElement.updateIcon(post, messageElement, this.ownerTribune);
     }
 
     /**

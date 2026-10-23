@@ -25,37 +25,66 @@ export class Gc2Tribune extends HTMLElement {
         let shouldRender = !post.hiddenConversation || GC2_CONVERSATION_FILTER.displayMode === "gray";
         if (shouldRender && !document.getElementById(`${post.id}@${post.tribune}`)) {
             let postElement = new Gc2Post();
+            postElement.ownerTribune = this;
             postElement.setup(post);
             postElement.classList.toggle("gc2-post-filtered", post.hiddenConversation);
-            this.appendChild(postElement);
-            this.sortPosts();
+            this.insertPostElement(postElement);
+            this.refreshNotifications();
         }
     }
 
-    sortPosts() {
-        let postElements = this.getElementsByTagName('gc2-post');
-        Array.prototype.slice.call(postElements).sort((a, b) => {
-            if (a.postId < b.postId) {
-                return -1;
-            } else if (a.postId > b.postId) {
-                return 1;
-            }
-            return 0;
-        }).forEach((p) => {
-            this.appendChild(p);
-        });
+    insertPostElement(postElement) {
+        let nextElement = this.findInsertionPoint(postElement.postId);
+        if (nextElement) {
+            this.insertBefore(postElement, nextElement);
+        } else {
+            this.appendChild(postElement);
+        }
+    }
 
+    findInsertionPoint(postId) {
+        let postElements = this.getElementsByTagName('gc2-post');
+        let wanted = Number(postId);
+        let low = 0;
+        let high = postElements.length;
+        while (low < high) {
+            let middle = (low + high) >>> 1;
+            if (Number(postElements[middle].postId) <= wanted) {
+                low = middle + 1;
+            } else {
+                high = middle;
+            }
+        }
+        return postElements[low] || null;
+    }
+
+    refreshNotifications() {
         this.hasBigorno = false;
         this.hasReply = false;
-        let lastReadPostId =  GC2_STORAGE.getItem(`${this.getAttribute("name")}_lastReadPostId`) || -1;
+        let postElements = this.getElementsByTagName('gc2-post');
+        let lastReadPostId = GC2_STORAGE.getItem(`${this.getAttribute("name")}_lastReadPostId`) || -1;
         for (let i = postElements.length - 1; i > 0; --i) {
             let post = postElements[i];
-            if(post.id <= lastReadPostId || post.isMine) {
+            if (post.id <= lastReadPostId || post.isMine) {
                 break;
             }
             this.hasReply |= post.isReply;
             this.hasBigorno |= post.isBigorno;
         }
+    }
+
+    sortPosts() {
+        // Kept for compatibility. Posts are inserted in order, so only reorder
+        // the DOM when it is actually needed instead of on every new post.
+        let postElements = Array.prototype.slice.call(this.getElementsByTagName('gc2-post'));
+        let sortedPosts = postElements.slice().sort((a, b) => Number(a.postId) - Number(b.postId));
+        let alreadySorted = sortedPosts.every((element, index) => element === postElements[index]);
+        if (!alreadySorted) {
+            for (let postElement of sortedPosts) {
+                this.appendChild(postElement);
+            }
+        }
+        this.refreshNotifications();
     }
 
     markAsRead() {

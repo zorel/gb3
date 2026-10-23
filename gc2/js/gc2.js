@@ -57,6 +57,11 @@ class Gc2Main extends HTMLElement {
      */
     storedTribunes;
 
+    /**
+     * @type Map<String, HTMLOptionElement>
+     */
+    tribuneOptions = new Map();
+
     constructor() {
         super();
     }
@@ -369,19 +374,22 @@ class Gc2Main extends HTMLElement {
 
                 // Keep the unmodified message for conversation matching. The
                 // plop transformation below can replace clock references.
-                post.conversationMessage = this.backend2html.parse(post.message);
+                let parsedMessage = this.backend2html.parse(post.message);
+                post.conversationMessage = parsedMessage;
 
                 // If the post's info matches an entry in the plop list, replace random words
+                let plopped = false;
                 try {
                     let plopList = GC2_STORAGE.getPlopList ? GC2_STORAGE.getPlopList() : [];
                     if (plopList && plopList.includes(post.info)) {
                         post.message = this.replaceWholeMessage(post.message);
+                        plopped = true;
                     }
                 } catch (e) {
                     // ignore errors
                 }
 
-                post.message = this.backend2html.parse(post.message);
+                post.message = plopped ? this.backend2html.parse(post.message) : parsedMessage;
                 this.getTribuneElement(post.tribune).insertPost(post);
                 this.updateNotifications();
                 if (wasAtbottom) {
@@ -414,6 +422,7 @@ class Gc2Main extends HTMLElement {
             var option = document.createElement("option");
             option.text = option.value = tribuneName;
             this.tribuneSelect.add(option);
+            this.tribuneOptions.set(tribuneName, option);
 
             if (this.tribuneNavigator) {
                 this.tribuneNavigator.addTribune(tribuneName);
@@ -639,7 +648,7 @@ class Gc2Main extends HTMLElement {
         let bigorno = false;
         let reply = false;
         this.tribunes.forEach((tribuneElement, tribuneName) => {
-            let option = this.tribuneSelect.querySelector(`option[value="${tribuneName}"`);
+            let option = this.tribuneOptions.get(tribuneName);
             if (option) {
                 if (tribuneElement.hasBigorno) {
                     bigorno = true;

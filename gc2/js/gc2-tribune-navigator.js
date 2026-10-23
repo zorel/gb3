@@ -28,9 +28,15 @@ customElements.define('gc2-tribune-navigator-button', Gc2TribuneNavigatorButton)
      */
     onnavigate;
 
+    /**
+     * @type Map<String, Gc2TribuneNavigatorButton>
+     */
+    buttons = new Map();
+
     addTribune(tribuneName) {
         let tribuneButton = document.createElement("gc2-tribune-navigator-button");
         tribuneButton.tribuneName = tribuneName;
+        this.buttons.set(tribuneName, tribuneButton);
         
         let tribuneSpan = document.createElement("span");
         tribuneSpan.innerText = tribuneName;
@@ -45,8 +51,8 @@ customElements.define('gc2-tribune-navigator-button', Gc2TribuneNavigatorButton)
     }
 
     setActiveTribune(tribuneName) {
-        this.querySelectorAll("gc2-tribune-navigator-button").forEach((element) => {
-            element.toggleAttribute("active", element.tribuneName === tribuneName);
+        this.buttons.forEach((element, name) => {
+            element.toggleAttribute("active", name === tribuneName);
         });
     }
 
@@ -57,12 +63,11 @@ customElements.define('gc2-tribune-navigator-button', Gc2TribuneNavigatorButton)
      * @param {boolean} hasReply 
      */
     setTribuneNotifications(tribuneName, hasBigorno, hasReply) {
-        this.querySelectorAll("gc2-tribune-navigator-button").forEach((element) => {
-            if(element.tribuneName === tribuneName) {
-                element.toggleAttribute("bigorno", hasBigorno);
-                element.toggleAttribute("reply", hasReply);
-            }
-        });
+        let element = this.buttons.get(tribuneName);
+        if (element) {
+            element.toggleAttribute("bigorno", hasBigorno);
+            element.toggleAttribute("reply", hasReply);
+        }
     }
 }
 

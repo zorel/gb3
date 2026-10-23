@@ -150,12 +150,19 @@ make tui
 ./gb3tui -url http://localhost:16666 -info dave -blocked thoasm -gray
 ```
 
-Use `Tab` or the arrow keys to switch tribunes, `Ctrl-U`/`Ctrl-D` to scroll,
-`Enter` to post, and `q` to quit. The TUI also loads server-side blocked
-identities from `/gb2c/config`. Replies are grouped with a stable conversation
-color and one gutter lane per overlapping conversation: `┏` marks a root, `┣`
-an intermediate reply, and `┗` the end of a branch. Nested replies stay in the
-root conversation's lane, and finished lanes are reused.
+Use `↑`/`↓` to move a highlight between posts and `←`/`→` to follow the clock
+references (`12:00:00` or `12:00:00@tribune`) that link a post to the posts it
+replies to: the highlight moves onto the referenced post. While a post is
+highlighted, clock references in other posts that point to it are highlighted
+as well. With an empty input, `Enter` inserts the highlighted post's clock into
+the input so you can answer it, or follows a selected clock to make its target
+the new context. With text in the input, `Enter` posts. Use `Tab`/`Shift-Tab` to
+switch tribunes, `PgUp`/`PgDn` (or `Ctrl-U`/`Ctrl-D`) to scroll, and `q` to quit. The
+TUI also loads server-side blocked identities from `/gb2c/config`. Replies are
+grouped with a stable conversation color and one gutter lane per overlapping
+conversation: `┏` marks a root, `┣` an intermediate reply, and `┗` the end of a
+branch. Nested replies stay in the root conversation's lane, and finished lanes
+are reused.
 Inline `<b>`, `<i>`, `<u>`, and `<s>` formatting is rendered with the matching
 terminal style.
 

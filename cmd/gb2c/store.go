@@ -16,31 +16,26 @@ type memStore struct {
 	maxPostsInHistory int //  number of latests posts to store
 }
 
-func constainsById(posts Posts, id int64) bool {
-	for _, p := range posts {
-		if p.ID == id {
-			return true
-		}
-	}
-	return false
-}
-
-func appendUniquePosts(posts Posts, elements ...Post) Posts {
-	for _, e := range elements {
-		if !constainsById(posts, e.ID) {
-			posts = append(posts, e)
-		}
-	}
-	return posts
-}
-
 func (m memStore) Save(tribune string, posts Posts) error {
-	newPosts := make(Posts, 0, m.maxPostsInHistory)
+	var newPosts Posts
 	oldPosts, ok := m.postsMap.Load(tribune)
 	if ok {
-		newPosts = append(newPosts, oldPosts.(Posts)...)
-		newPosts = appendUniquePosts(newPosts, posts...)
+		existing := oldPosts.(Posts)
+		newPosts = make(Posts, 0, len(existing)+len(posts))
+		newPosts = append(newPosts, existing...)
+		seen := make(map[int64]struct{}, len(existing))
+		for _, p := range existing {
+			seen[p.ID] = struct{}{}
+		}
+		for _, p := range posts {
+			if _, ok := seen[p.ID]; ok {
+				continue
+			}
+			seen[p.ID] = struct{}{}
+			newPosts = append(newPosts, p)
+		}
 	} else {
+		newPosts = make(Posts, 0, len(posts))
 		newPosts = append(newPosts, posts...)
 	}
 	sort.Sort(newPosts)

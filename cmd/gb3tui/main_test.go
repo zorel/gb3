@@ -3,6 +3,8 @@ package main
 import (
 	"strings"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func TestPrettyMessageShortensAnchorsAndURLs(t *testing.T) {
@@ -171,5 +173,200 @@ func TestShortBrowserUserAgentKeepsCustomInfo(t *testing.T) {
 	const info = "coincoin-from-the-future"
 	if got := shortBrowserUserAgent(info); got != info {
 		t.Fatalf("shortBrowserUserAgent() = %q, want %q", got, info)
+	}
+}
+
+func TestFindPostByClock(t *testing.T) {
+	posts := []Post{
+		{ID: 1, Time: "20260926120000", Tribune: "moules", Message: "root"},
+		{ID: 2, Time: "20260926120100", Tribune: "moules", Message: "reply"},
+		{ID: 3, Time: "20260926120000", Tribune: "dlfp", Message: "same clock, other tribune"},
+	}
+	target, ok := findPostByClock(posts, "moules", "120000")
+	if !ok || target.ID != 1 {
+		t.Fatalf("findPostByClock() = %v, %t; want post 1, true", target, ok)
+	}
+	if _, ok := findPostByClock(posts, "moules", "123456"); ok {
+		t.Fatal("findPostByClock() should not match a missing clock")
+	}
+}
+
+func TestFindPostByClockPrefersMostRecent(t *testing.T) {
+	posts := []Post{
+		{ID: 1, Time: "20260926120000", Tribune: "moules", Message: "toto"},
+		{ID: 5, Time: "20260926120000", Tribune: "moules", Message: "michel"},
+	}
+	target, ok := findPostByClock(posts, "moules", "120000")
+	if !ok || target.ID != 5 {
+		t.Fatalf("findPostByClock() = %v, %t; want post 5, true", target, ok)
+	}
+}
+
+func TestConversationGraphMostRecentMatchFormsNewThread(t *testing.T) {
+	posts := []Post{
+		{ID: 1, Time: "20260926120000", Tribune: "moules", Message: "toto root"},
+		{ID: 2, Time: "20260926120000", Tribune: "moules", Message: "michel root"},
+		{ID: 3, Time: "20260926120500", Tribune: "moules", Message: "12:00:00 answer"},
+	}
+	graph := buildConversationGraph(posts)
+	lanes := buildConversationLanes(posts, graph)
+
+	toto := postKey(posts[0])
+	michel := postKey(posts[1])
+	answer := postKey(posts[2])
+
+	if got := graph.root(answer); got != michel {
+		t.Fatalf("root(answer) = %q, want %q", got, michel)
+	}
+	if contains(graph.children[toto], answer) {
+		t.Fatal("answer should not be a child of toto")
+	}
+	if !contains(graph.children[michel], answer) {
+		t.Fatal("answer should be a child of michel")
+	}
+	if lanes.rootByKey[answer] != michel {
+		t.Fatalf("answer lane root = %q, want %q", lanes.rootByKey[answer], michel)
+	}
+	if _, ok := lanes.byRoot[toto]; ok {
+		t.Fatal("toto should not own a conversation lane")
+	}
+}
+
+func TestPostClockLinks(t *testing.T) {
+	posts := []Post{
+		{ID: 1, Time: "20260926120000", Tribune: "moules", Message: "root"},
+		{ID: 2, Time: "20260926120100", Tribune: "moules", Message: "12:00:00 reply"},
+		{ID: 3, Time: "20260926120000", Tribune: "dlfp", Message: "dlfp root"},
+		{ID: 4, Time: "20260926120200", Tribune: "moules", Message: "12:00:00@dlfp cross"},
+	}
+
+	links := postClockLinks(posts, posts[1])
+	if len(links) != 1 || !links[0].found || links[0].target.ID != 1 {
+		t.Fatalf("postClockLinks() = %+v; want one resolved link to post 1", links)
+	}
+
+	cross := postClockLinks(posts, posts[3])
+	if len(cross) != 1 || !cross[0].found || cross[0].target.ID != 3 || cross[0].target.Tribune != "dlfp" {
+		t.Fatalf("postClockLinks() cross-tribune = %+v; want link to dlfp post 3", cross)
+	}
+}
+
+func TestClockForPost(t *testing.T) {
+	post := Post{ID: 1, Time: "20260926150405", Tribune: "moules", Message: "hello"}
+	if got := clockForPost(post); got != "15:04:05" {
+		t.Fatalf("clockForPost() = %q, want %q", got, "15:04:05")
+	}
+}
+
+func TestWrapWordsHangingIndent(t *testing.T) {
+	lines := wrapWords("aa bb cc dd ee ff", 10, 20)
+	want := []string{"aa bb cc", "dd ee ff"}
+	if len(lines) != len(want) {
+		t.Fatalf("wrapWords() = %v, want %v", lines, want)
+	}
+	for i := range want {
+		if lines[i] != want[i] {
+			t.Fatalf("wrapWords()[%d] = %q, want %q", i, lines[i], want[i])
+		}
+	}
+}
+
+func TestHiddenPostsPropagatesThroughReplies(t *testing.T) {
+	posts := []Post{
+		{ID: 1, Time: "20260926120000", Tribune: "moules", Login: "troll", Message: "root"},
+		{ID: 2, Time: "20260926120001", Tribune: "moules", Message: "12:00:00 reply"},
+		{ID: 3, Time: "20260926120002", Tribune: "moules", Message: "12:00:01 nested reply"},
+		{ID: 4, Time: "20260926120003", Tribune: "moules", Message: "unrelated"},
+	}
+	index := newPostIndex(posts)
+	m := model{tribunes: []string{"moules"}, blocked: map[string]bool{"troll": true}}
+	hidden := m.hiddenPosts(index)
+	for _, post := range posts[:3] {
+		if !hidden[postKey(post)] {
+			t.Fatalf("post %d should be hidden", post.ID)
+		}
+	}
+	if hidden[postKey(posts[3])] {
+		t.Fatal("unrelated post should remain visible")
+	}
+
+	visible := m.visiblePostsFrom(index, hidden)
+	if len(visible) != 1 || visible[0].ID != 4 {
+		t.Fatalf("visiblePostsFrom() = %+v, want only post 4", visible)
+	}
+
+	m.gray = true
+	visible = m.visiblePostsFrom(index, hidden)
+	if len(visible) != len(posts) {
+		t.Fatalf("gray visible post count = %d, want %d", len(visible), len(posts))
+	}
+	if visible[0].Message != "[message hidden]" {
+		t.Fatalf("gray hidden message = %q, want masked message", visible[0].Message)
+	}
+}
+
+func TestSelectedIndexFollowsClock(t *testing.T) {
+	posts := []Post{
+		{ID: 1, Time: "20260926120000", Tribune: "moules", Message: "root"},
+		{ID: 2, Time: "20260926120005", Tribune: "moules", Message: "12:00:00 reply"},
+		{ID: 3, Time: "20260926120010", Tribune: "moules", Message: "unrelated"},
+	}
+	index := newPostIndex(posts)
+	m := model{
+		tribunes:    []string{"moules"},
+		selectedKey: postKey(posts[1]),
+		clockIndex:  0,
+	}
+	if got := m.selectedIndexFrom(index, posts); got != 0 {
+		t.Fatalf("selectedIndexFrom() with clock = %d, want 0", got)
+	}
+	m.clockIndex = -1
+	if got := m.selectedIndexFrom(index, posts); got != 1 {
+		t.Fatalf("selectedIndexFrom() without clock = %d, want 1", got)
+	}
+}
+
+func TestWaitForStreamBatchesBufferedPosts(t *testing.T) {
+	stream := &postStream{
+		posts:  make(chan Post, 4),
+		errors: make(chan error, 1),
+	}
+	stream.posts <- Post{ID: 1}
+	stream.posts <- Post{ID: 2}
+	stream.posts <- Post{ID: 3}
+
+	msg := (model{stream: stream}).waitForStream()()
+	batch, ok := msg.(postsMessage)
+	if !ok {
+		t.Fatalf("waitForStream() returned %T, want postsMessage", msg)
+	}
+	if len(batch) != 3 {
+		t.Fatalf("batch length = %d, want 3", len(batch))
+	}
+}
+
+func TestUpdateBuildsCachedView(t *testing.T) {
+	stream := &postStream{
+		posts:  make(chan Post, 4),
+		errors: make(chan error, 1),
+	}
+	m := model{
+		tribunes: []string{"moules"},
+		posts:    make(map[string]Post),
+		stream:   stream,
+	}
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(model)
+	updated, _ = m.Update(postsMessage{
+		{ID: 1, Time: "20260926120000", Tribune: "moules", Message: "root"},
+		{ID: 2, Time: "20260926120005", Tribune: "moules", Message: "12:00:00 reply"},
+	})
+	m = updated.(model)
+
+	if len(m.view.visible) != 2 {
+		t.Fatalf("cached visible post count = %d, want 2", len(m.view.visible))
+	}
+	if m.view.totalLines == 0 || len(m.view.lines) == 0 {
+		t.Fatal("cached view did not render any lines")
 	}
 }

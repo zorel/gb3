@@ -239,6 +239,9 @@ func (g *gb3) handlePoll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("X-Accel-Buffering", "no")
+	// Send the response headers now: a quiet tribune may not produce any post
+	// for a while, and clients must not wait for the first event to connect.
+	flusher.Flush()
 
 	c := NewCoincoin(w, flusher)
 	if r.URL.Query().Has("filter") {
@@ -261,8 +264,14 @@ func (g *gb3) handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 	t := g.tribunes[r.PostFormValue("tribune")]
 	if nil != t {
-		g.client.Post(t, r)
-		g.poll <- t
+		message := r.PostFormValue("message")
+		info := r.PostFormValue("info")
+		authorization := r.Header.Get("Authorization")
+		// Forwarding to the remote tribune must not block the HTTP response.
+		go func() {
+			g.client.Post(t, message, info, authorization)
+			g.poll <- t
+		}()
 	}
 }
 
@@ -299,13 +308,14 @@ func (g *gb3) pollTribune(t *Tribune) {
 }
 
 func (g *gb3) pollLoop(t *Tribune) {
-	tick := time.Tick(30 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
 	g.pollTribune(t)
 	for {
 		select {
 		case t := <-g.poll:
 			g.pollTribune(t)
-		case <-tick:
+		case <-ticker.C:
 			g.pollTribune(t)
 		}
 	}

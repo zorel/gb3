@@ -9,6 +9,7 @@ import (
 
 type SqliteStore struct {
 	db                *sql.DB
+	insertStmt        *sql.Stmt
 	location          *time.Location
 	maxPostsInHistory int // number of posts to return in RetrieveLatest()
 	maxPostsInStorage int // number of posts to store in the database
@@ -27,6 +28,11 @@ func NewSqliteStore(dbPath string, maxPostsInHistory int, maxPostsInStorage int)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open SQLite database: %v", err)
 	}
+
+	// SQLite only supports one writer at a time. Serializing access through a
+	// single connection avoids SQLITE_BUSY errors when tribunes are saved
+	// concurrently.
+	db.SetMaxOpenConns(1)
 
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS posts (
@@ -52,8 +58,14 @@ func NewSqliteStore(dbPath string, maxPostsInHistory int, maxPostsInStorage int)
 		return nil, fmt.Errorf("failed to load time location: %v", err)
 	}
 
+	stmt, err := db.Prepare(`INSERT OR IGNORE INTO posts (Tribune, ID, Time, Info, Login, Message) VALUES (?, ?, ?, ?, ?, ?);`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare insert statement: %v", err)
+	}
+
 	return &SqliteStore{
 		db:                db,
+		insertStmt:        stmt,
 		location:          location,
 		maxPostsInHistory: maxPostsInHistory,
 		maxPostsInStorage: maxPostsInStorage,
@@ -61,10 +73,15 @@ func NewSqliteStore(dbPath string, maxPostsInHistory int, maxPostsInStorage int)
 }
 
 func (s *SqliteStore) Save(tribune string, posts Posts) error {
-	stmt, err := s.db.Prepare(`INSERT OR IGNORE INTO posts (Tribune, ID, Time, Info, Login, Message) VALUES (?, ?, ?, ?, ?, ?);`)
+	tx, err := s.db.Begin()
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
+
+	// Reuse the statement prepared once in NewSqliteStore, bound to this transaction.
+	stmt := tx.Stmt(s.insertStmt)
+	defer stmt.Close()
 
 	var errs []error
 	for _, post := range posts {
@@ -85,8 +102,9 @@ func (s *SqliteStore) Save(tribune string, posts Posts) error {
 	}
 
 	if s.maxPostsInStorage > 0 {
-		_, err := s.db.Exec(
+		_, err := tx.Exec(
 			`DELETE FROM posts WHERE Tribune = ? AND ROWID < (SELECT ROWID FROM posts WHERE Tribune = ? ORDER BY ROWID DESC LIMIT ?, 1)`,
+			tribune,
 			tribune,
 			s.maxPostsInStorage,
 		)
@@ -95,7 +113,7 @@ func (s *SqliteStore) Save(tribune string, posts Posts) error {
 		}
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 func (s *SqliteStore) RetrieveLatests(tribune string) (Posts, error) {
@@ -124,5 +142,5 @@ func (s *SqliteStore) RetrieveLatests(tribune string) (Posts, error) {
 	// FIXME: In Go 1.21+, replace the following with:slices.Reverse(posts)
 	sort.Sort(posts)
 
-	return posts, nil
+	return posts, rows.Err()
 }

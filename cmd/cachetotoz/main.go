@@ -10,6 +10,8 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -17,8 +19,29 @@ import (
 
 var totozCacheDir string
 
+// totozHttpClient is shared so connections can be reused between downloads.
+var totozHttpClient = &http.Client{Timeout: 30 * time.Second}
+
 const maxTagsToRetrieve = 100
 const durationBetweenRetrieve = time.Hour
+
+// totozFetchConcurrency limits parallel downloads from nsfw.totoz.eu.
+const totozFetchConcurrency = 8
+
+func forEachConcurrently(count int, fn func(int)) {
+	semaphore := make(chan struct{}, totozFetchConcurrency)
+	var waitGroup sync.WaitGroup
+	for i := 0; i < count; i++ {
+		waitGroup.Add(1)
+		semaphore <- struct{}{}
+		go func(i int) {
+			defer waitGroup.Done()
+			defer func() { <-semaphore }()
+			fn(i)
+		}(i)
+	}
+	waitGroup.Wait()
+}
 
 func initCacheDir() {
 	totozCacheDir = os.Getenv("CACHETOTOZ_CACHE_DIRECTORY")
@@ -54,7 +77,7 @@ func cacheTotozTags(totozName string) (cached bool, err error) {
 		return false, err
 	}
 
-	res, err := http.Get(totozUrl)
+	res, err := totozHttpClient.Get(totozUrl)
 	if nil != err {
 		return false, err
 	}
@@ -93,7 +116,7 @@ func cacheTotozImage(totozName string) (cached bool, err error) {
 		return false, err
 	}
 
-	res, err := http.Get(totozImageUrl)
+	res, err := totozHttpClient.Get(totozImageUrl)
 	if nil != err {
 		return false, err
 	}
@@ -113,7 +136,7 @@ func cacheTotozImage(totozName string) (cached bool, err error) {
 }
 
 func retrieveLastestTotozes() {
-	res, err := http.Get("https://nsfw.totoz.eu/")
+	res, err := totozHttpClient.Get("https://nsfw.totoz.eu/")
 	if nil != err {
 		log.Println(err)
 		return
@@ -130,9 +153,7 @@ func retrieveLastestTotozes() {
 		return
 	}
 
-	nbTotozFound := 0
-	nbImagesCached := 0
-	nbTagsCached := 0
+	var totozNames []string
 	doc.Find(".totoz").Each(func(i int, s *goquery.Selection) {
 
 		//totoz regex /^[A-Za-z0-9-_ ]+$/ ?
@@ -143,39 +164,41 @@ func retrieveLastestTotozes() {
 			log.Printf("Totoz %s contains invalid characters\n", totozNameWithMarkup)
 			return
 		}
+		totozNames = append(totozNames, totozName)
+	})
 
-		nbTotozFound++
-
+	var nbImagesCached atomic.Int64
+	var nbTagsCached atomic.Int64
+	forEachConcurrently(len(totozNames), func(i int) {
+		totozName := totozNames[i]
 		imageCached, err := cacheTotozImage(totozName)
 		if nil != err {
-			log.Printf("Cannot cache totoz %s image : %v\n", totozNameWithMarkup, err)
+			log.Printf("Cannot cache totoz %s image : %v\n", totozName, err)
 			return
 		}
 		if imageCached {
-			nbImagesCached++
+			nbImagesCached.Add(1)
 		}
 		tagsCached, err := cacheTotozTags(totozName)
 		if nil != err {
-			log.Printf("Cannot cache totoz %s tags : %v\n", totozNameWithMarkup, err)
+			log.Printf("Cannot cache totoz %s tags : %v\n", totozName, err)
 			return
 		}
 		if tagsCached {
-			nbTagsCached++
+			nbTagsCached.Add(1)
 		}
 	})
 
-	fmt.Printf("Found %d totozes, cached %d images and %d tags\n", nbTotozFound, nbImagesCached, nbTagsCached)
+	fmt.Printf("Found %d totozes, cached %d images and %d tags\n", len(totozNames), nbImagesCached.Load(), nbTagsCached.Load())
 }
 
 func retrieveMissingTags() {
-	nbTotozFoundWithMissingTags := 0
-	nbTagsCached := 0
-
 	files, err := os.ReadDir(totozCacheDir)
 	if nil != err {
 		log.Fatal(err)
 	}
 
+	missingTags := make([]string, 0, maxTagsToRetrieve)
 	for _, file := range files {
 		if !file.Type().IsRegular() {
 			continue
@@ -184,21 +207,28 @@ func retrieveMissingTags() {
 		if !isValidTotozName(totozName) {
 			continue
 		}
-		tagsCached, err := cacheTotozTags(totozName)
-		if nil != err {
-			nbTotozFoundWithMissingTags++
-			log.Printf("Cannot cache totoz %s tags : %v\n", totozName, err)
+		if _, err := os.Stat(path.Join(totozCacheDir, totozName+".tags")); err == nil {
 			continue
 		}
-		if tagsCached {
-			nbTotozFoundWithMissingTags++
-			nbTagsCached++
-			if nbTagsCached >= maxTagsToRetrieve {
-				break
-			}
+		missingTags = append(missingTags, totozName)
+		if len(missingTags) >= maxTagsToRetrieve {
+			break
 		}
 	}
-	fmt.Printf("Found %d totozes without tags, cached %d tags\n", nbTotozFoundWithMissingTags, nbTagsCached)
+
+	var nbTagsCached atomic.Int64
+	forEachConcurrently(len(missingTags), func(i int) {
+		totozName := missingTags[i]
+		tagsCached, err := cacheTotozTags(totozName)
+		if nil != err {
+			log.Printf("Cannot cache totoz %s tags : %v\n", totozName, err)
+			return
+		}
+		if tagsCached {
+			nbTagsCached.Add(1)
+		}
+	})
+	fmt.Printf("Found %d totozes without tags, cached %d tags\n", len(missingTags), nbTagsCached.Load())
 }
 func main() {
 
