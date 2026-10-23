@@ -73,12 +73,58 @@ func NewSqliteStore(dbPath string, maxPostsInHistory int, maxPostsInStorage int)
 }
 
 func (s *SqliteStore) Save(tribune string, posts Posts) error {
+	if len(posts) == 0 {
+		return nil
+	}
+
+	if len(posts) == 1 {
+		// A transaction would only add overhead for a single row.
+		if err := s.insertPosts(tribune, posts); err != nil {
+			return err
+		}
+		return s.trim(tribune)
+	}
+
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
+	if err := s.insertPostsTx(tx, tribune, posts); err != nil {
+		return err
+	}
+
+	if s.maxPostsInStorage > 0 {
+		if _, err := tx.Exec(
+			`DELETE FROM posts WHERE Tribune = ? AND ID <= (SELECT ID FROM posts WHERE Tribune = ? ORDER BY ID DESC LIMIT 1 OFFSET ?)`,
+			tribune,
+			tribune,
+			s.maxPostsInStorage,
+		); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (s *SqliteStore) insertPosts(tribune string, posts Posts) error {
+	var errs []error
+	for _, post := range posts {
+		postTime, err := parsePostTime(post.Time, s.location)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		if _, err := s.insertStmt.Exec(post.Tribune, post.ID, postTime, post.Info, post.Login, post.Message); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return joinErrors(errs)
+}
+
+func (s *SqliteStore) insertPostsTx(tx *sql.Tx, tribune string, posts Posts) error {
 	// Reuse the statement prepared once in NewSqliteStore, bound to this transaction.
 	stmt := tx.Stmt(s.insertStmt)
 	defer stmt.Close()
@@ -90,30 +136,32 @@ func (s *SqliteStore) Save(tribune string, posts Posts) error {
 			errs = append(errs, err)
 			continue
 		}
-
-		_, err = stmt.Exec(post.Tribune, post.ID, postTime, post.Info, post.Login, post.Message)
-		if err != nil {
+		if _, err := stmt.Exec(post.Tribune, post.ID, postTime, post.Info, post.Login, post.Message); err != nil {
 			errs = append(errs, err)
 		}
 	}
-	if len(errs) > 0 {
-		// FIXME: In Go 1.20+, replace the following with: return errors.Join(errs...)
-		return fmt.Errorf("%v", errs)
-	}
+	return joinErrors(errs)
+}
 
-	if s.maxPostsInStorage > 0 {
-		_, err := tx.Exec(
-			`DELETE FROM posts WHERE Tribune = ? AND ROWID < (SELECT ROWID FROM posts WHERE Tribune = ? ORDER BY ROWID DESC LIMIT ?, 1)`,
-			tribune,
-			tribune,
-			s.maxPostsInStorage,
-		)
-		if err != nil {
-			return err
-		}
+func (s *SqliteStore) trim(tribune string) error {
+	if s.maxPostsInStorage <= 0 {
+		return nil
 	}
+	_, err := s.db.Exec(
+		`DELETE FROM posts WHERE Tribune = ? AND ID <= (SELECT ID FROM posts WHERE Tribune = ? ORDER BY ID DESC LIMIT 1 OFFSET ?)`,
+		tribune,
+		tribune,
+		s.maxPostsInStorage,
+	)
+	return err
+}
 
-	return tx.Commit()
+func joinErrors(errs []error) error {
+	if len(errs) == 0 {
+		return nil
+	}
+	// FIXME: In Go 1.20+, replace the following with: return errors.Join(errs...)
+	return fmt.Errorf("%v", errs)
 }
 
 func (s *SqliteStore) RetrieveLatests(tribune string) (Posts, error) {

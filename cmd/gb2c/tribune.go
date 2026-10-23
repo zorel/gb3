@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"io"
 	"log"
 	"net/http"
@@ -81,11 +80,24 @@ func (tc *TribuneClient) Poll(tribune *Tribune) (Posts, error) {
 
 func (tc *TribuneClient) parseTSVBackend(tribune *Tribune, body io.Reader) (Posts, error) {
 	posts := make(Posts, 0, 100) // 100 seems to be a good starting point depending on the tribune
-	scanner := bufio.NewScanner(body)
-	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
-	for scanner.Scan() {
-		record := strings.Split(scanner.Text(), "\t")
-		if len(record) < 5 {
+	data, err := io.ReadAll(body)
+	if nil != err {
+		return nil, err
+	}
+	// Work on one string so every field is a free substring of it instead of a
+	// separate allocation per line and per field.
+	rest := string(data)
+	for len(rest) > 0 {
+		line := rest
+		if newline := strings.IndexByte(rest, '\n'); newline >= 0 {
+			line = rest[:newline]
+			rest = rest[newline+1:]
+		} else {
+			rest = ""
+		}
+
+		record, ok := splitTSVLine(line)
+		if !ok {
 			continue
 		}
 		id, err := strconv.ParseInt(record[0], 10, 64)
@@ -96,8 +108,26 @@ func (tc *TribuneClient) parseTSVBackend(tribune *Tribune, body io.Reader) (Post
 		post := Post{ID: id, Time: record[1], Info: record[2], Login: record[3], Message: record[4], Tribune: tribune.Name}
 		posts = append(posts, post)
 	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
 	return posts, nil
+}
+
+// splitTSVLine splits a backend line into the five leading fields without
+// allocating: the returned strings share the caller's backing string. Anything
+// after the fifth field is dropped, as the previous strings.Split-based code did.
+func splitTSVLine(line string) ([5]string, bool) {
+	var record [5]string
+	rest := line
+	for i := 0; i < 4; i++ {
+		tab := strings.IndexByte(rest, '\t')
+		if tab < 0 {
+			return record, false
+		}
+		record[i] = rest[:tab]
+		rest = rest[tab+1:]
+	}
+	if tab := strings.IndexByte(rest, '\t'); tab >= 0 {
+		rest = rest[:tab]
+	}
+	record[4] = rest
+	return record, true
 }

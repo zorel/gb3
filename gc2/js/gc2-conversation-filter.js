@@ -21,6 +21,27 @@ export class Gc2ConversationFilter {
      */
     postsByTribuneTime = new Map();
 
+    /**
+     * Posts referencing a given tribune/second, so replacing the post that owns
+     * that second can re-resolve those references.
+     * @type Map<string, Set<string>>
+     */
+    clockReferers = new Map();
+
+    /**
+     * Posts referencing each post: targetKey -> Set<childKey>.
+     * Used to propagate hiding to replies.
+     * @type Map<string, Set<string>>
+     */
+    childrenByTarget = new Map();
+
+    /**
+     * Resolved targets of each post: postKey -> Set<targetKey>.
+     * Used to diff edges when a reference resolves differently.
+     * @type Map<string, Set<string>>
+     */
+    targetsByPost = new Map();
+
     constructor(identities = []) {
         this.setBlockedIdentities(identities);
     }
@@ -35,9 +56,34 @@ export class Gc2ConversationFilter {
     }
 
     add(post) {
-        this.posts.set(this.key(post), post);
-        this.index(post);
-        this.recompute();
+        let key = this.key(post);
+        if (this.posts.has(key)) {
+            return !this.posts.get(key).hiddenConversation;
+        }
+        this.posts.set(key, post);
+        // Derive the identity-based flag before indexing so that references to
+        // this post, resolved below, already see the right state.
+        post.hiddenConversation = this.isBlocked(post);
+
+        for (let reference of this.references(post)) {
+            this.referersOf(reference).add(key);
+        }
+
+        // Registering the post may change which post owns a (tribune, second)
+        // clock. When it replaces an existing owner, references can resolve to
+        // another post and a previously hidden post may become visible again,
+        // so the whole state has to be re-derived like the old fixed point did.
+        if (this.index(post)) {
+            this.recompute();
+            return !post.hiddenConversation;
+        }
+
+        if (this.updateTargets(key, post)) {
+            post.hiddenConversation = true;
+        }
+        if (post.hiddenConversation) {
+            this.hideReplies(key);
+        }
         return !post.hiddenConversation;
     }
 
@@ -45,6 +91,14 @@ export class Gc2ConversationFilter {
         return `${post.tribune}:${post.id}`;
     }
 
+    isBlocked(post) {
+        return this.blockedIdentities.has(post.login) || this.blockedIdentities.has(post.info);
+    }
+
+    /**
+     * @returns {boolean} true when the post takes over a clock already owned by
+     * another post, which may change how existing references resolve
+     */
     index(post) {
         let byTime = this.postsByTribuneTime.get(post.tribune);
         if (!byTime) {
@@ -53,10 +107,26 @@ export class Gc2ConversationFilter {
         }
         let time = post.time.slice(8);
         let current = byTime.get(time);
-        // When several posts share a second, the last one in post order wins.
-        if (!current || Number(post.id) >= Number(current.id)) {
-            byTime.set(time, post);
+        if (current && Number(post.id) < Number(current.id)) {
+            return false;
         }
+        // When several posts share a second, the last one in post order wins.
+        byTime.set(time, post);
+        if (current === post) {
+            return false;
+        }
+        this.reResolve(`${post.tribune}:${time}`);
+        return current !== undefined;
+    }
+
+    referersOf(reference) {
+        let clockKey = `${reference.tribune}:${reference.time}`;
+        let referers = this.clockReferers.get(clockKey);
+        if (!referers) {
+            referers = new Set();
+            this.clockReferers.set(clockKey, referers);
+        }
+        return referers;
     }
 
     references(post) {
@@ -87,55 +157,64 @@ export class Gc2ConversationFilter {
         return references;
     }
 
-    resolve(reference, sourceTribune) {
-        let tribune = reference.tribune || sourceTribune;
-        let time = reference.time;
-        if (!time) {
-            return null;
-        }
-        let byTime = this.postsByTribuneTime.get(tribune);
-        return byTime ? (byTime.get(time) || null) : null;
+    resolve(reference) {
+        let byTime = this.postsByTribuneTime.get(reference.tribune);
+        return byTime ? (byTime.get(reference.time) || null) : null;
     }
 
-    recompute() {
-        for (let post of this.posts.values()) {
-            post.hiddenConversation = this.blockedIdentities.has(post.login) || this.blockedIdentities.has(post.info);
-        }
-
-        // Replies normally arrive after their target, but the fixed point also
-        // handles stored posts arriving in an unexpected order. Propagate the
-        // hidden flag downwards through a reverse index instead of rescanning
-        // every post until nothing changes.
-        let children = new Map();
-        for (let [key, post] of this.posts) {
-            for (let reference of this.references(post)) {
-                let target = this.resolve(reference, post.tribune);
-                if (!target) {
-                    continue;
-                }
-                let targetKey = this.key(target);
-                let childKeys = children.get(targetKey);
-                if (!childKeys) {
-                    childKeys = [];
-                    children.set(targetKey, childKeys);
-                }
-                childKeys.push(key);
-            }
-        }
-
-        let queue = [];
-        for (let [key, post] of this.posts) {
-            if (post.hiddenConversation) {
-                queue.push(key);
-            }
-        }
-        while (queue.length > 0) {
-            let hiddenKey = queue.pop();
-            let childKeys = children.get(hiddenKey);
-            if (!childKeys) {
+    /**
+     * Resolve the references of a post and update the reply edges.
+     * @returns {boolean} true when one of the resolved targets is hidden
+     */
+    updateTargets(key, post) {
+        let previousTargets = this.targetsByPost.get(key);
+        let targets = new Set();
+        let hiddenTarget = false;
+        for (let reference of this.references(post)) {
+            let target = this.resolve(reference);
+            if (!target) {
                 continue;
             }
-            for (let childKey of childKeys) {
+            let targetKey = this.key(target);
+            targets.add(targetKey);
+            hiddenTarget = hiddenTarget || Boolean(target.hiddenConversation);
+        }
+
+        if (previousTargets) {
+            for (let targetKey of previousTargets) {
+                if (!targets.has(targetKey)) {
+                    this.childrenOf(targetKey).delete(key);
+                }
+            }
+        }
+        for (let targetKey of targets) {
+            this.childrenOf(targetKey).add(key);
+        }
+        this.targetsByPost.set(key, targets);
+        return hiddenTarget;
+    }
+
+    childrenOf(targetKey) {
+        let children = this.childrenByTarget.get(targetKey);
+        if (!children) {
+            children = new Set();
+            this.childrenByTarget.set(targetKey, children);
+        }
+        return children;
+    }
+
+    /**
+     * Hide every direct or indirect reply of the given hidden posts.
+     */
+    hideReplies(...seeds) {
+        let queue = seeds.slice();
+        while (queue.length > 0) {
+            let key = queue.pop();
+            let children = this.childrenByTarget.get(key);
+            if (!children) {
+                continue;
+            }
+            for (let childKey of children) {
                 let child = this.posts.get(childKey);
                 if (child && !child.hiddenConversation) {
                     child.hiddenConversation = true;
@@ -143,5 +222,58 @@ export class Gc2ConversationFilter {
                 }
             }
         }
+    }
+
+    /**
+     * Re-resolve references pointing at a clock whose owning post changed.
+     */
+    reResolve(clockKey) {
+        let referers = this.clockReferers.get(clockKey);
+        if (!referers) {
+            return;
+        }
+        for (let key of referers) {
+            let post = this.posts.get(key);
+            if (!post || post.hiddenConversation) {
+                continue;
+            }
+            if (this.updateTargets(key, post)) {
+                post.hiddenConversation = true;
+                this.hideReplies(key);
+            }
+        }
+    }
+
+    /**
+     * Rebuild every derived structure from scratch. Used when the blocked
+     * identities change, which is the only case where posts can become visible
+     * again.
+     */
+    recompute() {
+        this.targetsByPost.clear();
+        this.childrenByTarget.clear();
+        this.clockReferers.clear();
+
+        for (let post of this.posts.values()) {
+            post.hiddenConversation = this.isBlocked(post);
+        }
+        for (let [key, post] of this.posts) {
+            for (let reference of this.references(post)) {
+                this.referersOf(reference).add(key);
+            }
+        }
+
+        let queue = [];
+        for (let [key, post] of this.posts) {
+            if (post.hiddenConversation) {
+                // Keep edges up to date even for already hidden posts.
+                this.updateTargets(key, post);
+                queue.push(key);
+            } else if (this.updateTargets(key, post)) {
+                post.hiddenConversation = true;
+                queue.push(key);
+            }
+        }
+        this.hideReplies(...queue);
     }
 }

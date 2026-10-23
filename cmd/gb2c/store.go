@@ -11,47 +11,64 @@ type Store interface {
 	RetrieveLatests(tribune string) (Posts, error)
 }
 
-type memStore struct {
-	postsMap          *sync.Map
-	maxPostsInHistory int //  number of latests posts to store
+// memTribune holds the posts of a single tribune together with the set of
+// known post IDs so deduplication does not need a scan of every stored post.
+type memTribune struct {
+	mu    sync.RWMutex
+	posts Posts
+	ids   map[int64]struct{}
 }
 
-func (m memStore) Save(tribune string, posts Posts) error {
-	var newPosts Posts
-	oldPosts, ok := m.postsMap.Load(tribune)
-	if ok {
-		existing := oldPosts.(Posts)
-		newPosts = make(Posts, 0, len(existing)+len(posts))
-		newPosts = append(newPosts, existing...)
-		seen := make(map[int64]struct{}, len(existing))
-		for _, p := range existing {
-			seen[p.ID] = struct{}{}
+type memStore struct {
+	tribunes          sync.Map // tribune name -> *memTribune
+	maxPostsInHistory int      //  number of latests posts to store
+}
+
+func (m *memStore) loadTribune(tribune string) *memTribune {
+	value, _ := m.tribunes.LoadOrStore(tribune, &memTribune{ids: make(map[int64]struct{})})
+	return value.(*memTribune)
+}
+
+func (m *memStore) Save(tribune string, posts Posts) error {
+	t := m.loadTribune(tribune)
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	added := false
+	for _, p := range posts {
+		if _, ok := t.ids[p.ID]; ok {
+			continue
 		}
-		for _, p := range posts {
-			if _, ok := seen[p.ID]; ok {
-				continue
-			}
-			seen[p.ID] = struct{}{}
-			newPosts = append(newPosts, p)
+		t.ids[p.ID] = struct{}{}
+		t.posts = append(t.posts, p)
+		added = true
+	}
+	if !added {
+		return nil
+	}
+
+	sort.Sort(t.posts)
+	if len(t.posts) > m.maxPostsInHistory {
+		for _, p := range t.posts[:len(t.posts)-m.maxPostsInHistory] {
+			delete(t.ids, p.ID)
 		}
-	} else {
-		newPosts = make(Posts, 0, len(posts))
-		newPosts = append(newPosts, posts...)
+		trimmed := make(Posts, m.maxPostsInHistory)
+		copy(trimmed, t.posts[len(t.posts)-m.maxPostsInHistory:])
+		t.posts = trimmed
 	}
-	sort.Sort(newPosts)
-	if len(newPosts) > m.maxPostsInHistory {
-		newPosts = newPosts[len(newPosts)-m.maxPostsInHistory:]
-	}
-	m.postsMap.Store(tribune, newPosts)
 	return nil
 }
 
-func (m memStore) RetrieveLatests(tribune string) (Posts, error) {
-	posts, _ := m.postsMap.LoadOrStore(tribune, make(Posts, 0, m.maxPostsInHistory))
-	return posts.(Posts), nil
+func (m *memStore) RetrieveLatests(tribune string) (Posts, error) {
+	t := m.loadTribune(tribune)
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	posts := make(Posts, len(t.posts))
+	copy(posts, t.posts)
+	return posts, nil
 }
 
 // NewMemStore creates a memory-backed store
 func NewMemStore(maxPostsInHistory int) Store {
-	return &memStore{postsMap: new(sync.Map), maxPostsInHistory: maxPostsInHistory}
+	return &memStore{maxPostsInHistory: maxPostsInHistory}
 }
