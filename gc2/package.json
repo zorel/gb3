@@ -1,19 +1,20 @@
 {
-  "name": "gc2",
-  "version": "1.0.0",
-  "description": "gb3 coincoin",
-  "author": "",
-  "license": "ISC",
-  "scripts": {
-    "fmt": "prettier -w .",
-    "lint": "eslint ."
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "eslint": "^10.11.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.6",
-    "globals": "^17.12.0",
-    "prettier": "^3.9.8"
-  }
+    "name": "gc2",
+    "version": "1.0.0",
+    "description": "gb3 coincoin",
+    "author": "",
+    "license": "ISC",
+    "scripts": {
+        "fmt": "prettier -w .",
+        "lint": "eslint .",
+        "test": "node --test \"test/*.test.mjs\""
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.11.0",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-prettier": "^5.5.6",
+        "globals": "^17.12.0",
+        "prettier": "^3.9.8"
+    }
 }

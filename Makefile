@@ -42,6 +42,7 @@ check-go:
 
 check-js:
 	cd gc2 && npm run lint
+	cd gc2 && npm test
 
 check: check-go check-js
 

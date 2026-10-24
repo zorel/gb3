@@ -1,0 +1,172 @@
+{
+    "backend": [
+        [
+            "hello",
+            "hello"
+        ],
+        [
+            "salut <b>les</b> <i>moules</i>",
+            "salut <b>les</b> <i>moules</i>"
+        ],
+        [
+            "<b>bold <i>italic</b> tail",
+            "<b>bold <i>italic</i></b> tail"
+        ],
+        [
+            "<b>unclosed",
+            "<b>unclosed</b>"
+        ],
+        [
+            "</b>alone",
+            "alone"
+        ],
+        [
+            "<strong>not a tag</strong>",
+            "&lt;strong&gt;not a tag&lt;/strong&gt;"
+        ],
+        [
+            "<code>a < b</code>",
+            "<code>a &lt; b</code>"
+        ],
+        [
+            "<spoiler>secret</spoiler>",
+            "<gc2-spoiler>secret</gc2-spoiler>"
+        ],
+        [
+            "a & b \"quoted\" 'single'",
+            "a &amp; b &quot;quoted&quot; &apos;single&apos;"
+        ],
+        [
+            "&lt;b&gt; &amp; &nbsp;",
+            "&lt;b&gt; &amp; &amp;nbsp;"
+        ],
+        [
+            "[:coincoin] et [:a.b/c]",
+            "<gc2-totoz>coincoin<img src=\"https://nsfw.totoz.eu/img/coincoin\" loading=\"lazy\"></gc2-totoz> et <gc2-totoz>a&#46;b/c<img src=\"https://nsfw.totoz.eu/img/a.b/c\" loading=\"lazy\"></gc2-totoz>"
+        ],
+        [
+            "12:34 et 12:34:56",
+            "<gc2-norloge title=\"12:34\">12:34</gc2-norloge> et <gc2-norloge title=\"12:34:56\">12:34:56</gc2-norloge>"
+        ],
+        [
+            "09/26#12:34:56",
+            "<gc2-norloge title=\"09-26 12:34:56\">12:34:56</gc2-norloge>"
+        ],
+        [
+            "2026-09-26 12:34:56@dlfp",
+            "<gc2-norloge title=\"2026-09-26 12:34:56\" bouchot=\"dlfp\">12:34:56@dlfp</gc2-norloge>"
+        ],
+        [
+            "2026-09-26T12:34:56@gabuzomeu",
+            "<gc2-norloge title=\"2026-09-26 12:34:56\" bouchot=\"gabuzomeu\">12:34:56@gabuzomeu</gc2-norloge>"
+        ],
+        [
+            "29/26#12:34:56",
+            "29/26#<gc2-norloge title=\"12:34:56\">12:34:56</gc2-norloge>"
+        ],
+        [
+            "blam< hello",
+            "<gc2-bigorno>blam</gc2-bigorno> hello"
+        ],
+        [
+            "  blam< hello",
+            "  <gc2-bigorno>blam</gc2-bigorno> hello"
+        ],
+        [
+            "a   blam< hello",
+            "a  <gc2-bigorno>blam</gc2-bigorno> hello"
+        ],
+        [
+            "blam&lt; hello",
+            "<gc2-bigorno>blam</gc2-bigorno> hello"
+        ],
+        [
+            "fin<",
+            "<gc2-bigorno>fin</gc2-bigorno>"
+        ],
+        [
+            "voir https://example.org/a/b. et ftp://x.org/y",
+            "voir <a href=\"https://example.org/a/b.\" target=\"_blank\" rel=\"noreferrer\">example.org</a> et <a href=\"ftp://x.org/y\" target=\"_blank\" rel=\"noreferrer\">x.org</a>"
+        ],
+        [
+            "data:text/plain,hello",
+            "<a href=\"data:text/plain,hello\" target=\"_blank\" rel=\"noreferrer\">url</a>"
+        ],
+        [
+            "<a href=\"https://example.org/x?a=1&amp;b=2\">label</a>",
+            "<a href=\"https://example.org/x?a=1&amp;b=2\" target=\"_blank\" rel=\"noreferrer\">example.org</a>"
+        ],
+        [
+            "<a href=\"https://example.org/x\" class=\"y\">label</a>",
+            "<a href=\"https://example.org/x\" target=\"_blank\" rel=\"noreferrer\">example.org</a>&quot; class=&quot;y&quot;&gt;label&lt;/a&gt;"
+        ],
+        [
+            "<a href=\"https://example.org/x\"></a>",
+            "<a href=\"https://example.org/x\" target=\"_blank\" rel=\"noreferrer\">example.org</a>&quot;&gt;&lt;/a&gt;"
+        ],
+        [
+            "x</b></i>y",
+            "xy"
+        ],
+        [
+            "<b><i><u><s><tt><code>deep",
+            "<b><i><u><s><tt><code>deep</code></tt></s></u></i></b>"
+        ]
+    ],
+    "suffix": [
+        [
+            "12:34@dlfp 12:34:56@moules 2026-09-26 12:34:56@dlfp 09/26#12:34:56",
+            "dlfp",
+            "moules",
+            "12:34@dlfp 12:34:56 2026-09-26 12:34:56@dlfp 09/26#12:34:56@dlfp"
+        ],
+        [
+            "12:34@dlfp 12:34:56@moules 2026-09-26 12:34:56@dlfp 09/26#12:34:56",
+            "moules",
+            "dlfp",
+            "12:34 12:34:56@moules 2026-09-26 12:34:56 09/26#12:34:56@moules"
+        ],
+        [
+            "12:34@dlfp 12:34:56@moules 2026-09-26 12:34:56@dlfp 09/26#12:34:56",
+            "",
+            "dlfp",
+            "12:34 12:34:56@moules 2026-09-26 12:34:56 09/26#12:34:56"
+        ],
+        [
+            "https://x.org/12:34@dlfp [:12:34@dlfp]",
+            "dlfp",
+            "moules",
+            "https://x.org/12:34@dlfp [:12:34@dlfp]"
+        ],
+        [
+            "https://x.org/12:34@dlfp [:12:34@dlfp]",
+            "moules",
+            "dlfp",
+            "https://x.org/12:34@dlfp [:12:34@dlfp]"
+        ],
+        [
+            "https://x.org/12:34@dlfp [:12:34@dlfp]",
+            "",
+            "dlfp",
+            "https://x.org/12:34@dlfp [:12:34@dlfp]"
+        ],
+        [
+            "",
+            "dlfp",
+            "moules",
+            ""
+        ],
+        [
+            "",
+            "moules",
+            "dlfp",
+            ""
+        ],
+        [
+            "",
+            "",
+            "dlfp",
+            ""
+        ]
+    ]
+}

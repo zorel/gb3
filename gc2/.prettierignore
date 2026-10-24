@@ -1,4 +1,4 @@
-js/peggy-esm-5.0.6.js
 node_modules
 package.json
 package-lock.json
+test/golden.json

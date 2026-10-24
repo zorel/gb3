@@ -3,7 +3,7 @@ import { GC2_CONVERSATION_FILTER } from "./gc2-tribune.js";
 import "./gc2-menu.js";
 import "./gc2-alarm.js";
 import { GC2_STORAGE } from "./gc2-storage.js";
-import peggy from "./peggy-esm-5.0.6.js";
+import { backend2html, rewriteBouchotSuffix } from "./gc2-message.js";
 
 class Gc2Main extends HTMLElement {
     /**
@@ -37,16 +37,6 @@ class Gc2Main extends HTMLElement {
     messageInput;
 
     /**
-     * @type CallableFunction
-     */
-    backend2html;
-
-    /**
-     * @type CallableFunction
-     */
-    bouchotSuffixor;
-
-    /**
      * @type string
      */
     activeTribune;
@@ -68,8 +58,6 @@ class Gc2Main extends HTMLElement {
         this.setupControls();
         this.setupTribuneNavigator();
         this.setupGesture();
-        await this.setupBackend2html();
-        await this.setupBouchotSuffixor();
         await this.listTribunes();
         this.selectTribune();
         this.appendChild(this.controls);
@@ -306,12 +294,6 @@ class Gc2Main extends HTMLElement {
         this.controls.appendChild(this.messageInput);
     }
 
-    async setupBackend2html() {
-        let response = await fetch("/peg/backend2html.pegjs");
-        let text = await response.text();
-        this.backend2html = peggy.generate(text);
-    }
-
     selectTribune() {
         let unposted = GC2_STORAGE.getItem("linuxfr_unposted_message");
         if (unposted) {
@@ -369,7 +351,7 @@ class Gc2Main extends HTMLElement {
 
                 // Keep the unmodified message for conversation matching. The
                 // plop transformation below can replace clock references.
-                let parsedMessage = this.backend2html.parse(post.message);
+                let parsedMessage = backend2html(post.message);
                 post.conversationMessage = parsedMessage;
 
                 // If the post's info matches an entry in the plop list, replace whole messages
@@ -387,7 +369,7 @@ class Gc2Main extends HTMLElement {
                 }
 
                 post.message = plopped
-                    ? this.backend2html.parse(post.message)
+                    ? backend2html(post.message)
                     : parsedMessage;
                 this.getTribuneElement(post.tribune).insertPost(post);
                 this.updateNotifications();
@@ -613,16 +595,11 @@ class Gc2Main extends HTMLElement {
         return repl[Math.floor(Math.random() * repl.length)];
     }
 
-    async setupBouchotSuffixor() {
-        let response = await fetch("/peg/bouchotsuffixor.pegjs");
-        let text = await response.text();
-        this.bouchotSuffixor = peggy.generate(text);
-    }
-
     addBouchotSuffixInMessageInput(previousTribuneName, nextTribuneName) {
-        this.messageInput.value = this.bouchotSuffixor.parse(
+        this.messageInput.value = rewriteBouchotSuffix(
             this.messageInput.value,
-            { oldBouchot: previousTribuneName, newBouchot: nextTribuneName },
+            previousTribuneName,
+            nextTribuneName,
         );
     }
 

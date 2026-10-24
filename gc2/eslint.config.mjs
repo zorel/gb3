@@ -5,7 +5,7 @@ import prettierPlugin from "eslint-plugin-prettier";
 import prettierConfig from "eslint-config-prettier";
 
 export default defineConfig([
-    globalIgnores(["js/peggy*.js", "node_modules"]),
+    globalIgnores(["node_modules"]),
     {
         files: ["**/*.js"],
         plugins: {
