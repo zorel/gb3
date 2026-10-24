@@ -15,14 +15,24 @@ all:
 clean:
 	rm -f gb0 gb2c cachetotoz
 
-.PHONY: fmt
-fmt:
+.PHONY: fmt fmt-go fmt-js
+fmt-go:
 	go run $(GOLANGCI_LINT) fmt
 
-.PHONY: check
-check:
+fmt-js:
+	cd gc2 && npm run fmt
+
+fmt: fmt-go fmt-js
+
+.PHONY: check check-go check-js
+check-go:
 	go run $(GOLANGCI_LINT) run
 	go run $(GOVULNCHECK) -show verbose ./...
+
+check-js:
+	cd gc2 && npm run lint
+
+check: check-go check-js
 
 .PHONY: build-containers
 build-containers:

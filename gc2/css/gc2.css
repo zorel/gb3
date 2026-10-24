@@ -1,192 +1,200 @@
 :root {
-	--body-color: #000;
-  --body-background-color: #eeeeee;
-  --gc2-alarm-color: #0000aa;
-  --gc2-alarm-color-preums: #ff0000;
-  --gc2-tribune-navigator-button-background-hover: #d7d2d2;
-  --gc2-post-background-color-even: #FFFFFF;
-  --gc2-post-background-color-odd: #FBFBFB;
-  --gc2-norloge-is-reply-color: #ff0000;
-  --gc2-message-gc2-norloge-color: #5F7FBF;
-  --gc2-moule-color: #833;
-  --gc2-message-color: #000;
-  --gc2-message-a-color: #1690f3;
-  --gc2-message-a-visited-color: #d00b5d;
-  --gc2-message-cite-color: #F00;
-  --gc2-highlighted-color: #FFD202;
-  --gc2-spoiler-color: #000;
-  --gc2-revealed-spoiler-color: #ff0000;
-  --gc2-bigorno-color: #D00;
-  --gb3-post-popup-content-background-color: #f3f3f3;
-  --gc2-tribune-color: #007700;
-  --gc2-post-norloge-color: #000;
-  --gc2-totoz-search-results-figure-background-color: #d7d2d2;
-  --gc2-totoz-color: #0A1;
-  --gc2-post-norloge-border-color: #808080;
-  --gc2-moule-border-color: #808080;
+    --body-color: #000;
+    --body-background-color: #eeeeee;
+    --gc2-alarm-color: #0000aa;
+    --gc2-alarm-color-preums: #ff0000;
+    --gc2-tribune-navigator-button-background-hover: #d7d2d2;
+    --gc2-post-background-color-even: #ffffff;
+    --gc2-post-background-color-odd: #fbfbfb;
+    --gc2-norloge-is-reply-color: #ff0000;
+    --gc2-message-gc2-norloge-color: #5f7fbf;
+    --gc2-moule-color: #833;
+    --gc2-message-color: #000;
+    --gc2-message-a-color: #1690f3;
+    --gc2-message-a-visited-color: #d00b5d;
+    --gc2-message-cite-color: #f00;
+    --gc2-highlighted-color: #ffd202;
+    --gc2-spoiler-color: #000;
+    --gc2-revealed-spoiler-color: #ff0000;
+    --gc2-bigorno-color: #d00;
+    --gb3-post-popup-content-background-color: #f3f3f3;
+    --gc2-tribune-color: #007700;
+    --gc2-post-norloge-color: #000;
+    --gc2-totoz-search-results-figure-background-color: #d7d2d2;
+    --gc2-totoz-color: #0a1;
+    --gc2-post-norloge-border-color: #808080;
+    --gc2-moule-border-color: #808080;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-	--body-color: #e8efbf;
-  --body-background-color: #33292e;
-  --gc2-alarm-color:  #78adaf ;
-  --gc2-alarm-color-preums:  #913a40 ;
-  --gc2-tribune-navigator-button-background-hover:  #6f6087 ;
-  --gc2-post-background-color-even: #1d1922;
-  --gc2-post-background-color-odd: #33292e;
-  --gc2-norloge-is-reply-color: #913a40;
-  --gc2-message-gc2-norloge-color: #78adaf;
-  --gc2-moule-color: #eb8d3c;
-  --gc2-message-color:  #e8efbf;
-  --gc2-message-a-color: #78adaf;
-  --gc2-message-a-visited-color: #ad7d98;
-  --gc2-message-cite-color:  #913a40 ;
-  --gc2-highlighted-color: #b26950;
-  --gc2-spoiler-color:  #b26950 ;
-  --gc2-revealed-spoiler-color: #ae4d5d ;
-  --gc2-bigorno-color: #eb8d3c;
-  --gb3-post-popup-content-background-color: #b26950;
-  --gc2-tribune-color: #4b806a;
-  --gc2-post-norloge-color: #78adaf ;
-  --gc2-totoz-search-results-figure-background-color: #b26950;
-  --gc2-totoz-color: #a0ccad;
-  --gc2-post-norloge-border-color:#6a83a8;
-  --gc2-moule-border-color: #6f6087;
-  }
-	
-	form * {
-		color: #e8efbf;
-		background-color: #33292e;
-	}
+    :root {
+        --body-color: #e8efbf;
+        --body-background-color: #33292e;
+        --gc2-alarm-color: #78adaf;
+        --gc2-alarm-color-preums: #913a40;
+        --gc2-tribune-navigator-button-background-hover: #6f6087;
+        --gc2-post-background-color-even: #1d1922;
+        --gc2-post-background-color-odd: #33292e;
+        --gc2-norloge-is-reply-color: #913a40;
+        --gc2-message-gc2-norloge-color: #78adaf;
+        --gc2-moule-color: #eb8d3c;
+        --gc2-message-color: #e8efbf;
+        --gc2-message-a-color: #78adaf;
+        --gc2-message-a-visited-color: #ad7d98;
+        --gc2-message-cite-color: #913a40;
+        --gc2-highlighted-color: #b26950;
+        --gc2-spoiler-color: #b26950;
+        --gc2-revealed-spoiler-color: #ae4d5d;
+        --gc2-bigorno-color: #eb8d3c;
+        --gb3-post-popup-content-background-color: #b26950;
+        --gc2-tribune-color: #4b806a;
+        --gc2-post-norloge-color: #78adaf;
+        --gc2-totoz-search-results-figure-background-color: #b26950;
+        --gc2-totoz-color: #a0ccad;
+        --gc2-post-norloge-border-color: #6a83a8;
+        --gc2-moule-border-color: #6f6087;
+    }
 
-	gc2-menu * {
-		color: #e8efbf;
-		background-color: #33292e;
-	}
+    form * {
+        color: #e8efbf;
+        background-color: #33292e;
+    }
+
+    gc2-menu * {
+        color: #e8efbf;
+        background-color: #33292e;
+    }
 }
 
-
-
 body {
-	display: flex;
-	align-items: flex-end;
+    display: flex;
+    align-items: flex-end;
 
-	color: var(--body-color);
-	background-color: var(--body-background-color);
-	font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Open Sans,Helvetica Neue,sans-serif;
-	font-weight: 400;
-	line-height: 1.55;
+    color: var(--body-color);
+    background-color: var(--body-background-color);
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        Segoe UI,
+        Roboto,
+        Oxygen,
+        Ubuntu,
+        Cantarell,
+        Open Sans,
+        Helvetica Neue,
+        sans-serif;
+    font-weight: 400;
+    line-height: 1.55;
 
-	position: fixed;
-	top: 0px;
-	bottom: 0px;
-	left: 0px;
-	right: 0px;
-	margin: 1px;
+    position: fixed;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    margin: 1px;
 }
 
 .gc2-sidebar {
-	display: none;
-	margin-right: 0.5em;
+    display: none;
+    margin-right: 0.5em;
 }
 
 gc2-alarm {
-	font-family: monospace;
-	font-size: 1.5em;
-  color: var(--gc2-alarm-color);
-  text-align: center;
+    font-family: monospace;
+    font-size: 1.5em;
+    color: var(--gc2-alarm-color);
+    text-align: center;
 }
 
 gc2-alarm[preums] {
-  color: var(--gc2-alarm-color-preums);
+    color: var(--gc2-alarm-color-preums);
 }
 
 gc2-tribune-navigator {
-	display: flex;
-	flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 gc2-tribune-navigator-button {
-	cursor: pointer
+    cursor: pointer;
 }
 
 gc2-tribune-navigator-button:hover {
-	background: var(--gc2-tribune-navigator-button-background-hover)
+    background: var(--gc2-tribune-navigator-button-background-hover);
 }
 
 gc2-tribune-navigator-button[active] {
-	font-weight: bolder
+    font-weight: bolder;
 }
 
 gc2-tribune-navigator-button span {
-	display: flex
+    display: flex;
 }
 
 gc2-tribune-navigator-button[bigorno] span::after {
-	content: "📢"
+    content: "📢";
 }
 
 gc2-tribune-navigator-button[reply] span::after {
-	content: "↩"
+    content: "↩";
 }
 
 gc2-main {
-	flex: 1 1 auto;
-	margin: auto;
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-end;
-	overflow: auto;
-	height: 100%;
+    flex: 1 1 auto;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: auto;
+    height: 100%;
 }
 
 gc2-menu {
-	max-width: 60rem;
-	margin: auto;
-	display: flex;
-	align-items: center;
-	flex-direction: column;
-	overflow: auto;
-	height: 100%;
+    max-width: 60rem;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    overflow: auto;
+    height: 100%;
 }
 
 gc2-menu button {
-	width: max-content;
-	margin: 8px;
+    width: max-content;
+    margin: 8px;
 }
 
 gc2-menu a {
-	margin-top: auto;
+    margin-top: auto;
 }
 
 .gc2-controls {
-	display: flex;
+    display: flex;
 }
 
 .gc2-controls input {
-	flex-grow: 1
+    flex-grow: 1;
 }
 
 .gc2-controls * {
-	font-size: initial
+    font-size: initial;
 }
 
 gc2-tribunes {
-	margin: 0;
-	padding: 0;
-	overflow-x: visible;
-	overflow-y: scroll;
-	width: 100%;
-	height: 100%;
-	display: grid;
-	align-items: end;
+    margin: 0;
+    padding: 0;
+    overflow-x: visible;
+    overflow-y: scroll;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    align-items: end;
 }
 
 gc2-tribune {
-	display: table;
-	color: var(--gc2-tribune-color);
-	width: 100%;
+    display: table;
+    color: var(--gc2-tribune-color);
+    width: 100%;
 }
 
 gc2-post {
@@ -194,172 +202,172 @@ gc2-post {
 }
 
 gc2-post:nth-of-type(even) {
-	background-color: var(--gc2-post-background-color-even);
+    background-color: var(--gc2-post-background-color-even);
 }
 
 gc2-post:nth-of-type(odd) {
-	background-color: var(--gc2-post-background-color-odd);
+    background-color: var(--gc2-post-background-color-odd);
 }
 
 gc2-post-icon {
-	display: table-cell;
-	width: 1em;
+    display: table-cell;
+    width: 1em;
 }
 
 gc2-post-norloge {
-	display: table-cell;
-	width: 1em;
-	padding-right: 0.5em;
-	color: var(--gc2-post-norloge-color);
-	font-weight: bold;
-	white-space: nowrap;
-	cursor: pointer;
+    display: table-cell;
+    width: 1em;
+    padding-right: 0.5em;
+    color: var(--gc2-post-norloge-color);
+    font-weight: bold;
+    white-space: nowrap;
+    cursor: pointer;
 }
 
 .gc2-norloge-is-reply {
-	color: var(--gc2-norloge-is-reply-color);
+    color: var(--gc2-norloge-is-reply-color);
 }
 
 gc2-message gc2-norloge {
-	color: var(--gc2-message-gc2-norloge-color);
-	cursor: pointer;
+    color: var(--gc2-message-gc2-norloge-color);
+    cursor: pointer;
 }
 
 gc2-moule {
-	display: table-cell;
-	width: 1em;
-	max-width: 8em;
-	padding-right: 0.5em;
-	color: var(--gc2-moule-color);
-	white-space: nowrap;
-	overflow-wrap: break-word;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	cursor: pointer;
+    display: table-cell;
+    width: 1em;
+    max-width: 8em;
+    padding-right: 0.5em;
+    color: var(--gc2-moule-color);
+    white-space: nowrap;
+    overflow-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
 }
 
 gc2-message {
-	display: table-cell;
-	color: var(--gc2-message-color);
-	overflow-wrap: anywhere;
+    display: table-cell;
+    color: var(--gc2-message-color);
+    overflow-wrap: anywhere;
 }
 
 gc2-message a {
-	font-weight: bold;
-	color: var(--gc2-message-a-color);
+    font-weight: bold;
+    color: var(--gc2-message-a-color);
 }
 
 gc2-message a:hover {
-	text-decoration: underline;
+    text-decoration: underline;
 }
 
 gc2-message a:visited {
-	color:  var(--gc2-message-a-visited-color);
+    color: var(--gc2-message-a-visited-color);
 }
 
 gc2-message cite {
-	border: 1px solid  var(--gc2-message-cite-color);
-	cursor: pointer;
+    border: 1px solid var(--gc2-message-cite-color);
+    cursor: pointer;
 }
 
 gc2-message cite:after {
-	content: '<';
+    content: "<";
 }
 
 .gc2-highlighted {
-	background-color: var(--gc2-highlighted-color) !important;
+    background-color: var(--gc2-highlighted-color) !important;
 }
 
 .gc2-highlighted > * {
-	background-color: var(--gc2-highlighted-color) !important;
+    background-color: var(--gc2-highlighted-color) !important;
 }
 
 .gc2-totoz-search-results {
-	display: flex;
-	flex-wrap: wrap;
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .gc2-totoz-search-results figure:hover {
-	background: var(--gc2-totoz-search-results-figure-background-color);
+    background: var(--gc2-totoz-search-results-figure-background-color);
 }
 
 .gc2-emoji-search-results {
-	display: flex;
-	flex-wrap: wrap;
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .gc2-emoji-search-results figure:hover {
-	background: var(--gc2-totoz-search-results-figure-background-color);
+    background: var(--gc2-totoz-search-results-figure-background-color);
 }
 
 gc2-totoz {
-	display: inline;
-	position: relative;
-	font-weight: bold;
-	color: var(--gc2-totoz-color);
-	margin: unset;
+    display: inline;
+    position: relative;
+    font-weight: bold;
+    color: var(--gc2-totoz-color);
+    margin: unset;
 }
 
 gc2-totoz img {
-	display: none;
+    display: none;
 }
 
 gc2-totoz:hover img {
-	display: inline;
-	position: absolute;
-	top: 0;
-	left: -50%;
-	margin-left: 100%;
-	transform: translate(-0%, -100%);
+    display: inline;
+    position: absolute;
+    top: 0;
+    left: -50%;
+    margin-left: 100%;
+    transform: translate(-0%, -100%);
 }
 
 gc2-spoiler {
-	background-color: var(--gc2-spoiler-color);
-	color: var(--gc2-spoiler-color);
+    background-color: var(--gc2-spoiler-color);
+    color: var(--gc2-spoiler-color);
 }
 
 gc2-spoiler:hover {
-	background-color: inherit;
+    background-color: inherit;
 }
 
 gc2-revealed-spoiler {
-	background-color: inherit;
-	color: var(--gc2-revealed-spoiler-color);
+    background-color: inherit;
+    color: var(--gc2-revealed-spoiler-color);
 }
 
 gc2-bigorno {
-	color: var(--gc2-bigorno-color);
-	font-weight: bold;
+    color: var(--gc2-bigorno-color);
+    font-weight: bold;
 }
 
 gc2-bigorno::after {
-	content: "📢"
+    content: "📢";
 }
 
 .gc2-loading {
-	background-image: url("/img/loading.svg");
-	background-repeat: no-repeat;
-	background-position: right;
+    background-image: url("/img/loading.svg");
+    background-repeat: no-repeat;
+    background-position: right;
 }
 
 gc2-attach {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-content: center;
-	align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
 }
 
 gc2-attach img {
-	max-width: 100%;
+    max-width: 100%;
 }
 
 gc2-attach video {
-	max-width: 100%;
+    max-width: 100%;
 }
 
 gc2-attach audio {
-	max-width: 100%;
+    max-width: 100%;
 }
 
 #gb3-post-popup {
@@ -380,53 +388,52 @@ gc2-attach audio {
 }
 
 @media only screen and (max-device-width: 480px) {
-	.gc2-shortcuts-button {
-		display: none;
-	}
+    .gc2-shortcuts-button {
+        display: none;
+    }
 
-	.gc2-controls select {
-		display: none;
-	}
+    .gc2-controls select {
+        display: none;
+    }
 
-	gc2-post-icon {
-		display: inline-block;
-		width: initial;
-	}
-	
-	gc2-post-norloge {
-		display: inline-block;
-		width: initial;
-		vertical-align: text-top;
-		padding-right: 5px;
-    	padding-left: 5px;
-		margin-right: 8px;
-		border-radius: 8px;
-    	border: 1px solid var(--gc2-post-norloge-border-color);
-	}
+    gc2-post-icon {
+        display: inline-block;
+        width: initial;
+    }
 
-	gc2-moule {
-		display: inline-block;
-		width: initial;
-		vertical-align: text-top;
-		padding-right: 5px;
-    	padding-left: 5px;
-	  	border-radius: 8px;
-    	border: 1px solid var(--gc2-moule-border-color);
-	}
+    gc2-post-norloge {
+        display: inline-block;
+        width: initial;
+        vertical-align: text-top;
+        padding-right: 5px;
+        padding-left: 5px;
+        margin-right: 8px;
+        border-radius: 8px;
+        border: 1px solid var(--gc2-post-norloge-border-color);
+    }
 
-	gc2-message {
-		display: block;
-	}
+    gc2-moule {
+        display: inline-block;
+        width: initial;
+        vertical-align: text-top;
+        padding-right: 5px;
+        padding-left: 5px;
+        border-radius: 8px;
+        border: 1px solid var(--gc2-moule-border-color);
+    }
+
+    gc2-message {
+        display: block;
+    }
 }
 
 @media only screen and (min-device-width: 720px) {
+    .gc2-sidebar {
+        display: flex;
+        flex-direction: column;
+    }
 
-	.gc2-sidebar {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.gc2-controls select {
-		display: none;
-	}
+    .gc2-controls select {
+        display: none;
+    }
 }

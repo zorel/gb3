@@ -1,3 +1,8 @@
 #!/bin/sh
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags sqlite -o . ./...
-tar czf gc2.tar.gz --exclude=gc2/node_modules --exclude=gc2/.jshintignore --exclude=gc2/.jshintrc --exclude=gc2/package.json gc2
+tar czf gc2.tar.gz
+  --exclude=gc2/node_modules \
+  --exclude=gc2/eslint-config.mjs \
+  --exclude=gc2/package.json \
+  --exclude=gc2/package-lock.json \
+  gc2

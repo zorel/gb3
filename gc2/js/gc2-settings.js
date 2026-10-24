@@ -15,7 +15,7 @@ class Gc2Settings {
          * @type HTMLSelectElement
          */
         let tribuneSelect = document.getElementById("tribunes");
-        for(let tribune of storedTribunes.availableTribunes) {
+        for (let tribune of storedTribunes.availableTribunes) {
             /**
              * @type HTMLOptionElement
              */
@@ -27,20 +27,20 @@ class Gc2Settings {
         }
         tribuneSelect.onchange = () => {
             let tribuneArray = [];
-            for(let option of tribuneSelect.options) {
-                if(option.selected) {
+            for (let option of tribuneSelect.options) {
+                if (option.selected) {
                     tribuneArray.push(option.value);
                 }
             }
             GC2_STORAGE.setItem("tribunes", tribuneArray.join(","));
-        }
+        };
     }
 
     handleBackButton() {
         let backButton = document.getElementById("backButton");
         backButton.onclick = () => {
             window.location.href = "/";
-        }
+        };
     }
 }
 const GC2_SETTINGS = new Gc2Settings();
