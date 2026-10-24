@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"hash/fnv"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -33,9 +34,11 @@ type Post struct {
 	Tribune string `json:"tribune"`
 }
 
-type postsMessage []Post
-type sentMessage struct{ err error }
-type streamError struct{ err error }
+type (
+	postsMessage []Post
+	sentMessage  struct{ err error }
+	streamError  struct{ err error }
+)
 
 type postStream struct {
 	posts  chan Post
@@ -121,20 +124,22 @@ type inlineFormat struct {
 	bold, italic, underline, strike bool
 }
 
-var clockReference = regexp.MustCompile(`(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2}[T# ]|[0-9]{2}/[0-9]{2}#)?([0-9]{2}:[0-9]{2}:[0-9]{2})(?:@([a-z]+))?)`)
-var anchorURL = regexp.MustCompile(`(?is)<a\s+[^>]*href=["']([^"']+)["'][^>]*>.*?</a>`)
-var plainURL = regexp.MustCompile(`https?://[^\s<>"']+`)
-var inlineToken = regexp.MustCompile(`https?://[^\s<>"']+|(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2}[T# ]|[0-9]{2}/[0-9]{2}#)?[0-9]{2}:[0-9]{2}:[0-9]{2}(?:@[a-z]+)?)`)
-var browserVersions = []struct {
-	name       string
-	expression *regexp.Regexp
-}{
-	{"Edge", regexp.MustCompile(`(?:Edg|EdgiOS|EdgA)/([0-9]+)`)},
-	{"Opera", regexp.MustCompile(`(?:OPR|Opera)/([0-9]+)`)},
-	{"Firefox", regexp.MustCompile(`(?:Firefox|FxiOS)/([0-9]+)`)},
-	{"Chrome", regexp.MustCompile(`(?:Chrome|CriOS)/([0-9]+)`)},
-	{"Safari", regexp.MustCompile(`Version/([0-9]+)(?:\.[0-9]+)*.*Safari/`)},
-}
+var (
+	clockReference  = regexp.MustCompile(`(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2}[T# ]|[0-9]{2}/[0-9]{2}#)?([0-9]{2}:[0-9]{2}:[0-9]{2})(?:@([a-z]+))?)`)
+	anchorURL       = regexp.MustCompile(`(?is)<a\s+[^>]*href=["']([^"']+)["'][^>]*>.*?</a>`)
+	plainURL        = regexp.MustCompile(`https?://[^\s<>"']+`)
+	inlineToken     = regexp.MustCompile(`https?://[^\s<>"']+|(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2}[T# ]|[0-9]{2}/[0-9]{2}#)?[0-9]{2}:[0-9]{2}:[0-9]{2}(?:@[a-z]+)?)`)
+	browserVersions = []struct {
+		name       string
+		expression *regexp.Regexp
+	}{
+		{"Edge", regexp.MustCompile(`(?:Edg|EdgiOS|EdgA)/([0-9]+)`)},
+		{"Opera", regexp.MustCompile(`(?:OPR|Opera)/([0-9]+)`)},
+		{"Firefox", regexp.MustCompile(`(?:Firefox|FxiOS)/([0-9]+)`)},
+		{"Chrome", regexp.MustCompile(`(?:Chrome|CriOS)/([0-9]+)`)},
+		{"Safari", regexp.MustCompile(`Version/([0-9]+)(?:\.[0-9]+)*.*Safari/`)},
+	}
+)
 
 var (
 	titleStyle          = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#7D56F4"))
@@ -1091,6 +1096,9 @@ func readEvents(reader *bufio.Reader, output chan<- Post) error {
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil && len(line) == 0 {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
 			return err
 		}
 		line = strings.TrimRight(line, "\r\n")
@@ -1363,13 +1371,6 @@ func urlLabel(value string) string {
 		return value
 	}
 	return parsed.Scheme + "://" + parsed.Host + suffix
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 func fatal(err error) {

@@ -70,3 +70,6 @@ cmd/gb0/__debug_bin
 cmd/cachetotoz/__debug_bin
 gc2.tar.gz
 .vscode/launch.json
+
+# Built binaries
+/gb3tui
