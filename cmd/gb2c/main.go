@@ -259,7 +259,13 @@ func RegisterGc2() {
 	for _, path := range []string{os.Getenv("GB2C_GC2_FROM_PATH"), "../../gc2", "gc2"} {
 		pathInfo, err := os.Stat(path) // #nosec G703 -- GB2C_GC2_FROM_PATH is set by the administrator who knows better
 		if nil == err && pathInfo.IsDir() {
-			http.Handle("/", http.FileServer(http.Dir(path)))
+			fileServer := http.FileServer(http.Dir(path))
+			http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// The frontend is updated in place, so force browsers to
+				// revalidate its assets instead of using a stale copy.
+				w.Header().Set("Cache-Control", "no-cache")
+				fileServer.ServeHTTP(w, r)
+			}))
 			log.Printf("gc2 files served from %s\n", path)
 			return
 		}
