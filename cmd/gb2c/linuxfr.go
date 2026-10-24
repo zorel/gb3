@@ -53,7 +53,7 @@ func RegisterLinuxfrAPI(httpClient *http.Client) {
 		http.Redirect(w, r, linuxfrAuthorizeURL.String(), http.StatusSeeOther)
 	})
 	http.HandleFunc("/gb2c/linuxfr/connected", func(w http.ResponseWriter, r *http.Request) {
-		//Request token
+		// Request token
 		linuxfrRedirectURL := url.URL{
 			Scheme: "https",
 			Host:   remoteHost(r),
@@ -78,7 +78,7 @@ func RegisterLinuxfrAPI(httpClient *http.Client) {
 			return
 		}
 
-		//parse token
+		// parse token
 		var linuxfrAccessData LinuxfrAccessData
 		defer tokenResponse.Body.Close()
 		tokenDecoder := json.NewDecoder(tokenResponse.Body)
@@ -88,7 +88,7 @@ func RegisterLinuxfrAPI(httpClient *http.Client) {
 			return
 		}
 
-		//retrieve login
+		// retrieve login
 		meResponse, err := httpClient.Get(fmt.Sprintf("https://linuxfr.org/api/v1/me?bearer_token=%s", url.QueryEscape(linuxfrAccessData.AccessToken)))
 		if nil != err {
 			http.Error(w, fmt.Sprintf("linuxfr me request failed: %s", err), 500)
@@ -102,8 +102,8 @@ func RegisterLinuxfrAPI(httpClient *http.Client) {
 			return
 		}
 
-		//encode json access data (token and login) to base64 and send redirect
-		body, err := json.Marshal(linuxfrAccessData)
+		// encode json access data (token and login) to base64 and send redirect
+		body, err := json.Marshal(linuxfrAccessData) // #nosec G117 -- the whole purpose is to transmit the access token
 		if nil != err {
 			http.Error(w, fmt.Sprintf("Cannot encode linuxfr access data: %s", err), 500)
 			return
@@ -135,7 +135,7 @@ func RegisterLinuxfrAPI(httpClient *http.Client) {
 			http.Error(w, fmt.Sprintf("Cannot refresh linuxfr token: %s", err), 500)
 			return
 		}
-		//parse token
+		// parse token
 		var linuxfrAccessRefreshData LinuxfrAccessRefreshData
 		defer tokenResponse.Body.Close()
 		tokenDecoder := json.NewDecoder(tokenResponse.Body)
@@ -148,7 +148,7 @@ func RegisterLinuxfrAPI(httpClient *http.Client) {
 		w.Header().Set("Content-Type", "application/json")
 
 		e := json.NewEncoder(w)
-		err = e.Encode(&linuxfrAccessRefreshData)
+		err = e.Encode(&linuxfrAccessRefreshData) // #nosec G117 -- the whole purpose is to transmit the access token
 		if nil != err {
 			http.Error(w, fmt.Sprintf("Cannot encode linuxfrAccessRefreshData: %s. Blame dave.", err), 500)
 			return

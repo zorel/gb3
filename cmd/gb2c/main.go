@@ -6,9 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -24,68 +22,20 @@ func init() {
 	}
 }
 
-func getIntFromEnv(envVar string, defaultValue int) int {
-	value, isPresent := os.LookupEnv(envVar)
-	if isPresent {
-		intValue, err := strconv.Atoi(value)
-		if nil != err {
-			log.Printf("Invalid value for %s: %v\n", envVar, err)
-		} else {
-			return intValue
-		}
-	}
-	return defaultValue
-}
-
-func newStore() (Store, error) {
-	maxPostsInHistory := getIntFromEnv("GB2C_MAX_POSTS_IN_HISTORY", 200)
-
-	storeType := strings.ToLower(os.Getenv("GB2C_STORE"))
-	switch storeType {
-	case "", "memory":
-		log.Println("Using in-memory store")
-		return NewMemStore(maxPostsInHistory), nil
-	case "sqlite":
-		var err error
-		dbPath := os.Getenv("GB2C_SQLITE_PATH")
-		if dbPath == "" {
-			dbPath, err = os.MkdirTemp("", "gb2c")
-			if err != nil {
-				return nil, fmt.Errorf("could not create temporary store directory: %v", err)
-			}
-			dbPath = path.Join(dbPath, "posts.sqlite")
-		}
-
-		maxStoredPosts := getIntFromEnv("GB2C_SQLITE_MAX_POSTS_IN_STORAGE", maxPostsInHistory)
-
-		store, err := NewSqliteStore(dbPath, maxPostsInHistory, maxStoredPosts)
-		if err != nil {
-			return nil, fmt.Errorf("could not create SQLite store: %v", err)
-		} else {
-			log.Printf("Using SQLite store in %s\n", dbPath)
-			return store, nil
-		}
-	default:
-		log.Println("Unknown store type: ", storeType)
-		return nil, fmt.Errorf("unknown store type: %s", storeType)
-	}
-}
-
 type gb3 struct {
 	join              chan *Coincoin
 	leave             chan *Coincoin
 	forward           chan forwardMessage
 	tribunes          map[string]*Tribune
 	poll              chan *Tribune
-	indexer           Indexer
 	store             Store
 	client            *TribuneClient
 	blockedIdentities []string
 }
 
 type forwardMessage struct {
-	Post
-	*Coincoin
+	Post     Post
+	Coincoin *Coincoin
 }
 
 func (g *gb3) addGb0Tribunes() {
@@ -93,7 +43,7 @@ func (g *gb3) addGb0Tribunes() {
 	if len(gb0Tribunes) == 0 {
 		gb0Tribunes = "devnewton:https://gb3.devnewton.fr,gabuzomeu:https://gb3.plop.cc"
 	}
-	for _, gb0Tribune := range strings.Split(gb0Tribunes, ",") {
+	for gb0Tribune := range strings.SplitSeq(gb0Tribunes, ",") {
 		gb0TribuneSplitted := strings.SplitN(gb0Tribune, ":", 2)
 		if len(gb0TribuneSplitted) != 2 {
 			fmt.Printf("Invalid gb0 tribune description in GB2C_GB0_TRIBUNES: %s\n", gb0Tribune)
@@ -110,7 +60,7 @@ func (g *gb3) addMiaoliTribunes() {
 	if len(miaoliTribunes) == 0 {
 		miaoliTribunes = "reveildutroll:https://miaoli.im/%2B6VtcdSCI0Y"
 	}
-	for _, miaoliTribune := range strings.Split(miaoliTribunes, ",") {
+	for miaoliTribune := range strings.SplitSeq(miaoliTribunes, ",") {
 		miaoliTribuneSplitted := strings.SplitN(miaoliTribune, ":", 2)
 		if len(miaoliTribuneSplitted) != 2 {
 			fmt.Printf("Invalid miaoli tribune description in GB2C_MIAOLI_TRIBUNES: %s\n", miaoliTribune)
@@ -135,7 +85,6 @@ func newGb3(httpClient *http.Client, store Store) *gb3 {
 			"ototu":       {Name: "ototu", BackendURL: "https://www.ototu.me/goboard/backend/tsv", PostURL: "https://www.ototu.me/goboard/post", PostField: "message"},
 		},
 		poll:              make(chan *Tribune),
-		indexer:           NewIndexer(),
 		store:             store,
 		client:            NewTribuneClient(httpClient),
 		blockedIdentities: configuredBlockedIdentities(),
@@ -205,7 +154,7 @@ func (g *gb3) sendStoredPostsTo(c *Coincoin) {
 	}
 }
 
-func (g *gb3) handleList(w http.ResponseWriter, r *http.Request) {
+func (g *gb3) handleList(w http.ResponseWriter) {
 	tribunes := make([]string, 0, len(g.tribunes))
 	for t := range g.tribunes {
 		tribunes = append(tribunes, t)
@@ -220,7 +169,7 @@ func (g *gb3) handleList(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *gb3) handleConfig(w http.ResponseWriter, r *http.Request) {
+func (g *gb3) handleConfig(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(struct {
 		BlockedIdentities []string `json:"blockedIdentities"`
@@ -239,8 +188,8 @@ func (g *gb3) handlePoll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("X-Accel-Buffering", "no")
-	// Send the response headers now: a quiet tribune may not produce any post
-	// for a while, and clients must not wait for the first event to connect.
+	// Send the headers now: a quiet tribune may not produce any post for a
+	// while, and clients must not wait for the first event to connect.
 	flusher.Flush()
 
 	c := NewCoincoin(w, flusher)
@@ -256,7 +205,7 @@ func (g *gb3) handlePoll(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *gb3) handlePost(w http.ResponseWriter, r *http.Request) {
+func (g *gb3) handlePost(_ http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if nil != err {
 		log.Println(err)
@@ -275,22 +224,6 @@ func (g *gb3) handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *gb3) handleSearch(w http.ResponseWriter, r *http.Request) {
-	terms := r.FormValue("terms")
-	results, err := g.indexer.Search(terms)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
-	err = encoder.Encode(results)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
 func (g *gb3) pollTribune(t *Tribune) {
 	if verboseMode {
 		log.Printf("Poll %s\n", t.Name)
@@ -303,8 +236,9 @@ func (g *gb3) pollTribune(t *Tribune) {
 	for _, p := range posts {
 		g.forward <- forwardMessage{Post: p}
 	}
-	go g.store.Save(t.Name, posts)
-	go g.indexer.Index(posts)
+	if err := g.store.Save(t.Name, posts); err != nil {
+		log.Printf("Error while saving posts: %v\n", err)
+	}
 }
 
 func (g *gb3) pollLoop(t *Tribune) {
@@ -321,8 +255,19 @@ func (g *gb3) pollLoop(t *Tribune) {
 	}
 }
 
+func RegisterGc2() {
+	for _, path := range []string{os.Getenv("GB2C_GC2_FROM_PATH"), "../../gc2", "gc2"} {
+		pathInfo, err := os.Stat(path) // #nosec G703 -- GB2C_GC2_FROM_PATH is set by the administrator who knows better
+		if nil == err && pathInfo.IsDir() {
+			http.Handle("/", http.FileServer(http.Dir(path)))
+			log.Printf("gc2 files served from %s\n", path)
+			return
+		}
+	}
+}
+
 func main() {
-	httpClient := newHttpClient()
+	httpClient := newHTTPClient()
 	store, err := newStore()
 	if nil != err {
 		log.Fatal(err)
@@ -335,8 +280,8 @@ func main() {
 	}
 	RegisterLinuxfrAPI(httpClient)
 	RegisterAttachmentAPI()
-	http.HandleFunc("/gb2c/list", func(w http.ResponseWriter, r *http.Request) {
-		g.handleList(w, r)
+	http.HandleFunc("/gb2c/list", func(w http.ResponseWriter, _ *http.Request) {
+		g.handleList(w)
 	})
 	http.HandleFunc("/gb2c/config", func(w http.ResponseWriter, r *http.Request) {
 		g.handleConfig(w, r)
@@ -347,28 +292,22 @@ func main() {
 	http.HandleFunc("/gb2c/post", func(w http.ResponseWriter, r *http.Request) {
 		g.handlePost(w, r)
 	})
-	http.HandleFunc("/gb2c/search", func(w http.ResponseWriter, r *http.Request) {
-		g.handleSearch(w, r)
-	})
 	http.HandleFunc("/gb2c/totoz/search", TotozSearch(httpClient))
 	http.HandleFunc("/gb2c/emoji/search", EmojiSearch)
-
-	gc2Path := os.Getenv("GB2C_GC2_FROM_PATH")
-	if len(gc2Path) == 0 {
-		gc2Path = "../../gc2"
-	}
-	gc2PathInfo, err := os.Stat(gc2Path)
-	if nil == err && gc2PathInfo.IsDir() {
-		http.Handle("/", http.FileServer(http.Dir(gc2Path)))
-	}
+	RegisterGc2()
 
 	listenAddress := os.Getenv("GB2C_LISTEN")
 	if len(listenAddress) == 0 {
 		listenAddress = ":16666"
 	}
 	log.Printf("Listen to %s\n", listenAddress)
-	err = http.ListenAndServe(listenAddress, nil)
-	if nil != err {
+
+	server := http.Server{
+		Addr:        listenAddress,
+		ReadTimeout: 10 * time.Second,
+		IdleTimeout: 60 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

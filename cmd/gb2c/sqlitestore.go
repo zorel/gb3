@@ -1,11 +1,28 @@
+//go:build sqlite
+
 package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
-	"sort"
+	"log"
+	"os"
+	"path"
+	"slices"
 	"time"
+
+	_ "modernc.org/sqlite"
 )
+
+func init() {
+	storeMap["sqlite"] = NewSqliteStore
+}
+
+type newPosts struct {
+	tribune string
+	posts   Posts
+}
 
 type SqliteStore struct {
 	db                *sql.DB
@@ -13,6 +30,7 @@ type SqliteStore struct {
 	location          *time.Location
 	maxPostsInHistory int // number of posts to return in RetrieveLatest()
 	maxPostsInStorage int // number of posts to store in the database
+	newPosts          chan newPosts
 }
 
 func parsePostTime(postTime string, location *time.Location) (time.Time, error) {
@@ -23,16 +41,18 @@ func formatPostTime(postTime time.Time, location *time.Location) string {
 	return postTime.In(location).Format("20060102150405")
 }
 
-func NewSqliteStore(dbPath string, maxPostsInHistory int, maxPostsInStorage int) (Store, error) {
-	db, err := sql.Open("sqlite", dbPath)
+func initSqliteDatabase(db *sql.DB) error {
+	_, err := db.Exec(`
+		PRAGMA journal_mode = WAL;
+		PRAGMA busy_timeout = 5000;
+		PRAGMA synchronous = NORMAL;
+		PRAGMA cache_size = -64000;
+		PRAGMA foreign_keys = TRUE;
+		PRAGMA temp_store = MEMORY;
+	`)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open SQLite database: %v", err)
+		return fmt.Errorf("failed initialize database: %w", err)
 	}
-
-	// SQLite only supports one writer at a time. Serializing access through a
-	// single connection avoids SQLITE_BUSY errors when tribunes are saved
-	// concurrently.
-	db.SetMaxOpenConns(1)
 
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS posts (
@@ -45,12 +65,38 @@ func NewSqliteStore(dbPath string, maxPostsInHistory int, maxPostsInStorage int)
 			PRIMARY KEY (Tribune, ID)
 		);`)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create posts table: %v", err)
+		return fmt.Errorf("failed to create posts table: %v", err)
 	}
 
 	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS tribune_and_time_idx ON posts (Tribune, Time);`)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create index on posts table: %v", err)
+		return fmt.Errorf("failed to create index on posts table: %v", err)
+	}
+
+	return nil
+}
+
+func NewSqliteStore() (Store, error) {
+	var err error
+	dbPath := os.Getenv("GB2C_SQLITE_PATH")
+	if dbPath == "" {
+		dbPath, err = os.MkdirTemp("", "gb2c")
+		if err != nil {
+			return nil, fmt.Errorf("could not create temporary store directory: %v", err)
+		}
+		dbPath = path.Join(dbPath, "posts.sqlite")
+	}
+
+	maxPostsInHistory := getIntFromEnv("GB2C_MAX_POSTS_IN_HISTORY", 200)
+	maxPostsInStorage := getIntFromEnv("GB2C_SQLITE_MAX_POSTS_IN_STORAGE", maxPostsInHistory)
+
+	db, err := sql.Open("sqlite", dbPath+"?_txlock=immediate")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open SQLite database: %v", err)
+	}
+
+	if err := initSqliteDatabase(db); err != nil {
+		return nil, err
 	}
 
 	location, err := time.LoadLocation("Europe/Paris")
@@ -58,31 +104,42 @@ func NewSqliteStore(dbPath string, maxPostsInHistory int, maxPostsInStorage int)
 		return nil, fmt.Errorf("failed to load time location: %v", err)
 	}
 
-	stmt, err := db.Prepare(`INSERT OR IGNORE INTO posts (Tribune, ID, Time, Info, Login, Message) VALUES (?, ?, ?, ?, ?, ?);`)
+	// Prepare the insert statement once and reuse it for every batch instead of
+	// recompiling it on each poll.
+	insertStmt, err := db.Prepare(`INSERT OR IGNORE INTO posts (Tribune, ID, Time, Info, Login, Message) VALUES (?, ?, ?, ?, ?, ?);`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare insert statement: %v", err)
 	}
 
-	return &SqliteStore{
+	log.Printf("Using SQLite store in %s\n", dbPath)
+	store := &SqliteStore{
 		db:                db,
-		insertStmt:        stmt,
+		insertStmt:        insertStmt,
 		location:          location,
 		maxPostsInHistory: maxPostsInHistory,
 		maxPostsInStorage: maxPostsInStorage,
-	}, nil
+		newPosts:          make(chan newPosts),
+	}
+
+	go func() {
+		for s := range store.newPosts {
+			if err := store.savePosts(s.tribune, s.posts); err != nil {
+				log.Printf("Error while saving posts: %v\n", err)
+			}
+		}
+	}()
+
+	return store, nil
 }
 
 func (s *SqliteStore) Save(tribune string, posts Posts) error {
+	s.newPosts <- newPosts{tribune, posts}
+	return nil
+}
+
+func (s *SqliteStore) savePosts(tribune string, posts Posts) error {
 	if len(posts) == 0 {
 		return nil
-	}
-
-	if len(posts) == 1 {
-		// A transaction would only add overhead for a single row.
-		if err := s.insertPosts(tribune, posts); err != nil {
-			return err
-		}
-		return s.trim(tribune)
 	}
 
 	tx, err := s.db.Begin()
@@ -91,41 +148,7 @@ func (s *SqliteStore) Save(tribune string, posts Posts) error {
 	}
 	defer tx.Rollback()
 
-	if err := s.insertPostsTx(tx, tribune, posts); err != nil {
-		return err
-	}
-
-	if s.maxPostsInStorage > 0 {
-		if _, err := tx.Exec(
-			`DELETE FROM posts WHERE Tribune = ? AND ID <= (SELECT ID FROM posts WHERE Tribune = ? ORDER BY ID DESC LIMIT 1 OFFSET ?)`,
-			tribune,
-			tribune,
-			s.maxPostsInStorage,
-		); err != nil {
-			return err
-		}
-	}
-
-	return tx.Commit()
-}
-
-func (s *SqliteStore) insertPosts(tribune string, posts Posts) error {
-	var errs []error
-	for _, post := range posts {
-		postTime, err := parsePostTime(post.Time, s.location)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		if _, err := s.insertStmt.Exec(post.Tribune, post.ID, postTime, post.Info, post.Login, post.Message); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	return joinErrors(errs)
-}
-
-func (s *SqliteStore) insertPostsTx(tx *sql.Tx, tribune string, posts Posts) error {
-	// Reuse the statement prepared once in NewSqliteStore, bound to this transaction.
+	// Bind the statement prepared at startup to this transaction.
 	stmt := tx.Stmt(s.insertStmt)
 	defer stmt.Close()
 
@@ -136,32 +159,31 @@ func (s *SqliteStore) insertPostsTx(tx *sql.Tx, tribune string, posts Posts) err
 			errs = append(errs, err)
 			continue
 		}
-		if _, err := stmt.Exec(post.Tribune, post.ID, postTime, post.Info, post.Login, post.Message); err != nil {
+
+		_, err = stmt.Exec(post.Tribune, post.ID, postTime, post.Info, post.Login, post.Message)
+		if err != nil {
 			errs = append(errs, err)
 		}
 	}
-	return joinErrors(errs)
-}
-
-func (s *SqliteStore) trim(tribune string) error {
-	if s.maxPostsInStorage <= 0 {
-		return nil
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
-	_, err := s.db.Exec(
-		`DELETE FROM posts WHERE Tribune = ? AND ID <= (SELECT ID FROM posts WHERE Tribune = ? ORDER BY ID DESC LIMIT 1 OFFSET ?)`,
-		tribune,
-		tribune,
-		s.maxPostsInStorage,
-	)
-	return err
-}
 
-func joinErrors(errs []error) error {
-	if len(errs) == 0 {
-		return nil
+	if s.maxPostsInStorage > 0 {
+		// ORDER BY ID walks the (Tribune, ID) primary key instead of the whole
+		// table, and both placeholders are bound (the old query was missing one).
+		_, err := tx.Exec(
+			`DELETE FROM posts WHERE Tribune = ? AND ID <= (SELECT ID FROM posts WHERE Tribune = ? ORDER BY ID DESC LIMIT 1 OFFSET ?)`,
+			tribune,
+			tribune,
+			s.maxPostsInStorage,
+		)
+		if err != nil {
+			return err
+		}
 	}
-	// FIXME: In Go 1.20+, replace the following with: return errors.Join(errs...)
-	return fmt.Errorf("%v", errs)
+
+	return tx.Commit()
 }
 
 func (s *SqliteStore) RetrieveLatests(tribune string) (Posts, error) {
@@ -180,15 +202,17 @@ func (s *SqliteStore) RetrieveLatests(tribune string) (Posts, error) {
 		p := Post{Tribune: tribune}
 		var postTime time.Time
 		if err := rows.Scan(&p.ID, &postTime, &p.Info, &p.Login, &p.Message); err != nil {
-			fmt.Printf("failed to scan post row: %v", err)
+			fmt.Printf("failed to scan post row: %v\n", err)
 			return nil, fmt.Errorf("failed to scan post row: %v", err)
 		}
 		p.Time = formatPostTime(postTime, s.location)
 		posts = append(posts, p)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to read post rows: %v", err)
+	}
 
-	// FIXME: In Go 1.21+, replace the following with:slices.Reverse(posts)
-	sort.Sort(posts)
+	slices.Reverse(posts)
 
-	return posts, rows.Err()
+	return posts, nil
 }

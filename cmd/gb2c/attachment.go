@@ -15,8 +15,10 @@ import (
 	"time"
 )
 
-const maxAttachmentSize = 4 * 1024 * 1024
-const attachmentEndpointPath = "/gb2c/attachment/"
+const (
+	maxAttachmentSize      = 4 * 1024 * 1024
+	attachmentEndpointPath = "/gb2c/attachment/"
+)
 
 type AttachmentHandler struct {
 	attachmentDirectory string
@@ -30,26 +32,38 @@ func (a *AttachmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func generateAttachmentIdBase() string {
+func generateAttachmentIDBase() string {
 	return strconv.FormatInt(time.Now().Unix(), 10)
 }
 
-var attachmentIdRegex = regexp.MustCompile(`\d+(\.[a-zA-Z0-9]{1,4})?`)
+var attachmentIDRegex = regexp.MustCompile(`\d+(\.[a-zA-Z0-9]{1,4})?`)
 
-func isAttachmentId(attachmentId string) bool {
-	return attachmentIdRegex.MatchString(attachmentId)
+func isAttachmentID(attachmentID string) bool {
+	return attachmentIDRegex.MatchString(attachmentID)
 }
 
 func (a *AttachmentHandler) deleteOldAttachments() {
 	cleanupTime := time.Now().Add(-48 * time.Hour)
-	err := filepath.WalkDir(a.attachmentDirectory, func(path string, d fs.DirEntry, err error) error {
+
+	root, err := os.OpenRoot(a.attachmentDirectory)
+	if err != nil {
+		log.Printf("Could not open attachment directory: %v\n", err)
+		return
+	}
+	defer root.Close()
+
+	err = fs.WalkDir(root.FS(), ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if !d.IsDir() {
 			info, err := d.Info()
 			if nil != err {
 				return err
 			}
 			if info.ModTime().Before(cleanupTime) {
-				os.Remove(path)
+				return root.Remove(path)
 			}
 		}
 		return nil
@@ -57,12 +71,11 @@ func (a *AttachmentHandler) deleteOldAttachments() {
 	if nil != err {
 		log.Println("Error during attachment cleanup: ", err)
 	}
-
 }
 
 func (a *AttachmentHandler) postAttachment(w http.ResponseWriter, r *http.Request) {
 	a.deleteOldAttachments()
-	attachmentId := generateAttachmentIdBase()
+	attachmentID := generateAttachmentIDBase()
 	attachmentFormFile, _, err := r.FormFile("attachment")
 	if nil != err {
 		http.Error(w, fmt.Sprintf("No attachment file in request: %s", err), http.StatusBadRequest)
@@ -80,54 +93,93 @@ func (a *AttachmentHandler) postAttachment(w http.ResponseWriter, r *http.Reques
 	mimeType := http.DetectContentType(header)
 	switch mimeType {
 	case "image/gif":
-		attachmentId += ".gif"
+		attachmentID += ".gif"
 	case "image/png":
-		attachmentId += ".png"
+		attachmentID += ".png"
 	case "image/jpeg":
-		attachmentId += ".jpeg"
+		attachmentID += ".jpeg"
 	case "image/webp":
-		attachmentId += ".webp"
+		attachmentID += ".webp"
 	case "audio/mpeg":
-		attachmentId += ".mp3"
+		attachmentID += ".mp3"
 	case "application/ogg":
-		attachmentId += ".ogg"
+		attachmentID += ".ogg"
 	case "video/webm":
-		attachmentId += ".webm"
+		attachmentID += ".webm"
 	}
 
-	attachmentDestFile, err := os.Create(a.attachmentDirectory + "/" + attachmentId)
+	root, err := os.OpenRoot(a.attachmentDirectory)
+	if err != nil {
+		http.Error(w, "Cannot create attachment file", http.StatusInternalServerError)
+		log.Println("Cannot create attachment file: ", err)
+		return
+	}
+	defer root.Close()
+
+	attachmentDestFile, err := root.Create(attachmentID)
 	if nil != err {
 		http.Error(w, "Cannot create attachment file", http.StatusInternalServerError)
 		log.Println("Cannot create attachment file: ", err)
 		return
 	}
 
-	attachmentFormFile.Seek(0, io.SeekStart)
-	io.Copy(attachmentDestFile, io.LimitReader(attachmentFormFile, maxAttachmentSize))
+	if _, err := attachmentFormFile.Seek(0, io.SeekStart); err != nil {
+		http.Error(w, "Cannot seek attachment file", http.StatusInternalServerError)
+		log.Println("Cannot seek attachment file: ", err)
+		return
+	}
+
+	if _, err := io.Copy(attachmentDestFile, io.LimitReader(attachmentFormFile, maxAttachmentSize)); err != nil {
+		http.Error(w, "Cannot copy attachment file", http.StatusInternalServerError)
+		log.Println("Cannot copy attachment file: ", err)
+		return
+	}
 
 	attachmentURL := url.URL{
 		Scheme: remoteProtocol(r),
 		Host:   remoteHost(r),
-		Path:   attachmentEndpointPath + attachmentId,
+		Path:   attachmentEndpointPath + attachmentID,
 	}
 
 	w.Header().Set("Location", attachmentURL.String())
 	w.WriteHeader(http.StatusCreated)
-
 }
 
 func (a *AttachmentHandler) getAttachment(w http.ResponseWriter, r *http.Request) {
-	attachmentId := strings.TrimPrefix(r.URL.Path, attachmentEndpointPath)
-	if !isAttachmentId(attachmentId) {
+	attachmentID := strings.TrimPrefix(r.URL.Path, attachmentEndpointPath)
+	if !isAttachmentID(attachmentID) {
 		http.Error(w, "Attachment id is not valid", http.StatusBadRequest)
 		return
 	}
-	attachmentFilename := a.attachmentDirectory + "/" + attachmentId
-	if len(filepath.Ext(attachmentId)) == 0 {
-		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Content-Disposition", "attachment; filename="+attachmentId)
+
+	root, err := os.OpenRoot(a.attachmentDirectory)
+	if err != nil {
+		http.Error(w, "Cannot read attachment file", http.StatusInternalServerError)
+		log.Println("Cannot read attachment file: ", err)
+		return
 	}
-	http.ServeFile(w, r, attachmentFilename)
+	defer root.Close()
+
+	attachmentFile, err := root.Open(attachmentID)
+	if err != nil {
+		http.Error(w, "Attachment not found", http.StatusNotFound)
+		return
+	}
+	defer attachmentFile.Close() //nolint:errcheck // file opened readonly, not modified
+
+	info, err := attachmentFile.Stat()
+	if err != nil {
+		http.Error(w, "Cannot read attachment file", http.StatusInternalServerError)
+		log.Println("Cannot read attachment file: ", err)
+		return
+	}
+
+	if len(filepath.Ext(attachmentID)) == 0 {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", "attachment; filename="+attachmentID)
+	}
+
+	http.ServeContent(w, r, attachmentID, info.ModTime(), attachmentFile)
 }
 
 // RegisterAttachmentAPI setup http attachment API endpoints
@@ -137,6 +189,6 @@ func RegisterAttachmentAPI() {
 		log.Println("GB2C_ATTACHMENT_DIRECTORY is not defined, attachments will be stored in temporary directory")
 		attachmentHandler.attachmentDirectory, _ = os.MkdirTemp("", "gb2c_attachments")
 	}
-
+	fmt.Println("Attachments will be stored in", attachmentHandler.attachmentDirectory)
 	http.Handle(attachmentEndpointPath, attachmentHandler)
 }

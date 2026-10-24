@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -55,10 +56,12 @@ func (tc *TribuneClient) Post(tribune *Tribune, message, info, authorization str
 	if tribune.AuthentificationType == OAuth2Authentification {
 		outRequest.Header.Set("Authorization", authorization)
 	}
-	_, err = tc.httpClient.Do(outRequest)
+	response, err := tc.httpClient.Do(outRequest)
 	if nil != err {
 		log.Println(err)
+		return
 	}
+	response.Body.Close()
 }
 
 // Poll Retrieve backend
@@ -68,6 +71,10 @@ func (tc *TribuneClient) Poll(tribune *Tribune) (Posts, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("erreur de %s : %d %s", tribune.BackendURL, resp.StatusCode, resp.Status)
+	}
 
 	posts, err := tc.parseTSVBackend(tribune, resp.Body)
 	if err != nil {
@@ -113,7 +120,7 @@ func (tc *TribuneClient) parseTSVBackend(tribune *Tribune, body io.Reader) (Post
 
 // splitTSVLine splits a backend line into the five leading fields without
 // allocating: the returned strings share the caller's backing string. Anything
-// after the fifth field is dropped, as the previous strings.Split-based code did.
+// after the fifth field is dropped.
 func splitTSVLine(line string) ([5]string, bool) {
 	var record [5]string
 	rest := line

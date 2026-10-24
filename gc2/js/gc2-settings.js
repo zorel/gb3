@@ -15,7 +15,7 @@ class Gc2Settings {
          * @type HTMLSelectElement
          */
         let tribuneSelect = document.getElementById("tribunes");
-        for(let tribune of storedTribunes.availableTribunes) {
+        for (let tribune of storedTribunes.availableTribunes) {
             /**
              * @type HTMLOptionElement
              */
@@ -27,13 +27,13 @@ class Gc2Settings {
         }
         tribuneSelect.onchange = () => {
             let tribuneArray = [];
-            for(let option of tribuneSelect.options) {
-                if(option.selected) {
+            for (let option of tribuneSelect.options) {
+                if (option.selected) {
                     tribuneArray.push(option.value);
                 }
             }
             GC2_STORAGE.setItem("tribunes", tribuneArray.join(","));
-        }
+        };
     }
 
     handlePlopList() {
@@ -66,22 +66,11 @@ class Gc2Settings {
         };
     }
 
-    handleDarkMode() {
-        let checkbox = document.getElementById("darkMode");
-        if (!checkbox) return;
-        // initialize from storage (treat "1" or "true" as enabled)
-        let stored = GC2_STORAGE.getItem("dark_mode");
-        checkbox.checked = stored === "1" || stored === "true" || (stored === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        checkbox.onchange = (e) => {
-            GC2_STORAGE.setItem("dark_mode", checkbox.checked ? "1" : "0");
-        };
-    }
-
     handleBackButton() {
         let backButton = document.getElementById("backButton");
         backButton.onclick = () => {
             window.location.href = "/";
-        }
+        };
     }
 }
 const GC2_SETTINGS = new Gc2Settings();
@@ -90,5 +79,4 @@ GC2_SETTINGS.handleTribunes();
 GC2_SETTINGS.handlePlopList();
 GC2_SETTINGS.handleBlockedIdentities();
 GC2_SETTINGS.handleBlockedDisplayMode();
-GC2_SETTINGS.handleDarkMode();
 GC2_SETTINGS.handleBackButton();

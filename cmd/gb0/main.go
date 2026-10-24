@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -60,17 +61,24 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func handleGetTsv(w http.ResponseWriter, r *http.Request) {
+func handleGetTSV(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/tab-separated-values")
 	posts := postStore.ReadPosts()
 	for _, p := range posts {
-		p.PrintTsv(w)
+		p.PrintTSV(w) //nolint:errcheck
 	}
 }
 
 func main() {
-	postStore = NewStore()
-	http.HandleFunc("/gb0/tsv", handleGetTsv)
+	var err error
+
+	postStore, err = NewStore()
+	if err != nil {
+		log.Fatalf("Could not initialize store: %v", err)
+	}
+	defer postStore.Close()
+
+	http.HandleFunc("/gb0/tsv", handleGetTSV)
 	http.HandleFunc("/gb0/post", handlePost)
 
 	staticfs, err := fs.Sub(staticContent, "static")
@@ -84,8 +92,14 @@ func main() {
 		listenAddress = ":16667"
 	}
 	log.Printf("Listen to %s\n", listenAddress)
-	err = http.ListenAndServe(listenAddress, nil)
-	if nil != err {
+
+	server := http.Server{
+		Addr:         listenAddress,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
+	"time"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/search"
@@ -29,16 +30,22 @@ type Totoz struct {
 func searchTotozesInCache(terms string) (totozes Totozes, err error) {
 	totozes = Totozes{}
 
-	files, err := filepath.Glob(totozCacheDir + "/*.tags")
+	root, err := os.OpenRoot(totozCacheDir)
+	if err != nil {
+		return
+	}
+	defer root.Close()
+
+	files, err := fs.Glob(root.FS(), "*.tags")
 	if nil != err {
-		return totozes, err
+		return
 	}
 
 	matcher := search.New(language.French, search.Loose)
 	pattern := matcher.CompileString(terms)
 
 	appendTotoz := func(file string) {
-		totozes.Totozes = append(totozes.Totozes, Totoz{Name: strings.TrimSuffix(filepath.Base(file), ".tags")})
+		totozes.Totozes = append(totozes.Totozes, Totoz{Name: strings.TrimSuffix(file, ".tags")})
 	}
 
 	for _, file := range files {
@@ -47,7 +54,7 @@ func searchTotozesInCache(terms string) (totozes Totozes, err error) {
 			continue
 		}
 
-		fileContent, err := os.ReadFile(file)
+		fileContent, err := root.ReadFile(file)
 		if nil != err {
 			log.Printf("Cannot read totoz tags from %s", file)
 			continue
@@ -56,9 +63,8 @@ func searchTotozesInCache(terms string) (totozes Totozes, err error) {
 			appendTotoz(file)
 			continue
 		}
-
 	}
-	return totozes, err
+	return
 }
 
 // TotozSearch handler
@@ -79,7 +85,7 @@ func totozCacheSearch(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ServeTotozCacheApi() {
+func ServeTotozCacheAPI() {
 	http.HandleFunc("/search.xml", totozCacheSearch)
 
 	listenAddress := os.Getenv("CACHETOTOZ_LISTEN")
@@ -87,8 +93,13 @@ func ServeTotozCacheApi() {
 		listenAddress = ":16668"
 	}
 	log.Printf("Listen to %s\n", listenAddress)
-	err := http.ListenAndServe(listenAddress, nil)
-	if nil != err {
+	server := http.Server{
+		Addr:         listenAddress,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": true,
+        "noEmit": true,
+        "noImplicitAny": false,
+        "strict": true,
+        "lib": ["ES2022", "DOM"]
+    },
+    "include": ["js/**/*.js"],
+    "exclude": ["js/peggy-esm-5.0.6.js"]
+}

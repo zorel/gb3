@@ -1,0 +1,3 @@
+[Network]
+NetworkName=gb3net
+Driver=bridge

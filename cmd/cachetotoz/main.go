@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"regexp"
 	"strings"
 	"sync"
@@ -19,11 +18,13 @@ import (
 
 var totozCacheDir string
 
-// totozHttpClient is shared so connections can be reused between downloads.
-var totozHttpClient = &http.Client{Timeout: 30 * time.Second}
+// totozHTTPClient is shared so connections can be reused between downloads.
+var totozHTTPClient = &http.Client{Timeout: 30 * time.Second}
 
-const maxTagsToRetrieve = 100
-const durationBetweenRetrieve = time.Hour
+const (
+	maxTagsToRetrieve       = 100
+	durationBetweenRetrieve = time.Hour
+)
 
 // totozFetchConcurrency limits parallel downloads from nsfw.totoz.eu.
 const totozFetchConcurrency = 8
@@ -59,25 +60,32 @@ func initCacheDir() {
 	fmt.Println("Totozes will be cached in", totozCacheDir)
 }
 
-var totozRegex = regexp.MustCompile("^[A-Za-z0-9-_ !$'*+-.:²µ¸¹ÃÇßæèøûвмотԝ①③⑦愛]+$")
+var totozRegex = regexp.MustCompile("^[A-Za-z0-9_ !$'*+.:²µ¸¹ÃÇßæèøûвмотԝ①③⑦愛-]+$")
 
 func isValidTotozName(totozName string) bool {
 	return totozRegex.MatchString(totozName) && !strings.HasSuffix(totozName, ".tags")
 }
 
 func cacheTotozTags(totozName string) (cached bool, err error) {
-	totozTagsFilename := path.Join(totozCacheDir, totozName+".tags")
-	_, err = os.Stat(totozTagsFilename)
+	root, err := os.OpenRoot(totozCacheDir)
+	if err != nil {
+		return
+	}
+	defer root.Close()
+
+	totozTagsFilename := totozName + ".tags"
+	_, err = root.Stat(totozTagsFilename)
 	if nil == err {
 		return false, nil
 	}
 
-	totozUrl, err := url.JoinPath("https://nsfw.totoz.eu/totoz", totozName)
+	totozURL, err := url.JoinPath("https://nsfw.totoz.eu/totoz", totozName)
 	if nil != err {
 		return false, err
 	}
 
-	res, err := totozHttpClient.Get(totozUrl)
+	// #nosec G107 -- totozURL is safe because totozName was validated to be a path component (no /)
+	res, err := totozHTTPClient.Get(totozURL)
 	if nil != err {
 		return false, err
 	}
@@ -93,30 +101,41 @@ func cacheTotozTags(totozName string) (cached bool, err error) {
 
 	totozTags := doc.Find(".totoz .tags").Text()
 
-	totozTagsFile, err := os.Create(totozTagsFilename)
+	totozTagsFile, err := root.Create(totozTagsFilename)
 	if nil != err {
 		return false, err
 	}
-	defer totozTagsFile.Close()
+	if _, err := io.WriteString(totozTagsFile, totozTags); err != nil {
+		return false, err
+	}
+	if err := totozTagsFile.Close(); err != nil {
+		return false, err
+	}
 
-	_, err = io.WriteString(totozTagsFile, totozTags)
-	return true, err
+	return true, nil
 }
 
 func cacheTotozImage(totozName string) (cached bool, err error) {
-	totozImageFilename := path.Join(totozCacheDir, totozName)
+	root, err := os.OpenRoot(totozCacheDir)
+	if err != nil {
+		return
+	}
+	defer root.Close()
 
-	_, err = os.Stat(totozImageFilename)
+	totozImageFilename := totozName
+
+	_, err = root.Stat(totozImageFilename)
 	if nil == err {
 		return false, nil
 	}
 
-	totozImageUrl, err := url.JoinPath("https://nsfw.totoz.eu/img", totozName)
+	totozImageURL, err := url.JoinPath("https://nsfw.totoz.eu/img", totozName)
 	if nil != err {
 		return false, err
 	}
 
-	res, err := totozHttpClient.Get(totozImageUrl)
+	// #nosec G107 -- totozImageURL is safe because totozName was validated to be a path component (no /)
+	res, err := totozHTTPClient.Get(totozImageURL)
 	if nil != err {
 		return false, err
 	}
@@ -125,18 +144,22 @@ func cacheTotozImage(totozName string) (cached bool, err error) {
 		return false, fmt.Errorf("erreur de nsfw.totoz.eu : %d %s", res.StatusCode, res.Status)
 	}
 
-	totozImageFile, err := os.Create(totozImageFilename)
+	totozImageFile, err := root.Create(totozImageFilename)
 	if nil != err {
 		return false, err
 	}
-	defer totozImageFile.Close()
+	if _, err = io.Copy(totozImageFile, res.Body); err != nil {
+		return false, err
+	}
+	if err := totozImageFile.Close(); err != nil {
+		return false, err
+	}
 
-	_, err = io.Copy(totozImageFile, res.Body)
-	return true, err
+	return true, nil
 }
 
 func retrieveLastestTotozes() {
-	res, err := totozHttpClient.Get("https://nsfw.totoz.eu/")
+	res, err := totozHTTPClient.Get("https://nsfw.totoz.eu/")
 	if nil != err {
 		log.Println(err)
 		return
@@ -154,9 +177,8 @@ func retrieveLastestTotozes() {
 	}
 
 	var totozNames []string
-	doc.Find(".totoz").Each(func(i int, s *goquery.Selection) {
-
-		//totoz regex /^[A-Za-z0-9-_ ]+$/ ?
+	doc.Find(".totoz").Each(func(_ int, s *goquery.Selection) {
+		// totoz regex /^[A-Za-z0-9-_ ]+$/ ?
 		totozNameWithMarkup := s.Find(".name").Text()
 		totozName := strings.TrimPrefix(totozNameWithMarkup, "[:")
 		totozName = strings.TrimSuffix(totozName, "]")
@@ -207,9 +229,6 @@ func retrieveMissingTags() {
 		if !isValidTotozName(totozName) {
 			continue
 		}
-		if _, err := os.Stat(path.Join(totozCacheDir, totozName+".tags")); err == nil {
-			continue
-		}
 		missingTags = append(missingTags, totozName)
 		if len(missingTags) >= maxTagsToRetrieve {
 			break
@@ -230,11 +249,11 @@ func retrieveMissingTags() {
 	})
 	fmt.Printf("Found %d totozes without tags, cached %d tags\n", len(missingTags), nbTagsCached.Load())
 }
-func main() {
 
+func main() {
 	initCacheDir()
 
-	go ServeTotozCacheApi()
+	go ServeTotozCacheAPI()
 
 	for {
 		retrieveLastestTotozes()

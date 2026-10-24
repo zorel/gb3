@@ -47,7 +47,9 @@ export class Gc2ConversationFilter {
     }
 
     setBlockedIdentities(identities) {
-        this.blockedIdentities = new Set(identities.map((identity) => identity.trim()).filter(Boolean));
+        this.blockedIdentities = new Set(
+            identities.map((identity) => identity.trim()).filter(Boolean),
+        );
         this.recompute();
     }
 
@@ -92,7 +94,10 @@ export class Gc2ConversationFilter {
     }
 
     isBlocked(post) {
-        return this.blockedIdentities.has(post.login) || this.blockedIdentities.has(post.info);
+        return (
+            this.blockedIdentities.has(post.login) ||
+            this.blockedIdentities.has(post.info)
+        );
     }
 
     /**
@@ -151,7 +156,7 @@ export class Gc2ConversationFilter {
             }
             references.push({
                 tribune: norloge.getAttribute("bouchot") || post.tribune,
-                time: time
+                time: time,
             });
         }
         return references;
@@ -159,7 +164,7 @@ export class Gc2ConversationFilter {
 
     resolve(reference) {
         let byTime = this.postsByTribuneTime.get(reference.tribune);
-        return byTime ? (byTime.get(reference.time) || null) : null;
+        return byTime ? byTime.get(reference.time) || null : null;
     }
 
     /**

@@ -6,6 +6,16 @@ import (
 	"testing"
 )
 
+func newTestMemStore(t *testing.T, maxPostsInHistory int) Store {
+	t.Helper()
+	store, err := NewMemStore()
+	if err != nil {
+		t.Fatalf("NewMemStore() error = %v", err)
+	}
+	store.(*memStore).maxPostsInHistory = maxPostsInHistory
+	return store
+}
+
 func makeLatestPosts(count int) Posts {
 	posts := make(Posts, count)
 	for i := range posts {
@@ -15,7 +25,7 @@ func makeLatestPosts(count int) Posts {
 }
 
 func TestMemStoreDeduplicatesPosts(t *testing.T) {
-	store := NewMemStore(10)
+	store := newTestMemStore(t, 10)
 	posts := makeLatestPosts(3)
 	if err := store.Save("moules", posts); err != nil {
 		t.Fatal(err)
@@ -33,7 +43,7 @@ func TestMemStoreDeduplicatesPosts(t *testing.T) {
 }
 
 func TestMemStoreKeepsLatestPosts(t *testing.T) {
-	store := NewMemStore(5)
+	store := newTestMemStore(t, 5)
 	if err := store.Save("moules", makeLatestPosts(8)); err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +74,7 @@ func TestMemStoreKeepsLatestPosts(t *testing.T) {
 }
 
 func TestMemStoreRetrievalIsASnapshot(t *testing.T) {
-	store := NewMemStore(5)
+	store := newTestMemStore(t, 5)
 	if err := store.Save("moules", makeLatestPosts(2)); err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +93,7 @@ func TestMemStoreRetrievalIsASnapshot(t *testing.T) {
 }
 
 func TestMemStoreConcurrentAccess(t *testing.T) {
-	store := NewMemStore(50)
+	store := newTestMemStore(t, 50)
 	posts := makeLatestPosts(120)
 	var group sync.WaitGroup
 	for worker := 0; worker < 8; worker++ {

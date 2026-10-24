@@ -23,7 +23,7 @@ services:
    - "16666:16666"
   volumes:
    - gb2c-attachments:/data/attachments
-   - gb2c_posts:/data/posts
+   - gb2c-posts:/data/posts
  reverse-proxy:
   image: docker.io/nginx
   depends_on:
