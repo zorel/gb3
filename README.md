@@ -197,42 +197,15 @@ A simple coincoin frontend for gb2c.
 
 ### gb3tui
 
-A Bubble Tea terminal client for gb2c. Build and run it with:
+The Bubble Tea terminal client is maintained in its own repository:
 
-```bash
-make tui
-./gb3tui -url http://localhost:16666 -info dave -blocked thoasm -gray
-```
-
-Use `↑`/`↓` to move a highlight between posts and `←`/`→` to follow the clock
-references (`12:00:00` or `12:00:00@tribune`) that link a post to the posts it
-replies to: the highlight moves onto the referenced post. While a post is
-highlighted, clock references in other posts that point to it are highlighted
-as well. With an empty input, `Enter` inserts the highlighted post's clock into
-the input so you can answer it, or follows a selected clock to make its target
-the new context. With text in the input, `Enter` posts. Use `Tab`/`Shift-Tab` to
-switch tribunes, `PgUp`/`PgDn` (or `Ctrl-U`/`Ctrl-D`) to scroll, and `q` to quit. The
-TUI also loads server-side blocked identities from `/gb2c/config`. Replies are
-grouped with a stable conversation color and one gutter lane per overlapping
-conversation: `┏` marks a root, `┣` an intermediate reply, and `┗` the end of a
-branch. Nested replies stay in the root conversation's lane, and finished lanes
-are reused.
-Inline `<b>`, `<i>`, `<u>`, and `<s>` formatting is rendered with the matching
-terminal style.
+<https://github.com/__GITHUB_USER__/gb3tui>
 
 ### gb3-android
 
-A native Android client lives in [`android/`](android/README.md). It provides the
-gb3tui/gc2 feature set with a touch interface: live SSE posts, tribune swipes,
-clock references, conversation filtering and colors, LinuxFR OAuth, totoz and
-emoji search, attachments, ALT shortcuts, and local settings.
+The native Android client is maintained in its own repository:
 
-Build it with JDK 17 and Android SDK 35:
-
-```bash
-cd android
-./gradlew :app:assembleDebug
-```
+<https://github.com/__GITHUB_USER__/gb3-android>
 
 ### cachetotoz
 

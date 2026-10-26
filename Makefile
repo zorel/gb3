@@ -9,32 +9,21 @@ else
 CONTAINERCMD=docker
 endif
 
-.PHONY: all gb2c tui test
+.PHONY: all gb2c test
 all: gb2c
 
 # Build gb2c with SQLite support, as used by gb2c.Dockerfile.
 gb2c:
 	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -tags sqlite -o gb2c ./cmd/gb2c
 
-tui:
-	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -o gb3tui ./cmd/gb3tui
-
-.PHONY: android android-release android-test
-android:
-	cd android && ./gradlew :app:assembleDebug
-
-android-release:
-	cd android && ./gradlew :app:assembleRelease
-
-android-test:
-	cd android && ./gradlew :app:testDebugUnitTest
+# gb3tui and gb3-android are maintained in separate repositories.
 
 test:
 	$(GO) test ./...
 
 .PHONY: clean
 clean:
-	rm -f gb0 gb2c cachetotoz gb3tui
+	rm -f gb0 gb2c cachetotoz
 
 .PHONY: fmt fmt-go fmt-js
 fmt-go:
