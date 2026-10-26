@@ -199,13 +199,13 @@ A simple coincoin frontend for gb2c.
 
 The Bubble Tea terminal client is maintained in its own repository:
 
-<https://github.com/__GITHUB_USER__/gb3tui>
+<https://github.com/zorel/gb3tui>
 
 ### gb3-android
 
 The native Android client is maintained in its own repository:
 
-<https://github.com/__GITHUB_USER__/gb3-android>
+<https://github.com/zorel/gb3-android>
 
 ### cachetotoz
 
