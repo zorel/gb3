@@ -73,3 +73,11 @@ gc2.tar.gz
 
 # Built binaries
 /gb3tui
+
+# Android
+/android/.gradle/
+/android/local.properties
+/android/**/build/
+/android/captures/
+/android/.idea/
+*.iml

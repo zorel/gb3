@@ -220,6 +220,20 @@ are reused.
 Inline `<b>`, `<i>`, `<u>`, and `<s>` formatting is rendered with the matching
 terminal style.
 
+### gb3-android
+
+A native Android client lives in [`android/`](android/README.md). It provides the
+gb3tui/gc2 feature set with a touch interface: live SSE posts, tribune swipes,
+clock references, conversation filtering and colors, LinuxFR OAuth, totoz and
+emoji search, attachments, ALT shortcuts, and local settings.
+
+Build it with JDK 17 and Android SDK 35:
+
+```bash
+cd android
+./gradlew :app:assembleDebug
+```
+
 ### cachetotoz
 
 A simple utility to cache [totoz](https://nsfw.totoz.eu) image and tags.

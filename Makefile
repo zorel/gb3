@@ -19,6 +19,16 @@ gb2c:
 tui:
 	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -o gb3tui ./cmd/gb3tui
 
+.PHONY: android android-release android-test
+android:
+	cd android && ./gradlew :app:assembleDebug
+
+android-release:
+	cd android && ./gradlew :app:assembleRelease
+
+android-test:
+	cd android && ./gradlew :app:testDebugUnitTest
+
 test:
 	$(GO) test ./...
 
