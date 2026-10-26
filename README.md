@@ -205,7 +205,7 @@ The Bubble Tea terminal client is maintained in its own repository:
 
 The native Android client is maintained in its own repository:
 
-<https://github.com/zorel/gb3-android>
+<https://github.com/zorel/gb3android>
 
 ### cachetotoz
 
